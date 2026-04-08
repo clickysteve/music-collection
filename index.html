@@ -23,11 +23,7 @@
             --text-dim: #b3b3b3;
             --border: #282828;
             --vinyl-color: #e8873a;
-            --vinyl-border: rgba(232, 135, 58, 0.35);
-            --vinyl-bg: rgba(232, 135, 58, 0.06);
             --cd-color: #4a9eed;
-            --cd-border: rgba(74, 158, 237, 0.35);
-            --cd-bg: rgba(74, 158, 237, 0.06);
             --scrobble-color: #e33;
         }
 
@@ -272,28 +268,10 @@
             flex-direction: column;
         }
 
-        .card.card-vinyl {
-            background: var(--vinyl-bg);
-            border-color: var(--vinyl-border);
-        }
-
-        .card.card-cd {
-            background: var(--cd-bg);
-            border-color: var(--cd-border);
-        }
-
         .card:hover {
             transform: translateY(-2px);
-        }
-
-        .card.card-vinyl:hover {
-            border-color: var(--vinyl-color);
-            box-shadow: 0 8px 20px rgba(232, 135, 58, 0.25);
-        }
-
-        .card.card-cd:hover {
-            border-color: var(--cd-color);
-            box-shadow: 0 8px 20px rgba(74, 158, 237, 0.25);
+            border-color: var(--accent);
+            box-shadow: 0 8px 20px rgba(29, 185, 84, 0.2);
         }
 
         .card:focus-visible {
@@ -316,13 +294,15 @@
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transition: all 0.3s ease;
+            transition: opacity 0.4s ease, transform 0.3s ease;
             opacity: 0;
         }
 
         .card-image.loaded {
             opacity: 1;
         }
+
+
 
         .card:hover .card-image {
             transform: scale(1.05);
@@ -402,25 +382,18 @@
         }
 
         .collection-badge {
-            font-size: 9px;
+            font-size: 10px;
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.5px;
-            padding: 2px 8px;
-            border-radius: 10px;
-            line-height: 1.4;
         }
 
         .collection-badge.badge-vinyl {
             color: var(--vinyl-color);
-            background: rgba(232, 135, 58, 0.15);
-            border: 1px solid rgba(232, 135, 58, 0.3);
         }
 
         .collection-badge.badge-cd {
             color: var(--cd-color);
-            background: rgba(74, 158, 237, 0.15);
-            border: 1px solid rgba(74, 158, 237, 0.3);
         }
 
         .scrobble-pill {
@@ -1126,7 +1099,7 @@
         // ============ RENDERING ============
         function createCard(album) {
             const card = document.createElement('div');
-            card.className = `card card-${album.collection}`;
+            card.className = 'card';
             card.role = 'button';
             card.tabIndex = 0;
             card.setAttribute('aria-label', `${album.artist} - ${album.title}`);
@@ -1148,7 +1121,7 @@
                 img.remove();
                 imgWrapper.appendChild(createPlaceholderSVG());
             });
-            img.dataset.src = album.cover_url;
+            img.src = album.cover_url;
 
             // Content
             const content = document.createElement('div');
@@ -1220,20 +1193,6 @@
             return card;
         }
 
-        // Lazy image observer — loads cover art as cards scroll into view
-        const imgObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const img = entry.target;
-                    if (img.dataset.src) {
-                        img.src = img.dataset.src;
-                        delete img.dataset.src;
-                    }
-                    imgObserver.unobserve(img);
-                }
-            });
-        }, { rootMargin: '200px' });
-
         function render() {
             const grid = document.getElementById('grid');
             const emptyState = document.getElementById('emptyState');
@@ -1249,11 +1208,6 @@
             grid.innerHTML = '';
             filteredAlbums.forEach(album => {
                 grid.appendChild(createCard(album));
-            });
-
-            // Observe images for lazy loading
-            grid.querySelectorAll('img.card-image[data-src]').forEach(img => {
-                imgObserver.observe(img);
             });
         }
 
