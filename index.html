@@ -911,6 +911,263 @@
             font-weight: 600;
         }
 
+        .stats-expand-btn {
+            margin-left: auto;
+            padding: 6px 14px;
+            background: var(--surface-1);
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: 600;
+            font-family: Inter, sans-serif;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .stats-expand-btn:hover {
+            color: var(--text);
+            border-color: var(--accent);
+        }
+
+        .stats-expand-btn .chevron {
+            transition: transform 0.3s ease;
+            display: inline-block;
+        }
+
+        .stats-expand-btn.open .chevron {
+            transform: rotate(180deg);
+        }
+
+        .stats-detail {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, padding 0.3s ease;
+            border-bottom: 1px solid transparent;
+        }
+
+        .stats-detail.open {
+            max-height: 800px;
+            padding: 20px 0;
+            border-bottom-color: var(--border);
+        }
+
+        .stats-detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        .stats-section {
+            background: var(--surface-1);
+            border-radius: 10px;
+            padding: 16px;
+            border: 1px solid var(--border);
+        }
+
+        .stats-section-title {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 14px;
+        }
+
+        /* Year chart */
+        .year-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            height: 100px;
+            padding-top: 4px;
+        }
+
+        .year-bar-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 0;
+        }
+
+        .year-bar {
+            width: 100%;
+            max-width: 24px;
+            border-radius: 3px 3px 0 0;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            min-height: 2px;
+        }
+
+        .year-bar:hover {
+            opacity: 0.8;
+            transform: scaleY(1.05);
+            transform-origin: bottom;
+        }
+
+        .year-bar-label {
+            font-size: 9px;
+            color: var(--text-dim);
+            margin-top: 4px;
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            transform: rotate(180deg);
+            height: 28px;
+            overflow: hidden;
+        }
+
+        .year-bar-tooltip {
+            display: none;
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--surface-3);
+            color: var(--text);
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            white-space: nowrap;
+            pointer-events: none;
+            margin-bottom: 4px;
+            z-index: 10;
+        }
+
+        .year-bar:hover .year-bar-tooltip {
+            display: block;
+        }
+
+        /* Decade breakdown */
+        .decade-rows {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .decade-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .decade-label {
+            font-size: 13px;
+            font-weight: 600;
+            width: 40px;
+            flex-shrink: 0;
+        }
+
+        .decade-bar-track {
+            flex: 1;
+            height: 20px;
+            background: var(--surface-2);
+            border-radius: 4px;
+            overflow: hidden;
+            display: flex;
+        }
+
+        .decade-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            padding-left: 8px;
+        }
+
+        .decade-bar-fill .bar-cd {
+            background: var(--cd-color);
+            height: 100%;
+        }
+
+        .decade-bar-fill .bar-vinyl {
+            background: var(--vinyl-color);
+            height: 100%;
+        }
+
+        .decade-count {
+            font-size: 12px;
+            color: var(--text-dim);
+            width: 28px;
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        /* Top artists */
+        .top-artists {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .top-artist-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .top-artist-rank {
+            font-size: 11px;
+            color: var(--text-dim);
+            width: 18px;
+            text-align: right;
+            flex-shrink: 0;
+            font-weight: 700;
+        }
+
+        .top-artist-name {
+            font-size: 13px;
+            font-weight: 500;
+            flex: 1;
+            min-width: 0;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .top-artist-count {
+            font-size: 12px;
+            color: var(--text-dim);
+            flex-shrink: 0;
+        }
+
+        /* Type breakdown */
+        .type-breakdown {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .type-chip {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            background: var(--surface-2);
+            border-radius: 20px;
+            font-size: 13px;
+        }
+
+        .type-chip-count {
+            font-weight: 700;
+            color: var(--accent);
+        }
+
+        .type-chip-label {
+            color: var(--text-dim);
+        }
+
+        @media (max-width: 900px) {
+            .stats-detail-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
         /* List View */
         .list-view {
             display: none;
@@ -1120,6 +1377,31 @@
             <div class="stat-item"><span class="stat-value" id="statOldest">—</span><span class="stat-label">Oldest</span></div>
             <div class="stat-item"><span class="stat-value" id="statNewest">—</span><span class="stat-label">Newest</span></div>
             <div class="stat-item"><span class="stat-value" id="statDecade">—</span><span class="stat-label">Top Decade</span></div>
+            <button class="stats-expand-btn" id="statsExpandBtn">More Stats <span class="chevron">&#9660;</span></button>
+        </div>
+        <div class="stats-detail" id="statsDetail">
+            <div class="stats-detail-grid">
+                <div class="stats-section" style="grid-column: 1 / -1;">
+                    <div class="stats-section-title">Albums by Year</div>
+                    <div class="year-chart" id="yearChart"></div>
+                </div>
+                <div class="stats-section">
+                    <div class="stats-section-title">Albums by Decade</div>
+                    <div class="decade-rows" id="decadeRows"></div>
+                </div>
+                <div class="stats-section">
+                    <div class="stats-section-title">Top Artists</div>
+                    <div class="top-artists" id="topArtists"></div>
+                </div>
+                <div class="stats-section">
+                    <div class="stats-section-title">By Type</div>
+                    <div class="type-breakdown" id="typeBreakdown"></div>
+                </div>
+                <div class="stats-section">
+                    <div class="stats-section-title">Collection Split</div>
+                    <div class="decade-rows" id="collectionSplit"></div>
+                </div>
+            </div>
         </div>
         <div class="grid" id="grid"></div>
         <div class="list-view" id="listView">
@@ -1587,6 +1869,9 @@
             }
 
             updateStats();
+            if (document.getElementById('statsDetail').classList.contains('open')) {
+                updateDetailedStats();
+            }
         }
 
         function renderListView() {
@@ -1674,6 +1959,212 @@
                 const topDecade = Object.entries(decades).sort((a, b) => b[1] - a[1])[0];
                 document.getElementById('statDecade').textContent = topDecade[0] + 's';
             }
+        }
+
+        function updateDetailedStats() {
+            const albums = filteredAlbums;
+            if (!albums.length) return;
+
+            // ---- Year chart ----
+            const yearCounts = {};
+            const yearCdCounts = {};
+            const yearVinylCounts = {};
+            albums.forEach(a => {
+                if (a.year && a.year > 0) {
+                    yearCounts[a.year] = (yearCounts[a.year] || 0) + 1;
+                    if (a.collection === 'cd') yearCdCounts[a.year] = (yearCdCounts[a.year] || 0) + 1;
+                    if (a.collection === 'vinyl') yearVinylCounts[a.year] = (yearVinylCounts[a.year] || 0) + 1;
+                }
+            });
+
+            const allYears = Object.keys(yearCounts).map(Number).sort((a, b) => a - b);
+            const minYear = allYears[0];
+            const maxYear = allYears[allYears.length - 1];
+            const maxCount = Math.max(...Object.values(yearCounts));
+
+            const yearChart = document.getElementById('yearChart');
+            yearChart.innerHTML = '';
+
+            for (let y = minYear; y <= maxYear; y++) {
+                const total = yearCounts[y] || 0;
+                const cdCount = yearCdCounts[y] || 0;
+                const vinylCount = yearVinylCounts[y] || 0;
+                const pct = total > 0 ? (total / maxCount) * 100 : 0;
+
+                const group = document.createElement('div');
+                group.className = 'year-bar-group';
+
+                const barContainer = document.createElement('div');
+                barContainer.style.cssText = `width:100%;max-width:24px;height:${Math.max(pct, 2)}px;display:flex;flex-direction:column;`;
+
+                if (vinylCount > 0) {
+                    const vBar = document.createElement('div');
+                    vBar.style.cssText = `flex:${vinylCount};background:var(--vinyl-color);border-radius:3px 3px 0 0;min-height:1px;`;
+                    barContainer.appendChild(vBar);
+                }
+                if (cdCount > 0) {
+                    const cBar = document.createElement('div');
+                    cBar.style.cssText = `flex:${cdCount};background:var(--cd-color);border-radius:${vinylCount ? '0' : '3px 3px'} 0 0;min-height:1px;`;
+                    barContainer.appendChild(cBar);
+                }
+
+                const tooltip = document.createElement('div');
+                tooltip.className = 'year-bar-tooltip';
+                tooltip.textContent = `${y}: ${total} album${total !== 1 ? 's' : ''}`;
+
+                const barWrap = document.createElement('div');
+                barWrap.className = 'year-bar';
+                barWrap.style.height = `${Math.max(pct, 2)}%`;
+                barWrap.appendChild(barContainer);
+                barWrap.appendChild(tooltip);
+                barWrap.style.cssText = `width:100%;max-width:24px;height:${Math.max(pct, 2)}%;position:relative;cursor:pointer;`;
+
+                group.appendChild(barWrap);
+
+                // Show label every 5 years or if it's first/last
+                if (y % 5 === 0 || y === minYear || y === maxYear) {
+                    const label = document.createElement('div');
+                    label.className = 'year-bar-label';
+                    label.textContent = y;
+                    group.appendChild(label);
+                }
+
+                yearChart.appendChild(group);
+            }
+
+            // ---- Decade breakdown with CD/Vinyl split ----
+            const decades = {};
+            const decadeCd = {};
+            const decadeVinyl = {};
+            albums.forEach(a => {
+                if (a.year && a.year > 0) {
+                    const d = Math.floor(a.year / 10) * 10;
+                    decades[d] = (decades[d] || 0) + 1;
+                    if (a.collection === 'cd') decadeCd[d] = (decadeCd[d] || 0) + 1;
+                    if (a.collection === 'vinyl') decadeVinyl[d] = (decadeVinyl[d] || 0) + 1;
+                }
+            });
+
+            const decadeRows = document.getElementById('decadeRows');
+            decadeRows.innerHTML = '';
+            const sortedDecades = Object.keys(decades).map(Number).sort((a, b) => a - b);
+            const maxDecade = Math.max(...Object.values(decades));
+
+            sortedDecades.forEach(d => {
+                const row = document.createElement('div');
+                row.className = 'decade-row';
+
+                const label = document.createElement('div');
+                label.className = 'decade-label';
+                label.textContent = d + 's';
+
+                const track = document.createElement('div');
+                track.className = 'decade-bar-track';
+
+                const cdW = ((decadeCd[d] || 0) / maxDecade) * 100;
+                const vinylW = ((decadeVinyl[d] || 0) / maxDecade) * 100;
+
+                if (decadeCd[d]) {
+                    const cdFill = document.createElement('div');
+                    cdFill.style.cssText = `width:${cdW}%;background:var(--cd-color);height:100%;border-radius:4px 0 0 4px;`;
+                    track.appendChild(cdFill);
+                }
+                if (decadeVinyl[d]) {
+                    const vinylFill = document.createElement('div');
+                    vinylFill.style.cssText = `width:${vinylW}%;background:var(--vinyl-color);height:100%;border-radius:${decadeCd[d] ? '0' : '4px 0 0 4px'};`;
+                    track.appendChild(vinylFill);
+                }
+
+                const count = document.createElement('div');
+                count.className = 'decade-count';
+                count.textContent = decades[d];
+
+                row.appendChild(label);
+                row.appendChild(track);
+                row.appendChild(count);
+                decadeRows.appendChild(row);
+            });
+
+            // ---- Top artists ----
+            const artistCounts = {};
+            albums.forEach(a => {
+                artistCounts[a.artist] = (artistCounts[a.artist] || 0) + 1;
+            });
+            const topArtists = Object.entries(artistCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10);
+
+            const topArtistsEl = document.getElementById('topArtists');
+            topArtistsEl.innerHTML = '';
+            topArtists.forEach(([name, count], i) => {
+                const row = document.createElement('div');
+                row.className = 'top-artist-row';
+
+                const rank = document.createElement('div');
+                rank.className = 'top-artist-rank';
+                rank.textContent = i + 1;
+
+                const nameEl = document.createElement('div');
+                nameEl.className = 'top-artist-name';
+                nameEl.textContent = name;
+
+                const countEl = document.createElement('div');
+                countEl.className = 'top-artist-count';
+                countEl.textContent = `${count} album${count !== 1 ? 's' : ''}`;
+
+                row.appendChild(rank);
+                row.appendChild(nameEl);
+                row.appendChild(countEl);
+                topArtistsEl.appendChild(row);
+            });
+
+            // ---- Type breakdown ----
+            const typeCounts = {};
+            albums.forEach(a => {
+                const t = a.type || 'Unknown';
+                typeCounts[t] = (typeCounts[t] || 0) + 1;
+            });
+
+            const typeBreakdown = document.getElementById('typeBreakdown');
+            typeBreakdown.innerHTML = '';
+            Object.entries(typeCounts).sort((a, b) => b[1] - a[1]).forEach(([type, count]) => {
+                const chip = document.createElement('div');
+                chip.className = 'type-chip';
+                chip.innerHTML = `<span class="type-chip-count">${count}</span><span class="type-chip-label">${type}</span>`;
+                typeBreakdown.appendChild(chip);
+            });
+
+            // ---- Collection split ----
+            const cdTotal = albums.filter(a => a.collection === 'cd').length;
+            const vinylTotal = albums.filter(a => a.collection === 'vinyl').length;
+            const splitMax = Math.max(cdTotal, vinylTotal);
+
+            const splitEl = document.getElementById('collectionSplit');
+            splitEl.innerHTML = '';
+
+            [['CDs', cdTotal, 'var(--cd-color)'], ['Vinyl', vinylTotal, 'var(--vinyl-color)']].forEach(([label, count, color]) => {
+                const row = document.createElement('div');
+                row.className = 'decade-row';
+
+                const lbl = document.createElement('div');
+                lbl.className = 'decade-label';
+                lbl.textContent = label;
+
+                const track = document.createElement('div');
+                track.className = 'decade-bar-track';
+                const fill = document.createElement('div');
+                fill.style.cssText = `width:${(count / splitMax) * 100}%;background:${color};height:100%;border-radius:4px;transition:width 0.5s ease;`;
+                track.appendChild(fill);
+
+                const countEl = document.createElement('div');
+                countEl.className = 'decade-count';
+                countEl.textContent = count;
+
+                row.appendChild(lbl);
+                row.appendChild(track);
+                row.appendChild(countEl);
+                splitEl.appendChild(row);
+            });
         }
 
         // ============ MODAL ============
@@ -1844,6 +2335,17 @@
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.dropdown')) {
                 document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
+            }
+        });
+
+        // Stats expand toggle
+        document.getElementById('statsExpandBtn').addEventListener('click', () => {
+            const btn = document.getElementById('statsExpandBtn');
+            const detail = document.getElementById('statsDetail');
+            btn.classList.toggle('open');
+            detail.classList.toggle('open');
+            if (detail.classList.contains('open')) {
+                updateDetailedStats();
             }
         });
 
