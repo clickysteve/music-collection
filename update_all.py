@@ -772,13 +772,164 @@ DESCRIPTION_CACHE_FILE = SITE_DIR / "description_cache.json"
 ARTIST_BIO_CACHE_FILE = SITE_DIR / "artist_bio_cache.json"
 
 
-def fetch_album_descriptions(albums):
-    """Fetch album wiki summaries from Last.fm album.getInfo.
+def _score_sentence(s):
+    """Score a sentence for interestingness. Higher = more flavourful."""
+    s_lower = s.lower()
+    score = 0
 
-    Caches permanently by MBID. Returns first ~2 sentences.
+    # Penalise dry factual content
+    boring = [
+        (r'\breleased (on|in)\b', -3),
+        (r'\bdebuted at\b', -4),
+        (r'\breached #\d', -5),
+        (r'\bpeaked at\b', -5),
+        (r'\bcertified (gold|platinum|diamond)', -5),
+        (r'\bsold over\b', -4),
+        (r'\bcharted at\b', -5),
+        (r'\bbillboard\b', -5),
+        (r'\buk albums chart\b', -5),
+        (r'\bcopies sold\b', -4),
+        (r'\bwent on to sell\b', -4),
+        (r'\bis the (first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|debut)\b.{0,20}\b(album|record|release|ep|lp)\b', -3),
+        (r'\bwas later released\b', -3),
+        (r'\bsingles?\s+"', -2),
+        (r'\bspawned the\b', -2),
+        (r'\bformat\b.{0,20}\b(cd|vinyl|mp3|wav|digital)\b', -4),
+        (r'\bas of (january|february|march|april|may|june|july|august|september|october|november|december|\d{4})\b', -3),
+        (r'\b#\d+ in (the|ireland|uk|us|australia)\b', -5),
+        (r'\b\d+,\d+ copies\b', -4),
+        (r'\boverall world charts\b', -5),
+        (r'\bsleeve artwork\b', -3),
+        (r'\bcopy control\b|\bcopy protection\b', -5),
+        (r'\btrack listing\b|\bbonus (disc|track)\b', -3),
+        (r'\bdeluxe edition\b|\bremaster\b|\bre-?issue\b', -2),
+    ]
+    for pat, penalty in boring:
+        if re.search(pat, s_lower):
+            score += penalty
+
+    # Reward interesting content
+    interesting = [
+        (r'\brecorded (at|in|during)\b', 3),
+        (r'\bproduced by\b', 2),
+        (r'\binfluen(ce|ced)\b', 4),
+        (r'\binspired\b', 3),
+        (r'\bexperiment\w*\b', 3),
+        (r'\bsound(s|ed|scape)?\b', 2),
+        (r'\btheme[sd]?\b', 3),
+        (r'\blyric(s|al|ally)\b', 2),
+        (r'\batmospher\w+\b', 4),
+        (r'\btexture[sd]?\b', 3),
+        (r'\bmelod(y|ic|ies)\b', 2),
+        (r'\brhythm\w*\b', 2),
+        (r'\bgroove[sd]?\b', 3),
+        (r'\braw\b', 2),
+        (r'\babrasive\b', 3),
+        (r'\blush\b', 3),
+        (r'\bhaunting\b', 3),
+        (r'\bfuzz(y|ed)?\b', 3),
+        (r'\bdistort(ed|ion)\b', 2),
+        (r'\borchestral\b', 3),
+        (r'\bsynthesi[sz]\w*\b', 2),
+        (r'\bsampl(e[sd]?|ing)\b', 2),
+        (r'\bloop(s|ed|ing)\b', 2),
+        (r'\bgenre\b', 2),
+        (r'\bpunk\b|\bgrunge\b|\belectronica\b|\bhip[- ]?hop\b', 2),
+        (r'\bfolk\b|\bjazz\b|\bclassical\b|\bambient\b', 2),
+        (r'\bdeparture\b', 3),
+        (r'\bshift(ed|ing)?\b', 2),
+        (r'\bevol(ve|ution|ved)\b', 3),
+        (r'\bgroundbreaking\b|\bpioneering\b|\binnovativ\w+\b', 4),
+        (r'\blandmark\b|\bseminal\b|\bdefinitive\b', 3),
+        (r'\bpolitical\b|\bsocial\b|\bcultural\b', 2),
+        (r'\bconcept album\b', 3),
+        (r'\bdark(er|ness)?\b|\bintense\b|\bintimate\b', 2),
+        (r'\bcollaborat\w+\b', 2),
+        (r'\bfeaturing\b|\bside musicians\b|\bguest\b', 2),
+        (r'\bNigel Godrich\b|\bSteve Albini\b|\bBrian Eno\b|\bButch Vig\b', 3),
+        (r'\bwriter.s block\b|\bpersonal\b|\bdivorce\b|\baddiction\b|\bdeath\b', 3),
+        (r'\bstudio\b.{0,30}\b(session|record|track)\b', 2),
+        (r'\blive (in|at|session)\b', 2),
+        (r'\bcritics?\b.{0,20}\b(acclaim|prais|hail|call)\b', 2),
+    ]
+    for pat, pts in interesting:
+        if re.search(pat, s_lower):
+            score += pts
+
+    # Slight preference for medium-length sentences (not too short, not too long)
+    words = len(s.split())
+    if 10 <= words <= 35:
+        score += 1
+    elif words < 6:
+        score -= 2
+
+    return score
+
+
+def _extract_best_description(content, summary, max_sentences=4, max_chars=500):
+    """Pick the most interesting sentences from Last.fm wiki content."""
+    import html as html_mod
+
+    # Prefer full content, fall back to summary
+    text = content or summary or ""
+    if not text:
+        return ""
+
+    # Clean HTML
+    text = re.sub(r'<a\s.*?</a>', '', text)
+    text = re.sub(r'<[^>]+>', '', text)
+    text = html_mod.unescape(text).strip()
+
+    # Remove "Read more on Last.fm" and CC license boilerplate
+    text = re.sub(r'Read more on Last\.fm.*$', '', text, flags=re.DOTALL).strip()
+    text = re.sub(r'User-contributed text.*$', '', text, flags=re.DOTALL).strip()
+
+    # Split into sentences
+    sentences = re.split(r'(?<=[.!?])\s+', text)
+    sentences = [s.strip() for s in sentences if len(s.strip()) > 15]
+
+    if not sentences:
+        return ""
+
+    # Score each sentence
+    scored = [(s, _score_sentence(s)) for s in sentences]
+
+    # Always include the highest-scoring sentence
+    scored_sorted = sorted(scored, key=lambda x: x[1], reverse=True)
+
+    # Pick top sentences but try to maintain reading order
+    top_n = scored_sorted[:max_sentences * 2]  # candidates
+    top_set = set(s for s, _ in top_n)
+
+    # Re-order by original position and take the best ones
+    ordered = [(s, sc) for s, sc in scored if s in top_set]
+    # Take top max_sentences by score, then re-sort by position
+    best = sorted(ordered, key=lambda x: x[1], reverse=True)[:max_sentences]
+    best_set = set(s for s, _ in best)
+    result = [s for s in sentences if s in best_set]
+
+    # Join and trim to max chars
+    desc = ' '.join(result)
+    if len(desc) > max_chars:
+        # Trim at sentence boundary
+        trimmed = ""
+        for s in result:
+            if len(trimmed) + len(s) + 1 > max_chars:
+                break
+            trimmed = (trimmed + " " + s).strip()
+        desc = trimmed
+
+    return desc.strip()
+
+
+def fetch_album_descriptions(albums):
+    """Fetch album descriptions from Last.fm album.getInfo.
+
+    Uses full wiki content and picks the most interesting sentences —
+    recording context, influences, sound, themes — rather than dry
+    release dates and chart positions. Caches permanently by MBID.
     """
     import time
-    import html as html_mod
 
     api_key = os.environ.get("LASTFM_API_KEY", "").strip()
     if not api_key:
@@ -827,21 +978,16 @@ def fetch_album_descriptions(albums):
             if resp.status_code == 200:
                 data = resp.json()
                 wiki = data.get("album", {}).get("wiki", {})
+                content = wiki.get("content", "")
                 summary = wiki.get("summary", "")
-                if summary:
-                    # Clean HTML tags and "Read more on Last.fm" link
-                    summary = re.sub(r'<a\s.*?</a>', '', summary)
-                    summary = re.sub(r'<[^>]+>', '', summary)
-                    summary = html_mod.unescape(summary).strip()
-                    # Trim to ~2-3 sentences
-                    sentences = re.split(r'(?<=[.!?])\s+', summary)
-                    summary = ' '.join(sentences[:3]).strip()
-                    if summary:
-                        albums[idx]["description"] = summary
-                        if mbid:
-                            cache[mbid] = summary
-                        fetched += 1
-                        continue
+                desc = _extract_best_description(content, summary)
+                if desc:
+                    albums[idx]["description"] = desc
+                    if mbid:
+                        cache[mbid] = desc
+                    fetched += 1
+                    time.sleep(0.2)
+                    continue
 
             # Mark as empty so we don't retry
             if mbid:
@@ -916,18 +1062,14 @@ def fetch_artist_bios(albums):
                 if resp.status_code == 200:
                     data = resp.json()
                     bio = data.get("artist", {}).get("bio", {})
+                    content = bio.get("content", "")
                     summary = bio.get("summary", "")
-                    if summary:
-                        summary = re.sub(r'<a\s.*?</a>', '', summary)
-                        summary = re.sub(r'<[^>]+>', '', summary)
-                        summary = html_mod.unescape(summary).strip()
-                        sentences = re.split(r'(?<=[.!?])\s+', summary)
-                        summary = ' '.join(sentences[:4]).strip()
-                        if summary:
-                            cache[key] = summary
-                            fetched += 1
-                            time.sleep(0.2)
-                            continue
+                    desc = _extract_best_description(content, summary, max_sentences=4, max_chars=600)
+                    if desc:
+                        cache[key] = desc
+                        fetched += 1
+                        time.sleep(0.2)
+                        continue
 
                 cache[key] = ""
             except Exception:
