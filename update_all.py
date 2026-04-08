@@ -485,23 +485,49 @@ def extract_dominant_colors(albums, label=""):
     return albums
 
 
+COVER_CACHE_FILE = SITE_DIR / "cover_cache.json"
+
+
+def load_cover_cache():
+    if COVER_CACHE_FILE.exists():
+        try:
+            return json.loads(COVER_CACHE_FILE.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+    return {}
+
+
+def save_cover_cache(cache):
+    COVER_CACHE_FILE.write_text(json.dumps(cache, ensure_ascii=False), encoding="utf-8")
+
+
 def resolve_cover_urls(albums, label=""):
     """Resolve Cover Art Archive redirects to final archive.org URLs.
 
-    coverartarchive.org/release-group/{mbid}/front-250 redirects (302) to
-    an archive.org URL. Resolving at export time saves the browser a round-trip
-    per image and lets CDN/browser caching work much better.
+    Caches resolved URLs by MBID so subsequent runs skip already-resolved covers.
     """
-    import time
     from concurrent.futures import ThreadPoolExecutor, as_completed
 
-    to_resolve = [(i, a) for i, a in enumerate(albums)
-                  if a.get("cover_url", "").startswith("https://coverartarchive.org/")]
+    cache = load_cover_cache()
+
+    to_resolve = []
+    cached_count = 0
+    for i, a in enumerate(albums):
+        mbid = a.get("mbid", "")
+        if mbid and mbid in cache:
+            albums[i]["cover_url"] = cache[mbid]
+            cached_count += 1
+        elif a.get("cover_url", "").startswith("https://coverartarchive.org/"):
+            to_resolve.append((i, a))
+
+    if cached_count:
+        print(f"  {label}: {cached_count} cover URLs from cache")
 
     if not to_resolve:
+        print(f"  {label}: nothing new to resolve")
         return albums
 
-    print(f"  Resolving {len(to_resolve)} cover art URLs for {label}...")
+    print(f"  Resolving {len(to_resolve)} new cover art URLs for {label}...")
     resolved_count = 0
 
     def resolve_one(idx, album):
@@ -514,35 +540,58 @@ def resolve_cover_urls(albums, label=""):
             pass
         return idx, None
 
-    # Use 6 threads to be polite to Cover Art Archive
     with ThreadPoolExecutor(max_workers=6) as pool:
         futures = [pool.submit(resolve_one, i, a) for i, a in to_resolve]
         for future in as_completed(futures):
             idx, final_url = future.result()
             if final_url:
                 albums[idx]["cover_url"] = final_url
+                mbid = albums[idx].get("mbid", "")
+                if mbid:
+                    cache[mbid] = final_url
                 resolved_count += 1
 
-    print(f"  Resolved {resolved_count}/{len(to_resolve)} cover URLs to archive.org")
+    save_cover_cache(cache)
+    print(f"  Resolved {resolved_count}/{len(to_resolve)} cover URLs for {label}")
     return albums
 
 
 def itunes_cover_fallback(albums, label=""):
-    """For albums missing cover art, try the iTunes Search API as a fallback."""
+    """For albums still missing cover art, try the iTunes Search API.
+
+    Only queries for albums that don't already have a resolved URL.
+    Caches results in cover_cache.json alongside the CAA results.
+    """
     import time
-    import urllib.parse
+
+    cache = load_cover_cache()
 
     missing = [(i, a) for i, a in enumerate(albums)
                if not a.get("cover_url") or a["cover_url"].startswith("https://coverartarchive.org/")]
 
-    if not missing:
+    # Skip any already tried via iTunes (cached as mbid with itunes URL or as _itunes_miss)
+    truly_missing = []
+    for i, a in missing:
+        mbid = a.get("mbid", "")
+        itunes_key = f"_itunes_{mbid}" if mbid else ""
+        if itunes_key and itunes_key in cache:
+            url = cache[itunes_key]
+            if url:
+                albums[i]["cover_url"] = url
+        elif mbid:
+            truly_missing.append((i, a))
+
+    if not truly_missing:
+        if missing:
+            print(f"  {label}: iTunes results all cached")
         return albums
 
-    print(f"  iTunes fallback: looking up {len(missing)} {label} albums without covers...")
+    print(f"  iTunes fallback: looking up {len(truly_missing)} {label} albums...")
     found = 0
 
-    for idx, album in missing:
+    for idx, album in truly_missing:
         query = f"{album['artist']} {album['title']}"
+        mbid = album.get("mbid", "")
         try:
             resp = requests.get(
                 "https://itunes.apple.com/search",
@@ -554,15 +603,21 @@ def itunes_cover_fallback(albums, label=""):
                 if results:
                     art_url = results[0].get("artworkUrl100", "")
                     if art_url:
-                        # Get 250px version
                         art_url = art_url.replace("100x100bb", "250x250bb")
                         albums[idx]["cover_url"] = art_url
+                        if mbid:
+                            cache[f"_itunes_{mbid}"] = art_url
                         found += 1
+                        continue
+            # Mark as miss so we don't retry
+            if mbid:
+                cache[f"_itunes_{mbid}"] = ""
         except Exception:
             pass
-        time.sleep(0.3)  # Be polite
+        time.sleep(0.3)
 
-    print(f"  iTunes fallback: found {found}/{len(missing)} covers for {label}")
+    save_cover_cache(cache)
+    print(f"  iTunes fallback: found {found}/{len(truly_missing)} covers for {label}")
     return albums
 
 
