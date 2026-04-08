@@ -721,16 +721,43 @@ def fetch_lastfm_data(all_albums):
     return _apply_lastfm(all_albums, cache)
 
 
+def _normalize_for_match(s):
+    """Normalize a string for fuzzy matching: strip punctuation, normalize whitespace."""
+    import re as _re
+    s = s.lower()
+    s = s.replace("&", "and")
+    s = _re.sub(r"[^\w\s]", "", s)  # Strip punctuation
+    s = _re.sub(r"\s+", " ", s).strip()
+    return s
+
+
 def _apply_lastfm(albums, cache):
-    """Apply cached Last.fm data to album list."""
+    """Apply cached Last.fm data to album list using fuzzy matching."""
     plays_data = cache.get("plays", {})
     recent_data = cache.get("recent", {})
     matched = 0
 
+    # Build normalized lookup from Last.fm data
+    norm_plays = {}
+    norm_recent = {}
+    for key, val in plays_data.items():
+        parts = key.split("|||")
+        if len(parts) == 2:
+            norm_key = f"{_normalize_for_match(parts[0])}|||{_normalize_for_match(parts[1])}"
+            # Keep highest play count if multiple normalizations collide
+            if norm_key not in norm_plays or val > norm_plays[norm_key]:
+                norm_plays[norm_key] = val
+    for key, val in recent_data.items():
+        parts = key.split("|||")
+        if len(parts) == 2:
+            norm_key = f"{_normalize_for_match(parts[0])}|||{_normalize_for_match(parts[1])}"
+            if norm_key not in norm_recent:
+                norm_recent[norm_key] = val
+
     for a in albums:
-        key = f"{a['artist'].lower()}|||{a['title'].lower()}"
-        plays = plays_data.get(key, 0)
-        recent = recent_data.get(key, "")
+        norm_key = f"{_normalize_for_match(a['artist'])}|||{_normalize_for_match(a['title'])}"
+        plays = norm_plays.get(norm_key, 0)
+        recent = norm_recent.get(norm_key, "")
         if plays > 0:
             a["lastfm_plays"] = plays
             matched += 1
