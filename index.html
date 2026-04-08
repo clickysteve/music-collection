@@ -1121,7 +1121,7 @@
                 img.remove();
                 imgWrapper.appendChild(createPlaceholderSVG());
             });
-            img.src = album.cover_url;
+            imgWrapper.dataset.coverUrl = album.cover_url;
 
             // Content
             const content = document.createElement('div');
@@ -1193,6 +1193,37 @@
             return card;
         }
 
+        // Staggered image loading — loads covers in small batches to avoid overwhelming the server
+        const loadQueue = [];
+        let activeLoads = 0;
+        const MAX_CONCURRENT = 8;
+
+        function processQueue() {
+            while (activeLoads < MAX_CONCURRENT && loadQueue.length > 0) {
+                const wrapper = loadQueue.shift();
+                const img = wrapper.querySelector('img.card-image');
+                const url = wrapper.dataset.coverUrl;
+                if (img && url) {
+                    activeLoads++;
+                    const done = () => { activeLoads--; processQueue(); };
+                    img.addEventListener('load', done, { once: true });
+                    img.addEventListener('error', done, { once: true });
+                    img.src = url;
+                    delete wrapper.dataset.coverUrl;
+                }
+            }
+        }
+
+        const imgObserver = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    loadQueue.push(entry.target);
+                    imgObserver.unobserve(entry.target);
+                    processQueue();
+                }
+            });
+        }, { rootMargin: '600px 0px' });
+
         function render() {
             const grid = document.getElementById('grid');
             const emptyState = document.getElementById('emptyState');
@@ -1203,11 +1234,20 @@
                 return;
             }
 
+            // Reset load queue
+            loadQueue.length = 0;
+            activeLoads = 0;
+
             grid.style.display = 'grid';
             emptyState.style.display = 'none';
             grid.innerHTML = '';
             filteredAlbums.forEach(album => {
                 grid.appendChild(createCard(album));
+            });
+
+            // Observe wrappers (they have dimensions from aspect-ratio)
+            grid.querySelectorAll('.card-image-wrapper[data-cover-url]').forEach(wrapper => {
+                imgObserver.observe(wrapper);
             });
         }
 
