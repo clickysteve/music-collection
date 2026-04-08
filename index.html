@@ -217,6 +217,218 @@
             margin-top: 12px;
         }
 
+        /* ======== THE SHELF — 3D Spine View ======== */
+        .shelf-view {
+            display: none;
+            margin-top: 16px;
+            perspective: 1200px;
+            overflow-x: auto;
+            overflow-y: visible;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 20px;
+        }
+        .shelf-view.active { display: block; }
+
+        .shelf-row {
+            display: flex;
+            align-items: flex-end;
+            position: relative;
+            padding: 0 10px 0 10px;
+            margin-bottom: 8px;
+            min-height: 200px;
+        }
+        /* Shelf plank */
+        .shelf-row::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 8px;
+            background: linear-gradient(180deg, #3a2a1a 0%, #2a1c10 60%, #1a1008 100%);
+            border-radius: 0 0 3px 3px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.08);
+            z-index: 2;
+        }
+        /* Shelf bracket shadow */
+        .shelf-row::before {
+            content: '';
+            position: absolute;
+            bottom: 8px;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(180deg, rgba(0,0,0,0.3), transparent);
+            z-index: 1;
+        }
+
+        .spine {
+            flex-shrink: 0;
+            width: 18px;
+            min-width: 12px;
+            cursor: pointer;
+            position: relative;
+            border-radius: 2px 2px 0 0;
+            transition: transform 0.3s cubic-bezier(.34,1.56,.64,1), box-shadow 0.3s, z-index 0s;
+            transform-origin: bottom center;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            border-left: 1px solid rgba(255,255,255,0.06);
+            border-right: 1px solid rgba(0,0,0,0.3);
+        }
+        .spine:hover {
+            transform: translateY(-30px) scale(1.05);
+            z-index: 50;
+            box-shadow: 0 12px 30px rgba(0,0,0,0.6), 0 0 15px rgba(29,185,84,0.2);
+        }
+        .spine-text {
+            writing-mode: vertical-rl;
+            text-orientation: mixed;
+            transform: rotate(180deg);
+            font-size: 8px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.85);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-height: 90%;
+            padding: 4px 1px;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.6);
+            letter-spacing: 0.2px;
+            user-select: none;
+        }
+        .spine-tooltip {
+            display: none;
+            position: absolute;
+            bottom: calc(100% + 8px);
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 12px;
+            white-space: nowrap;
+            pointer-events: none;
+            z-index: 100;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+            text-align: center;
+            line-height: 1.5;
+        }
+        .spine-tooltip .tt-artist { color: var(--accent); font-weight: 700; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .spine-tooltip .tt-title { font-weight: 600; }
+        .spine:hover .spine-tooltip { display: block; }
+
+        /* Pulled-out spine — shows cover art */
+        .spine.pulled {
+            transform: translateY(-60px) rotateY(-25deg) scale(1.1);
+            z-index: 60;
+        }
+        .spine-cover-preview {
+            display: none;
+            position: absolute;
+            bottom: calc(100% + 12px);
+            left: 50%;
+            transform: translateX(-50%);
+            width: 140px;
+            height: 140px;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 12px 40px rgba(0,0,0,0.7);
+            z-index: 100;
+            border: 1px solid var(--border);
+        }
+        .spine.pulled .spine-cover-preview { display: block; }
+        .spine.pulled .spine-tooltip { display: block; bottom: calc(100% + 160px); }
+        .spine-cover-preview img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* ======== INFLUENCE GRAPH ======== */
+        .influence-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.92);
+            display: none;
+            z-index: 400;
+            backdrop-filter: blur(6px);
+        }
+        .influence-overlay.show { display: flex; flex-direction: column; }
+
+        .influence-header {
+            padding: 16px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            flex-shrink: 0;
+        }
+        .influence-header h3 {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text);
+        }
+        .influence-close {
+            width: 32px; height: 32px;
+            display: flex; align-items: center; justify-content: center;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            border-radius: 50%;
+            cursor: pointer;
+            color: var(--text);
+            font-size: 18px;
+            transition: all 0.2s;
+        }
+        .influence-close:hover { background: var(--accent); color: var(--bg); }
+
+        .influence-canvas-wrap {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+        }
+        #influenceCanvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .influence-legend {
+            position: absolute;
+            bottom: 16px;
+            left: 16px;
+            background: rgba(20,20,20,0.9);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 11px;
+            color: var(--text-dim);
+            line-height: 1.8;
+        }
+        .influence-legend-dot {
+            display: inline-block;
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            margin-right: 4px;
+            vertical-align: middle;
+        }
+
+        .influence-btn {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            font-size: 13px;
+            padding: 5px 14px;
+            border-radius: 16px;
+            cursor: pointer;
+            transition: color 0.2s, border-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .influence-btn:hover { color: var(--text); border-color: var(--accent); }
+
         /* Collector badge */
         .collector-badge {
             display: inline-flex;
@@ -1744,6 +1956,9 @@
             <button class="view-toggle-btn" id="listViewBtn" aria-label="List view">
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><line x1="1" y1="3" x2="15" y2="3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><line x1="1" y1="8" x2="15" y2="8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><line x1="1" y1="13" x2="15" y2="13" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
             </button>
+            <button class="view-toggle-btn" id="shelfViewBtn" aria-label="Shelf view" title="The Shelf">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="2" y="2" width="2" height="10" rx="0.5" stroke="currentColor" stroke-width="0.8" fill="currentColor" opacity="0.3"/><rect x="4.5" y="3" width="2" height="9" rx="0.5" stroke="currentColor" stroke-width="0.8" fill="currentColor" opacity="0.3"/><rect x="7" y="1" width="2" height="11" rx="0.5" stroke="currentColor" stroke-width="0.8" fill="currentColor" opacity="0.3"/><rect x="9.5" y="4" width="2" height="8" rx="0.5" stroke="currentColor" stroke-width="0.8" fill="currentColor" opacity="0.3"/><rect x="12" y="2" width="2" height="10" rx="0.5" stroke="currentColor" stroke-width="0.8" fill="currentColor" opacity="0.3"/><line x1="0" y1="13" x2="16" y2="13" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </button>
         </div>
 
         <button class="heatmap-btn" id="heatmapBtn" aria-label="Toggle scrobble heatmap" title="Scrobble heatmap">
@@ -1790,6 +2005,10 @@
         <div style="text-align:center;padding:4px 0 8px;display:flex;justify-content:center;gap:10px;">
             <button class="stats-expand-btn" id="statsExpandBtn">More Stats <span class="chevron">&#9660;</span></button>
             <button class="suggestions-btn" id="suggestionsBtn" style="display:none;">What am I missing?</button>
+            <button class="influence-btn" id="influenceBtn">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="3" cy="7" r="2" stroke="currentColor" stroke-width="1"/><circle cx="11" cy="3" r="2" stroke="currentColor" stroke-width="1"/><circle cx="11" cy="11" r="2" stroke="currentColor" stroke-width="1"/><path d="M5 6.5L9 3.5M5 7.5L9 10.5" stroke="currentColor" stroke-width="0.8"/></svg>
+                Who Influenced Who
+            </button>
         </div>
         <div class="suggestions-panel" id="suggestionsPanel"></div>
         <div class="stats-detail" id="statsDetail">
@@ -1858,6 +2077,7 @@
                 <tbody id="listBody"></tbody>
             </table>
         </div>
+        <div class="shelf-view" id="shelfView"></div>
         <div class="empty-state" id="emptyState" style="display: none;">
             <div class="empty-state-icon">🎵</div>
             <div class="empty-state-text">No albums found</div>
@@ -1882,6 +2102,22 @@
             <div class="random-pick-actions">
                 <button class="pick-again-btn" id="pickAgainBtn">Pick Another</button>
                 <button class="pick-close-btn" id="pickCloseBtn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Influence Graph -->
+    <div class="influence-overlay" id="influenceOverlay">
+        <div class="influence-header">
+            <h3>Who Influenced Who</h3>
+            <button class="influence-close" id="influenceClose">&times;</button>
+        </div>
+        <div class="influence-canvas-wrap">
+            <canvas id="influenceCanvas"></canvas>
+            <div class="influence-legend">
+                <div><span class="influence-legend-dot" style="background:var(--accent);"></span> In your collection</div>
+                <div><span class="influence-legend-dot" style="background:var(--vinyl-color);"></span> Influence connection</div>
+                <div style="margin-top:4px;font-size:10px;">Node size = albums owned &middot; Drag to explore &middot; Click artist to filter</div>
             </div>
         </div>
     </div>
@@ -2377,11 +2613,13 @@
         function render() {
             const grid = document.getElementById('grid');
             const listView = document.getElementById('listView');
+            const shelfView = document.getElementById('shelfView');
             const emptyState = document.getElementById('emptyState');
 
             if (filteredAlbums.length === 0) {
                 grid.style.display = 'none';
                 listView.classList.remove('active');
+                shelfView.classList.remove('active');
                 emptyState.style.display = 'block';
                 return;
             }
@@ -2390,6 +2628,7 @@
 
             if (currentView === 'grid') {
                 listView.classList.remove('active');
+                shelfView.classList.remove('active');
                 grid.style.display = 'grid';
 
                 // Reset load queue
@@ -2405,8 +2644,14 @@
                 grid.querySelectorAll('.card-image-wrapper[data-cover-url]').forEach(wrapper => {
                     imgObserver.observe(wrapper);
                 });
+            } else if (currentView === 'shelf') {
+                grid.style.display = 'none';
+                listView.classList.remove('active');
+                shelfView.classList.add('active');
+                renderShelfView();
             } else {
                 grid.style.display = 'none';
+                shelfView.classList.remove('active');
                 listView.classList.add('active');
                 renderListView();
             }
@@ -2415,7 +2660,7 @@
             if (document.getElementById('statsDetail').classList.contains('open')) {
                 updateDetailedStats();
             }
-            if (heatmapActive) {
+            if (heatmapActive && currentView === 'grid') {
                 requestAnimationFrame(applyHeatmap);
             }
         }
@@ -2468,6 +2713,405 @@
                 tr.appendChild(tdCollection);
                 tbody.appendChild(tr);
             });
+        }
+
+        // ============ THE SHELF — 3D Spine View ============
+        function renderShelfView() {
+            const container = document.getElementById('shelfView');
+            container.innerHTML = '';
+
+            // Calculate how many spines per row based on viewport width
+            const viewW = container.clientWidth || window.innerWidth - 40;
+            const spineW = 18;
+            const perRow = Math.floor(viewW / spineW);
+            const albums = filteredAlbums;
+
+            // Sort by artist for shelf grouping
+            const sorted = [...albums].sort((a, b) => a.artist.localeCompare(b.artist));
+
+            let pulledSpine = null;
+
+            for (let i = 0; i < sorted.length; i += perRow) {
+                const rowAlbums = sorted.slice(i, i + perRow);
+                const row = document.createElement('div');
+                row.className = 'shelf-row';
+
+                rowAlbums.forEach(album => {
+                    const spine = document.createElement('div');
+                    spine.className = 'spine';
+
+                    // Height based on runtime (or default)
+                    const runtime = album.runtime || 40;
+                    const height = Math.max(80, Math.min(220, runtime * 3.5));
+                    spine.style.height = height + 'px';
+
+                    // Color from album dominant color, or from collection type
+                    const baseColor = album.color || (album.collection === 'vinyl' ? '#6b3a1a' : '#1a3a6b');
+                    spine.style.background = `linear-gradient(135deg, ${baseColor} 0%, ${adjustColor(baseColor, -40)} 100%)`;
+
+                    // Spine text
+                    const text = document.createElement('div');
+                    text.className = 'spine-text';
+                    text.textContent = `${album.artist} — ${album.title}`;
+                    spine.appendChild(text);
+
+                    // Tooltip
+                    const tooltip = document.createElement('div');
+                    tooltip.className = 'spine-tooltip';
+                    tooltip.innerHTML = `<div class="tt-artist">${album.artist}</div><div class="tt-title">${album.title}</div><div style="font-size:11px;color:var(--text-dim);">${album.year || ''} · ${album.collection.toUpperCase()}${album.lastfm_plays ? ' · ' + album.lastfm_plays + ' plays' : ''}</div>`;
+                    spine.appendChild(tooltip);
+
+                    // Cover preview (shown when pulled)
+                    const preview = document.createElement('div');
+                    preview.className = 'spine-cover-preview';
+                    const img = document.createElement('img');
+                    img.loading = 'lazy';
+                    img.alt = '';
+                    preview.appendChild(img);
+                    spine.appendChild(preview);
+
+                    // Click: pull out / push back
+                    spine.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        if (pulledSpine === spine) {
+                            // Second click: open modal
+                            openModal(album);
+                            spine.classList.remove('pulled');
+                            pulledSpine = null;
+                        } else {
+                            if (pulledSpine) pulledSpine.classList.remove('pulled');
+                            spine.classList.add('pulled');
+                            // Lazy load cover only when pulled
+                            if (!img.src && album.cover_url) img.src = album.cover_url;
+                            pulledSpine = spine;
+                        }
+                    });
+
+                    row.appendChild(spine);
+                });
+
+                container.appendChild(row);
+            }
+
+            // Click elsewhere to push back
+            container.addEventListener('click', () => {
+                if (pulledSpine) { pulledSpine.classList.remove('pulled'); pulledSpine = null; }
+            });
+        }
+
+        // Helper: darken/lighten a hex color
+        function adjustColor(hex, amount) {
+            hex = hex.replace('#', '');
+            if (hex.length === 3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+            const num = parseInt(hex, 16);
+            let r = Math.min(255, Math.max(0, ((num >> 16) & 0xff) + amount));
+            let g = Math.min(255, Math.max(0, ((num >> 8) & 0xff) + amount));
+            let b = Math.min(255, Math.max(0, (num & 0xff) + amount));
+            return `#${((r << 16) | (g << 8) | b).toString(16).padStart(6, '0')}`;
+        }
+
+        // ============ INFLUENCE GRAPH — Force-directed Canvas ============
+        let influenceNodes = [];
+        let influenceEdges = [];
+        let influenceAnimId = null;
+
+        function openInfluenceGraph() {
+            document.getElementById('influenceOverlay').classList.add('show');
+            buildInfluenceGraph();
+        }
+
+        function closeInfluenceGraph() {
+            document.getElementById('influenceOverlay').classList.remove('show');
+            if (influenceAnimId) { cancelAnimationFrame(influenceAnimId); influenceAnimId = null; }
+        }
+
+        document.getElementById('influenceBtn').addEventListener('click', openInfluenceGraph);
+        document.getElementById('influenceClose').addEventListener('click', closeInfluenceGraph);
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') closeInfluenceGraph();
+        });
+
+        function buildInfluenceGraph() {
+            const canvas = document.getElementById('influenceCanvas');
+            const wrap = canvas.parentElement;
+            canvas.width = wrap.clientWidth * (window.devicePixelRatio || 1);
+            canvas.height = wrap.clientHeight * (window.devicePixelRatio || 1);
+            canvas.style.width = wrap.clientWidth + 'px';
+            canvas.style.height = wrap.clientHeight + 'px';
+            const ctx = canvas.getContext('2d');
+            const W = wrap.clientWidth;
+            const H = wrap.clientHeight;
+            const dpr = window.devicePixelRatio || 1;
+
+            // Build artist nodes from collection
+            const artistMap = {};
+            allAlbums.forEach(a => {
+                const key = a.artist;
+                if (!artistMap[key]) {
+                    artistMap[key] = { name: key, count: 0, genres: new Set(), plays: 0, color: a.color || '#1db954' };
+                }
+                artistMap[key].count++;
+                artistMap[key].plays += (a.lastfm_plays || 0);
+                (a.genres || []).forEach(g => artistMap[key].genres.add(g));
+            });
+
+            const artists = Object.values(artistMap);
+
+            // Build influence edges based on shared genres
+            // The more genres two artists share, the stronger the connection
+            const nodes = [];
+            const edges = [];
+            const nodeMap = {};
+
+            artists.forEach((a, i) => {
+                const radius = Math.max(6, Math.min(30, a.count * 5 + (a.plays > 0 ? 3 : 0)));
+                nodes.push({
+                    id: i,
+                    name: a.name,
+                    x: W * 0.2 + Math.random() * W * 0.6,
+                    y: H * 0.2 + Math.random() * H * 0.6,
+                    vx: 0, vy: 0,
+                    radius,
+                    count: a.count,
+                    plays: a.plays,
+                    genres: a.genres,
+                    color: a.color,
+                    pinned: false
+                });
+                nodeMap[a.name] = i;
+            });
+
+            // Connect artists who share 2+ genres
+            for (let i = 0; i < nodes.length; i++) {
+                for (let j = i + 1; j < nodes.length; j++) {
+                    const shared = [...nodes[i].genres].filter(g => nodes[j].genres.has(g));
+                    if (shared.length >= 2) {
+                        edges.push({ source: i, target: j, strength: shared.length, genres: shared });
+                    }
+                }
+            }
+
+            // Also connect artists who appear on the same album (various artists compilations, etc.)
+            // Not common in this dataset but nice to have
+
+            influenceNodes = nodes;
+            influenceEdges = edges;
+
+            // Force simulation
+            const SIM_SPEED = 0.8;
+            const REPULSION = 1200;
+            const ATTRACTION = 0.005;
+            const DAMPING = 0.92;
+            const CENTER_GRAVITY = 0.01;
+
+            let dragNode = null;
+            let hoveredNode = null;
+            let mouseX = 0, mouseY = 0;
+
+            function tick() {
+                // Repulsion between all nodes
+                for (let i = 0; i < nodes.length; i++) {
+                    for (let j = i + 1; j < nodes.length; j++) {
+                        const dx = nodes[j].x - nodes[i].x;
+                        const dy = nodes[j].y - nodes[i].y;
+                        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                        const force = REPULSION / (dist * dist);
+                        const fx = (dx / dist) * force;
+                        const fy = (dy / dist) * force;
+                        if (!nodes[i].pinned) { nodes[i].vx -= fx; nodes[i].vy -= fy; }
+                        if (!nodes[j].pinned) { nodes[j].vx += fx; nodes[j].vy += fy; }
+                    }
+                }
+
+                // Attraction along edges
+                edges.forEach(e => {
+                    const a = nodes[e.source], b = nodes[e.target];
+                    const dx = b.x - a.x;
+                    const dy = b.y - a.y;
+                    const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+                    const force = dist * ATTRACTION * e.strength;
+                    const fx = (dx / dist) * force;
+                    const fy = (dy / dist) * force;
+                    if (!a.pinned) { a.vx += fx; a.vy += fy; }
+                    if (!b.pinned) { b.vx -= fx; b.vy -= fy; }
+                });
+
+                // Center gravity
+                nodes.forEach(n => {
+                    if (n.pinned) return;
+                    n.vx += (W / 2 - n.x) * CENTER_GRAVITY;
+                    n.vy += (H / 2 - n.y) * CENTER_GRAVITY;
+                });
+
+                // Integrate
+                nodes.forEach(n => {
+                    if (n.pinned) return;
+                    n.vx *= DAMPING;
+                    n.vy *= DAMPING;
+                    n.x += n.vx * SIM_SPEED;
+                    n.y += n.vy * SIM_SPEED;
+                    // Boundary
+                    n.x = Math.max(n.radius, Math.min(W - n.radius, n.x));
+                    n.y = Math.max(n.radius, Math.min(H - n.radius, n.y));
+                });
+
+                // Draw
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                ctx.save();
+                ctx.scale(dpr, dpr);
+
+                // Edges
+                edges.forEach(e => {
+                    const a = nodes[e.source], b = nodes[e.target];
+                    const opacity = Math.min(0.4, e.strength * 0.08);
+                    ctx.beginPath();
+                    ctx.moveTo(a.x, a.y);
+                    ctx.lineTo(b.x, b.y);
+                    ctx.strokeStyle = `rgba(232, 135, 58, ${opacity})`;
+                    ctx.lineWidth = Math.min(3, e.strength * 0.6);
+                    ctx.stroke();
+                });
+
+                // Highlight edges for hovered node
+                if (hoveredNode !== null) {
+                    edges.forEach(e => {
+                        if (e.source === hoveredNode || e.target === hoveredNode) {
+                            const a = nodes[e.source], b = nodes[e.target];
+                            ctx.beginPath();
+                            ctx.moveTo(a.x, a.y);
+                            ctx.lineTo(b.x, b.y);
+                            ctx.strokeStyle = 'rgba(29, 185, 84, 0.6)';
+                            ctx.lineWidth = 2;
+                            ctx.stroke();
+                        }
+                    });
+                }
+
+                // Nodes
+                nodes.forEach((n, i) => {
+                    ctx.beginPath();
+                    ctx.arc(n.x, n.y, n.radius, 0, Math.PI * 2);
+
+                    // Glow for hovered
+                    if (i === hoveredNode) {
+                        ctx.shadowColor = '#1db954';
+                        ctx.shadowBlur = 15;
+                    } else {
+                        ctx.shadowColor = 'transparent';
+                        ctx.shadowBlur = 0;
+                    }
+
+                    ctx.fillStyle = n.color || '#1db954';
+                    ctx.fill();
+                    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+                    ctx.lineWidth = 1;
+                    ctx.stroke();
+                    ctx.shadowBlur = 0;
+
+                    // Labels for bigger nodes or hovered connections
+                    const showLabel = n.radius > 10 || i === hoveredNode ||
+                        (hoveredNode !== null && edges.some(e => (e.source === hoveredNode && e.target === i) || (e.target === hoveredNode && e.source === i)));
+
+                    if (showLabel) {
+                        ctx.font = `${i === hoveredNode ? '600 12px' : '500 10px'} Inter, sans-serif`;
+                        ctx.textAlign = 'center';
+                        ctx.fillStyle = i === hoveredNode ? '#ffffff' : 'rgba(255,255,255,0.7)';
+                        ctx.fillText(n.name, n.x, n.y - n.radius - 5);
+
+                        if (i === hoveredNode) {
+                            // Show album count and genre info
+                            ctx.font = '400 9px Inter, sans-serif';
+                            ctx.fillStyle = 'rgba(255,255,255,0.5)';
+                            ctx.fillText(`${n.count} album${n.count !== 1 ? 's' : ''}${n.plays ? ' · ' + n.plays + ' plays' : ''}`, n.x, n.y - n.radius - 18);
+                        }
+                    }
+                });
+
+                ctx.restore();
+                influenceAnimId = requestAnimationFrame(tick);
+            }
+
+            // Mouse interaction
+            function getNodeAt(x, y) {
+                for (let i = nodes.length - 1; i >= 0; i--) {
+                    const dx = nodes[i].x - x;
+                    const dy = nodes[i].y - y;
+                    if (dx * dx + dy * dy <= (nodes[i].radius + 4) * (nodes[i].radius + 4)) return i;
+                }
+                return null;
+            }
+
+            canvas.addEventListener('mousemove', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                mouseX = e.clientX - rect.left;
+                mouseY = e.clientY - rect.top;
+
+                if (dragNode !== null) {
+                    nodes[dragNode].x = mouseX;
+                    nodes[dragNode].y = mouseY;
+                } else {
+                    const hit = getNodeAt(mouseX, mouseY);
+                    hoveredNode = hit;
+                    canvas.style.cursor = hit !== null ? 'grab' : 'default';
+                }
+            });
+
+            canvas.addEventListener('mousedown', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                const hit = getNodeAt(x, y);
+                if (hit !== null) {
+                    dragNode = hit;
+                    nodes[hit].pinned = true;
+                    canvas.style.cursor = 'grabbing';
+                }
+            });
+
+            canvas.addEventListener('mouseup', () => {
+                if (dragNode !== null) {
+                    nodes[dragNode].pinned = false;
+                    canvas.style.cursor = 'grab';
+                    dragNode = null;
+                }
+            });
+
+            canvas.addEventListener('dblclick', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const hit = getNodeAt(e.clientX - rect.left, e.clientY - rect.top);
+                if (hit !== null) {
+                    closeInfluenceGraph();
+                    // Filter to this artist
+                    document.getElementById('searchInput').value = nodes[hit].name;
+                    applyFiltersAndSort();
+                }
+            });
+
+            // Touch support
+            canvas.addEventListener('touchstart', (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const t = e.touches[0];
+                const hit = getNodeAt(t.clientX - rect.left, t.clientY - rect.top);
+                if (hit !== null) { dragNode = hit; nodes[hit].pinned = true; hoveredNode = hit; e.preventDefault(); }
+            }, { passive: false });
+
+            canvas.addEventListener('touchmove', (e) => {
+                if (dragNode !== null) {
+                    const rect = canvas.getBoundingClientRect();
+                    const t = e.touches[0];
+                    nodes[dragNode].x = t.clientX - rect.left;
+                    nodes[dragNode].y = t.clientY - rect.top;
+                    e.preventDefault();
+                }
+            }, { passive: false });
+
+            canvas.addEventListener('touchend', () => {
+                if (dragNode !== null) { nodes[dragNode].pinned = false; dragNode = null; hoveredNode = null; }
+            });
+
+            // Start
+            if (influenceAnimId) cancelAnimationFrame(influenceAnimId);
+            tick();
         }
 
         function updateStats() {
@@ -3184,21 +3828,19 @@
         });
 
         // View toggle
-        document.getElementById('gridViewBtn').addEventListener('click', () => {
-            currentView = 'grid';
-            document.getElementById('gridViewBtn').classList.add('active');
-            document.getElementById('listViewBtn').classList.remove('active');
-            document.getElementById('sizeSliderGroup').style.display = '';
+        function setView(view) {
+            currentView = view;
+            document.getElementById('gridViewBtn').classList.toggle('active', view === 'grid');
+            document.getElementById('listViewBtn').classList.toggle('active', view === 'list');
+            document.getElementById('shelfViewBtn').classList.toggle('active', view === 'shelf');
+            document.getElementById('sizeSliderGroup').style.display = view === 'grid' ? '' : 'none';
+            document.getElementById('shelfView').classList.toggle('active', view === 'shelf');
             render();
-        });
+        }
 
-        document.getElementById('listViewBtn').addEventListener('click', () => {
-            currentView = 'list';
-            document.getElementById('listViewBtn').classList.add('active');
-            document.getElementById('gridViewBtn').classList.remove('active');
-            document.getElementById('sizeSliderGroup').style.display = 'none';
-            render();
-        });
+        document.getElementById('gridViewBtn').addEventListener('click', () => setView('grid'));
+        document.getElementById('listViewBtn').addEventListener('click', () => setView('list'));
+        document.getElementById('shelfViewBtn').addEventListener('click', () => setView('shelf'));
 
         // Random pick
         function showRandomPick() {
@@ -3455,6 +4097,8 @@
             currentView = 'grid';
             document.getElementById('gridViewBtn').classList.add('active');
             document.getElementById('listViewBtn').classList.remove('active');
+            document.getElementById('shelfViewBtn').classList.remove('active');
+            document.getElementById('shelfView').classList.remove('active');
             document.getElementById('sizeSliderGroup').style.display = '';
             // Scroll to top
             window.scrollTo({ top: 0, behavior: 'smooth' });

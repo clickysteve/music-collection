@@ -29,6 +29,8 @@ A static gallery site for browsing a physical music collection (CDs + vinyl), po
 - Collector's indicator — shows when you own an album on both CD and vinyl
 - "What am I missing?" gap identifier showing gaps in your top artists' discographies
 - "Artists to Explore" — genre-based recommendations for expanding your collection
+- "Who Influenced Who" — interactive force-directed graph showing artist connections based on shared genres, with drag-to-explore and click-to-filter
+- "The Shelf" — 3D CSS spine view rendering your collection as album spines on wooden shelves, colour-matched from cover art, with pull-to-preview interaction
 - Album descriptions/bios from Last.fm shown on cards and in the detail modal
 - Clear all filters button and clickable logo to reset everything
 - Collapsible toolbar for mobile browsing
