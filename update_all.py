@@ -185,6 +185,84 @@ def clean_album_data(albums):
     return cleaned
 
 
+GENRE_CACHE_FILE = SITE_DIR / "genre_cache.json"
+
+
+def load_genre_cache():
+    if GENRE_CACHE_FILE.exists():
+        try:
+            return json.loads(GENRE_CACHE_FILE.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+    return {}
+
+
+def save_genre_cache(cache):
+    GENRE_CACHE_FILE.write_text(json.dumps(cache, ensure_ascii=False), encoding="utf-8")
+
+
+def fetch_genres(albums, label=""):
+    """Fetch genre tags from MusicBrainz for each album's release-group MBID.
+
+    Uses the ?inc=genres parameter on the release-group endpoint.
+    Picks the top genre by vote count. Caches permanently by MBID.
+    """
+    import time
+
+    mb_agent = os.environ.get("MB_USER_AGENT", "").strip()
+    if not mb_agent:
+        mb_agent = "MusicCollectionGallery/1.0 (steve.blythe@a8c.com)"
+
+    mb_headers = {"User-Agent": mb_agent, "Accept": "application/json"}
+    cache = load_genre_cache()
+
+    to_fetch = []
+    for i, a in enumerate(albums):
+        mbid = a.get("mbid", "")
+        if mbid and mbid in cache:
+            albums[i]["genres"] = cache[mbid]
+        elif mbid:
+            to_fetch.append((i, a))
+        else:
+            albums[i]["genres"] = []
+
+    if not to_fetch:
+        print(f"  All {label} genres cached.")
+        return albums
+
+    print(f"  Fetching genres for {len(to_fetch)} {label} albums...")
+    fetched = 0
+
+    for idx, album in to_fetch:
+        mbid = album["mbid"]
+        time.sleep(1.1)  # MusicBrainz rate limit: 1 req/sec
+        try:
+            resp = requests.get(
+                f"https://musicbrainz.org/ws/2/release-group/{mbid}",
+                params={"fmt": "json", "inc": "genres"},
+                headers=mb_headers, timeout=10,
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                genres_raw = data.get("genres", [])
+                # Sort by vote count, take top 3 genre names
+                genres_raw.sort(key=lambda g: -g.get("count", 0))
+                genre_names = [g["name"] for g in genres_raw[:3]]
+                albums[idx]["genres"] = genre_names
+                cache[mbid] = genre_names
+                fetched += 1
+                if fetched % 20 == 0:
+                    print(f"    ...{fetched}/{len(to_fetch)}")
+            else:
+                albums[idx]["genres"] = []
+        except Exception:
+            albums[idx]["genres"] = []
+
+    save_genre_cache(cache)
+    print(f"  Fetched genres for {fetched}/{len(to_fetch)} {label} albums")
+    return albums
+
+
 SUGGESTIONS_CACHE_FILE = SITE_DIR / "suggestions_cache.json"
 
 
@@ -501,6 +579,8 @@ def export_to_site():
     vinyl = resolve_cover_urls(vinyl, "Vinyl")
     cd = itunes_cover_fallback(cd, "CDs")
     vinyl = itunes_cover_fallback(vinyl, "Vinyl")
+    cd = fetch_genres(cd, "CDs")
+    vinyl = fetch_genres(vinyl, "Vinyl")
     cd = extract_dominant_colors(cd, "CDs")
     vinyl = extract_dominant_colors(vinyl, "Vinyl")
 
