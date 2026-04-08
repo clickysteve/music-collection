@@ -197,6 +197,81 @@ def inject_into_html(cd_albums, vinyl_albums, html_path):
     print(f"  Injected {len(cd_albums)} CDs + {len(vinyl_albums)} vinyl into {html_path.name}")
 
 
+COLOR_CACHE_FILE = SITE_DIR / "color_cache.json"
+
+
+def load_color_cache():
+    if COLOR_CACHE_FILE.exists():
+        try:
+            return json.loads(COLOR_CACHE_FILE.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+    return {}
+
+
+def save_color_cache(cache):
+    COLOR_CACHE_FILE.write_text(json.dumps(cache, ensure_ascii=False), encoding="utf-8")
+
+
+def extract_dominant_colors(albums, label=""):
+    """Extract dominant color from each album's cover art using colorthief.
+
+    Caches results in color_cache.json keyed by MBID to avoid re-downloading.
+    """
+    try:
+        from colorthief import ColorThief
+        from io import BytesIO
+    except ImportError:
+        print("  colorthief not installed, skipping color extraction.")
+        print("  Install with: pip install colorthief")
+        return albums
+
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    cache = load_color_cache()
+    to_extract = []
+    for i, a in enumerate(albums):
+        mbid = a.get("mbid", "")
+        if mbid and mbid in cache:
+            albums[i]["color"] = cache[mbid]
+        elif a.get("cover_url"):
+            to_extract.append((i, a))
+
+    if not to_extract:
+        print(f"  All {label} colors cached.")
+        return albums
+
+    print(f"  Extracting colors for {len(to_extract)} {label} albums...")
+    extracted = 0
+
+    def extract_one(idx, album):
+        url = album["cover_url"]
+        try:
+            resp = requests.get(url, timeout=15)
+            if resp.status_code == 200 and resp.headers.get("content-type", "").startswith("image"):
+                ct = ColorThief(BytesIO(resp.content))
+                r, g, b = ct.get_color(quality=5)
+                return idx, f"#{r:02x}{g:02x}{b:02x}"
+        except Exception:
+            pass
+        return idx, None
+
+    with ThreadPoolExecutor(max_workers=6) as pool:
+        futures = [pool.submit(extract_one, i, a) for i, a in to_extract]
+        for future in as_completed(futures):
+            idx, color = future.result()
+            if color:
+                albums[idx]["color"] = color
+                mbid = albums[idx].get("mbid", "")
+                if mbid:
+                    cache[mbid] = color
+                extracted += 1
+
+    save_color_cache(cache)
+    print(f"  Extracted {extracted}/{len(to_extract)} colors for {label}")
+    return albums
+
+
 def resolve_cover_urls(albums, label=""):
     """Resolve Cover Art Archive redirects to final archive.org URLs.
 
@@ -250,6 +325,8 @@ def export_to_site():
     vinyl = export_database(VINYL_DATABASE_ID, "Vinyl Collection", headers)
     cd = resolve_cover_urls(cd, "CDs")
     vinyl = resolve_cover_urls(vinyl, "Vinyl")
+    cd = extract_dominant_colors(cd, "CDs")
+    vinyl = extract_dominant_colors(vinyl, "Vinyl")
     inject_into_html(cd, vinyl, INDEX_HTML)
     print(f"\n  Total: {len(cd)} CDs + {len(vinyl)} vinyl = {len(cd) + len(vinyl)} albums")
 

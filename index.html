@@ -742,6 +742,272 @@
         .shuffle-btn.active {
             color: var(--accent);
         }
+
+        /* View toggle */
+        .view-toggle {
+            display: flex;
+            gap: 2px;
+            background: var(--surface-1);
+            padding: 3px;
+            border-radius: 6px;
+        }
+
+        .view-toggle-btn {
+            padding: 5px 8px;
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            cursor: pointer;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            transition: all 0.2s ease;
+        }
+
+        .view-toggle-btn.active {
+            background: var(--surface-3);
+            color: var(--text);
+        }
+
+        /* Random Pick */
+        .pick-btn {
+            padding: 6px 14px;
+            border: 1px solid var(--accent);
+            background: transparent;
+            color: var(--accent);
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: Inter, sans-serif;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+        }
+
+        .pick-btn:hover {
+            background: var(--accent);
+            color: var(--bg);
+        }
+
+        .random-pick-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 300;
+            backdrop-filter: blur(8px);
+            padding: 20px;
+        }
+
+        .random-pick-overlay.show {
+            display: flex;
+        }
+
+        .random-pick-card {
+            background: var(--surface-1);
+            border-radius: 16px;
+            overflow: hidden;
+            max-width: 360px;
+            width: 100%;
+            animation: slideUp 0.4s ease;
+            text-align: center;
+            position: relative;
+        }
+
+        .random-pick-card .card-image-wrapper {
+            border-radius: 0;
+        }
+
+        .random-pick-label {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--accent);
+            padding: 20px 20px 0;
+        }
+
+        .random-pick-title {
+            font-size: 22px;
+            font-weight: 700;
+            padding: 8px 20px 4px;
+            line-height: 1.3;
+        }
+
+        .random-pick-meta {
+            font-size: 14px;
+            color: var(--text-dim);
+            padding: 0 20px;
+        }
+
+        .random-pick-actions {
+            display: flex;
+            gap: 10px;
+            padding: 20px;
+            justify-content: center;
+        }
+
+        .random-pick-actions button {
+            padding: 10px 24px;
+            border-radius: 24px;
+            font-size: 13px;
+            font-weight: 600;
+            font-family: Inter, sans-serif;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .pick-again-btn {
+            background: var(--accent);
+            color: var(--bg);
+            border: none;
+        }
+
+        .pick-again-btn:hover {
+            transform: scale(1.05);
+        }
+
+        .pick-close-btn {
+            background: transparent;
+            color: var(--text-dim);
+            border: 1px solid var(--border);
+        }
+
+        .pick-close-btn:hover {
+            color: var(--text);
+            border-color: var(--text);
+        }
+
+        /* Stats Bar */
+        .stats-bar {
+            display: flex;
+            gap: 24px;
+            padding: 16px 0;
+            margin-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .stat-item {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-value {
+            font-size: 20px;
+            font-weight: 700;
+            color: var(--text);
+            line-height: 1.2;
+        }
+
+        .stat-label {
+            font-size: 11px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 600;
+        }
+
+        /* List View */
+        .list-view {
+            display: none;
+            margin-top: 16px;
+        }
+
+        .list-view.active {
+            display: block;
+        }
+
+        .list-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .list-table th {
+            text-align: left;
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 8px 12px;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 60px;
+            background: var(--bg);
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .list-table th:hover {
+            color: var(--accent);
+        }
+
+        .list-table td {
+            padding: 10px 12px;
+            font-size: 13px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            vertical-align: middle;
+        }
+
+        .list-table tr {
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+
+        .list-table tbody tr:hover {
+            background: var(--surface-1);
+        }
+
+        .list-cover-thumb {
+            width: 36px;
+            height: 36px;
+            border-radius: 4px;
+            object-fit: cover;
+            vertical-align: middle;
+        }
+
+        .list-title-cell {
+            font-weight: 600;
+        }
+
+        .list-artist-cell {
+            color: var(--text-dim);
+        }
+
+        .list-badge {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .list-badge.badge-vinyl { color: var(--vinyl-color); }
+        .list-badge.badge-cd { color: var(--cd-color); }
+
+        /* Color gradient on card image wrapper */
+        .card-image-wrapper {
+            position: relative;
+        }
+
+        @media (max-width: 600px) {
+            .stats-bar {
+                gap: 16px;
+            }
+            .stat-value {
+                font-size: 16px;
+            }
+            .list-table th, .list-table td {
+                padding: 8px 6px;
+                font-size: 12px;
+            }
+            .list-cover-thumb {
+                width: 28px;
+                height: 28px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -803,13 +1069,24 @@
             </div>
         </div>
 
+        <button class="pick-btn" id="pickBtn" aria-label="Pick random album">Pick One</button>
+
         <button class="icon-btn shuffle-btn" id="shuffleBtn" aria-label="Shuffle albums">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <path d="M2 3H4M12 13H14M4 3L2 5L4 7M12 9L14 11L12 13M5 3H11C12.1 3 13 3.9 13 5V8M11 13H5C3.9 13 3 12.1 3 11V8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
         </button>
 
-        <div class="size-slider-group">
+        <div class="view-toggle">
+            <button class="view-toggle-btn active" id="gridViewBtn" aria-label="Grid view">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><rect x="1" y="1" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="9" y="1" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="1" y="9" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="9" y="9" width="6" height="6" rx="1" stroke="currentColor" stroke-width="1.2"/></svg>
+            </button>
+            <button class="view-toggle-btn" id="listViewBtn" aria-label="List view">
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><line x1="1" y1="3" x2="15" y2="3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><line x1="1" y1="8" x2="15" y2="8" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><line x1="1" y1="13" x2="15" y2="13" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+            </button>
+        </div>
+
+        <div class="size-slider-group" id="sizeSliderGroup">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <rect x="1" y="1" width="3" height="3" stroke="currentColor" stroke-width="1"/>
                 <rect x="5" y="1" width="3" height="3" stroke="currentColor" stroke-width="1"/>
@@ -835,11 +1112,52 @@
 
     <!-- Main Container -->
     <div class="container">
+        <div class="stats-bar" id="statsBar">
+            <div class="stat-item"><span class="stat-value" id="statTotal">0</span><span class="stat-label">Albums</span></div>
+            <div class="stat-item"><span class="stat-value" id="statRuntime">0h</span><span class="stat-label">Total Runtime</span></div>
+            <div class="stat-item"><span class="stat-value" id="statPlayed">0</span><span class="stat-label">Played</span></div>
+            <div class="stat-item"><span class="stat-value" id="statUnplayed">0</span><span class="stat-label">Unplayed</span></div>
+            <div class="stat-item"><span class="stat-value" id="statOldest">—</span><span class="stat-label">Oldest</span></div>
+            <div class="stat-item"><span class="stat-value" id="statNewest">—</span><span class="stat-label">Newest</span></div>
+            <div class="stat-item"><span class="stat-value" id="statDecade">—</span><span class="stat-label">Top Decade</span></div>
+        </div>
         <div class="grid" id="grid"></div>
+        <div class="list-view" id="listView">
+            <table class="list-table">
+                <thead>
+                    <tr>
+                        <th style="width:44px"></th>
+                        <th>Title</th>
+                        <th>Artist</th>
+                        <th>Year</th>
+                        <th>Type</th>
+                        <th>Runtime</th>
+                        <th>Collection</th>
+                    </tr>
+                </thead>
+                <tbody id="listBody"></tbody>
+            </table>
+        </div>
         <div class="empty-state" id="emptyState" style="display: none;">
             <div class="empty-state-icon">🎵</div>
             <div class="empty-state-text">No albums found</div>
             <div class="empty-state-hint">Try adjusting your filters or search</div>
+        </div>
+    </div>
+
+    <!-- Random Pick Overlay -->
+    <div class="random-pick-overlay" id="pickOverlay">
+        <div class="random-pick-card" id="pickCard">
+            <div class="card-image-wrapper">
+                <img class="card-image loaded" id="pickImage" alt="">
+            </div>
+            <div class="random-pick-label">You should listen to...</div>
+            <div class="random-pick-title" id="pickTitle"></div>
+            <div class="random-pick-meta" id="pickMeta"></div>
+            <div class="random-pick-actions">
+                <button class="pick-again-btn" id="pickAgainBtn">Pick Another</button>
+                <button class="pick-close-btn" id="pickCloseBtn">Close</button>
+            </div>
         </div>
     </div>
 
@@ -1025,6 +1343,7 @@
         let currentSort = 'artist';
         let isShuffled = false;
         let shuffledAlbums = [];
+        let currentView = 'grid';
 
         // ============ INITIALIZATION ============
         function initData() {
@@ -1107,6 +1426,9 @@
             // Image wrapper
             const imgWrapper = document.createElement('div');
             imgWrapper.className = 'card-image-wrapper';
+            if (album.color) {
+                imgWrapper.style.background = `linear-gradient(135deg, ${album.color}33 0%, var(--surface-2) 100%)`;
+            }
 
             const img = document.createElement('img');
             img.className = 'card-image';
@@ -1229,29 +1551,129 @@
 
         function render() {
             const grid = document.getElementById('grid');
+            const listView = document.getElementById('listView');
             const emptyState = document.getElementById('emptyState');
 
             if (filteredAlbums.length === 0) {
                 grid.style.display = 'none';
+                listView.classList.remove('active');
                 emptyState.style.display = 'block';
                 return;
             }
 
-            // Reset load queue
-            loadQueue.length = 0;
-            activeLoads = 0;
-
-            grid.style.display = 'grid';
             emptyState.style.display = 'none';
-            grid.innerHTML = '';
-            filteredAlbums.forEach(album => {
-                grid.appendChild(createCard(album));
-            });
 
-            // Observe wrappers (they have dimensions from aspect-ratio)
-            grid.querySelectorAll('.card-image-wrapper[data-cover-url]').forEach(wrapper => {
-                imgObserver.observe(wrapper);
+            if (currentView === 'grid') {
+                listView.classList.remove('active');
+                grid.style.display = 'grid';
+
+                // Reset load queue
+                loadQueue.length = 0;
+                activeLoads = 0;
+
+                grid.innerHTML = '';
+                filteredAlbums.forEach(album => {
+                    grid.appendChild(createCard(album));
+                });
+
+                // Observe wrappers (they have dimensions from aspect-ratio)
+                grid.querySelectorAll('.card-image-wrapper[data-cover-url]').forEach(wrapper => {
+                    imgObserver.observe(wrapper);
+                });
+            } else {
+                grid.style.display = 'none';
+                listView.classList.add('active');
+                renderListView();
+            }
+
+            updateStats();
+        }
+
+        function renderListView() {
+            const tbody = document.getElementById('listBody');
+            tbody.innerHTML = '';
+            filteredAlbums.forEach(album => {
+                const tr = document.createElement('tr');
+                tr.addEventListener('click', () => openModal(album));
+
+                const tdCover = document.createElement('td');
+                const thumb = document.createElement('img');
+                thumb.className = 'list-cover-thumb';
+                thumb.alt = '';
+                thumb.loading = 'lazy';
+                thumb.src = album.cover_url;
+                thumb.addEventListener('error', () => { thumb.style.display = 'none'; });
+                tdCover.appendChild(thumb);
+
+                const tdTitle = document.createElement('td');
+                tdTitle.className = 'list-title-cell';
+                tdTitle.textContent = album.title;
+
+                const tdArtist = document.createElement('td');
+                tdArtist.className = 'list-artist-cell';
+                tdArtist.textContent = album.artist;
+
+                const tdYear = document.createElement('td');
+                tdYear.textContent = album.year || '—';
+
+                const tdType = document.createElement('td');
+                tdType.textContent = album.type || '—';
+
+                const tdRuntime = document.createElement('td');
+                tdRuntime.textContent = album.length || '—';
+
+                const tdCollection = document.createElement('td');
+                const badge = document.createElement('span');
+                badge.className = `list-badge badge-${album.collection}`;
+                badge.textContent = album.collection === 'cd' ? 'CD' : 'VINYL';
+                tdCollection.appendChild(badge);
+
+                tr.appendChild(tdCover);
+                tr.appendChild(tdTitle);
+                tr.appendChild(tdArtist);
+                tr.appendChild(tdYear);
+                tr.appendChild(tdType);
+                tr.appendChild(tdRuntime);
+                tr.appendChild(tdCollection);
+                tbody.appendChild(tr);
             });
+        }
+
+        function updateStats() {
+            const albums = filteredAlbums;
+            document.getElementById('statTotal').textContent = albums.length;
+
+            // Total runtime
+            let totalMin = 0;
+            albums.forEach(a => {
+                if (a.runtime) totalMin += a.runtime;
+            });
+            const hours = Math.floor(totalMin / 60);
+            const mins = Math.round(totalMin % 60);
+            document.getElementById('statRuntime').textContent = hours > 0 ? `${hours}h ${mins}m` : `${mins}m`;
+
+            // Played / unplayed
+            const played = albums.filter(a => a.played).length;
+            document.getElementById('statPlayed').textContent = played;
+            document.getElementById('statUnplayed').textContent = albums.length - played;
+
+            // Oldest / newest year
+            const years = albums.map(a => a.year).filter(y => y && y > 0);
+            if (years.length) {
+                document.getElementById('statOldest').textContent = Math.min(...years);
+                document.getElementById('statNewest').textContent = Math.max(...years);
+            }
+
+            // Top decade
+            if (years.length) {
+                const decades = {};
+                years.forEach(y => {
+                    const d = Math.floor(y / 10) * 10;
+                    decades[d] = (decades[d] || 0) + 1;
+                });
+                const topDecade = Object.entries(decades).sort((a, b) => b[1] - a[1])[0];
+                document.getElementById('statDecade').textContent = topDecade[0] + 's';
+            }
         }
 
         // ============ MODAL ============
@@ -1350,6 +1772,7 @@
         document.addEventListener('keydown', (e) => {
             if (e.key === 'Escape') {
                 closeModal();
+                closeRandomPick();
             }
         });
 
@@ -1422,6 +1845,58 @@
             if (!e.target.closest('.dropdown')) {
                 document.querySelectorAll('.dropdown-menu').forEach(m => m.classList.remove('show'));
             }
+        });
+
+        // View toggle
+        document.getElementById('gridViewBtn').addEventListener('click', () => {
+            currentView = 'grid';
+            document.getElementById('gridViewBtn').classList.add('active');
+            document.getElementById('listViewBtn').classList.remove('active');
+            document.getElementById('sizeSliderGroup').style.display = '';
+            render();
+        });
+
+        document.getElementById('listViewBtn').addEventListener('click', () => {
+            currentView = 'list';
+            document.getElementById('listViewBtn').classList.add('active');
+            document.getElementById('gridViewBtn').classList.remove('active');
+            document.getElementById('sizeSliderGroup').style.display = 'none';
+            render();
+        });
+
+        // Random pick
+        function showRandomPick() {
+            const pool = filteredAlbums.length > 0 ? filteredAlbums : allAlbums;
+            const album = pool[Math.floor(Math.random() * pool.length)];
+            if (!album) return;
+
+            const overlay = document.getElementById('pickOverlay');
+            const img = document.getElementById('pickImage');
+            img.src = album.cover_url;
+            img.alt = `${album.artist} - ${album.title}`;
+            document.getElementById('pickTitle').textContent = album.title;
+            document.getElementById('pickMeta').textContent = `${album.artist} · ${album.year || ''}`;
+
+            // Color tint on the pick card
+            const card = document.getElementById('pickCard');
+            if (album.color) {
+                card.style.background = `linear-gradient(180deg, ${album.color}44 0%, var(--surface-1) 40%)`;
+            } else {
+                card.style.background = 'var(--surface-1)';
+            }
+
+            overlay.classList.add('show');
+        }
+
+        function closeRandomPick() {
+            document.getElementById('pickOverlay').classList.remove('show');
+        }
+
+        document.getElementById('pickBtn').addEventListener('click', showRandomPick);
+        document.getElementById('pickAgainBtn').addEventListener('click', showRandomPick);
+        document.getElementById('pickCloseBtn').addEventListener('click', closeRandomPick);
+        document.getElementById('pickOverlay').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('pickOverlay')) closeRandomPick();
         });
 
         // ============ UTILITY FUNCTIONS ============
