@@ -1151,20 +1151,23 @@
         /* Scroll to top */
         .scroll-top {
             position: fixed;
-            bottom: 24px;
-            right: 24px;
-            width: 40px;
-            height: 40px;
+            bottom: 28px;
+            right: 28px;
+            width: 48px;
+            height: 48px;
             border-radius: 50%;
-            background: var(--surface-2);
-            border: 1px solid var(--border);
-            color: var(--text-dim);
+            background: var(--accent);
+            border: none;
+            color: #fff;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
             opacity: 0;
             pointer-events: none;
+            font-size: 20px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
+            z-index: 200;
             transition: opacity 0.3s, background 0.2s;
             z-index: 90;
         }
@@ -1173,8 +1176,9 @@
             pointer-events: auto;
         }
         .scroll-top:hover {
-            background: var(--surface-3);
-            color: var(--text-main);
+            background: #17a34a;
+            color: #fff;
+            transform: scale(1.1);
         }
 
         .random-pick-overlay {
@@ -3934,6 +3938,80 @@
 
         initSuggestions();
 
+        // ============ ARTISTS TO EXPLORE (own panel) ============
+        function initExplore() {
+            if (!SUGGESTIONS || SUGGESTIONS.length === 0) return;
+            const btn = document.getElementById('exploreBtn');
+            const panel = document.getElementById('explorePanel');
+            btn.style.display = '';
+
+            btn.addEventListener('click', () => {
+                const isOpen = panel.classList.toggle('open');
+                btn.textContent = isOpen ? 'Hide explore' : 'Artists to Explore';
+                if (isOpen && !panel.hasChildNodes()) renderExplorePanel();
+            });
+        }
+
+        function renderExplorePanel() {
+            const panel = document.getElementById('explorePanel');
+            panel.innerHTML = '';
+
+            // Genre summary
+            const gCounts = {};
+            allAlbums.forEach(a => (a.genres || []).forEach(g => gCounts[g] = (gCounts[g] || 0) + 1));
+            const top5 = Object.entries(gCounts).sort((a, b) => b[1] - a[1]).slice(0, 5).map(e => e[0]);
+
+            if (top5.length) {
+                const genreRow = document.createElement('div');
+                genreRow.style.cssText = 'margin-bottom:14px;font-size:13px;color:var(--text-dim);';
+                genreRow.innerHTML = 'Your top genres: ' + top5.map(g => `<span style="color:var(--accent);font-weight:600;">${g}</span>`).join(', ');
+                panel.appendChild(genreRow);
+            }
+
+            // Artists with most missing albums
+            const recs = SUGGESTIONS.filter(s => s.missing.length >= 2)
+                .sort((a, b) => b.missing.length - a.missing.length);
+
+            if (recs.length === 0) {
+                panel.innerHTML += '<div style="font-size:13px;color:var(--text-dim);">Your collection is impressively complete!</div>';
+                return;
+            }
+
+            const heading = document.createElement('div');
+            heading.style.cssText = 'font-size:12px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;';
+            heading.textContent = 'Artists you could expand';
+            panel.appendChild(heading);
+
+            recs.forEach(s => {
+                const div = document.createElement('div');
+                div.className = 'suggestion-artist';
+                const ownedPct = Math.round((s.owned / s.total) * 100);
+                const barColor = ownedPct > 60 ? 'var(--accent)' : ownedPct > 30 ? 'var(--vinyl-color)' : 'var(--scrobble-color)';
+                const missing = s.missing.slice(0, 5).map(m => {
+                    const mbLink = m.mbid ? `https://musicbrainz.org/release-group/${m.mbid}` : '';
+                    const label = m.title + (m.year ? ` (${m.year})` : '');
+                    const inner = mbLink
+                        ? `<a href="${mbLink}" target="_blank" rel="noopener">${label}</a>`
+                        : label;
+                    return `<span class="suggestion-album">${inner}</span>`;
+                }).join('');
+                const moreText = s.missing.length > 5 ? `<span style="font-size:11px;color:var(--text-dim);margin-left:4px;">+${s.missing.length - 5} more</span>` : '';
+                div.innerHTML = `
+                    <div class="suggestion-header">
+                        <span class="suggestion-artist-name">${s.artist}</span>
+                        <span class="suggestion-count">${s.owned} of ${s.total} (${ownedPct}%)</span>
+                    </div>
+                    <div style="height:4px;background:var(--surface-2);border-radius:2px;margin-bottom:8px;overflow:hidden;">
+                        <div style="width:${ownedPct}%;height:100%;background:${barColor};border-radius:2px;transition:width 0.5s;"></div>
+                    </div>
+                    <div class="suggestion-missing">${missing}${moreText}</div>
+                `;
+                panel.appendChild(div);
+            });
+        }
+
+        initExplore();
+
         // ============ LOGO / HOME RESET ============
         document.getElementById('logoHome').addEventListener('click', resetAllFilters);
 
@@ -3977,8 +4055,16 @@
             document.getElementById('sizeSliderGroup').style.display = '';
             // Scroll to top
             window.scrollTo({ top: 0, behavior: 'smooth' });
-            // Close mobile controls
+            // Close panels
             document.getElementById('topbarControls').classList.remove('open');
+            const explorePanel = document.getElementById('explorePanel');
+            if (explorePanel) { explorePanel.classList.remove('open'); }
+            const exploreBtn = document.getElementById('exploreBtn');
+            if (exploreBtn) { exploreBtn.textContent = 'Artists to Explore'; }
+            const suggestionsPanel = document.getElementById('suggestionsPanel');
+            if (suggestionsPanel) { suggestionsPanel.classList.remove('open'); }
+            const suggestionsBtn = document.getElementById('suggestionsBtn');
+            if (suggestionsBtn) { suggestionsBtn.textContent = 'What am I missing?'; }
             applyFiltersAndSort();
             updateClearFiltersVisibility();
         }
