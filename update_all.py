@@ -772,326 +772,145 @@ DESCRIPTION_CACHE_FILE = SITE_DIR / "description_cache.json"
 ARTIST_BIO_CACHE_FILE = SITE_DIR / "artist_bio_cache.json"
 
 
-def _score_sentence(s):
-    """Score a sentence for interestingness. Higher = more flavourful."""
-    s_lower = s.lower()
-    score = 0
-
-    # Penalise dry factual content
-    boring = [
-        (r'\breleased (on|in)\b', -3),
-        (r'\bdebuted at\b', -4),
-        (r'\breached #\d', -5),
-        (r'\bpeaked at\b', -5),
-        (r'\bcertified (gold|platinum|diamond)', -5),
-        (r'\bsold over\b', -4),
-        (r'\bcharted at\b', -5),
-        (r'\bbillboard\b', -5),
-        (r'\buk albums chart\b', -5),
-        (r'\bcopies sold\b', -4),
-        (r'\bwent on to sell\b', -4),
-        (r'\bis the (first|second|third|fourth|fifth|sixth|seventh|eighth|ninth|tenth|debut)\b.{0,20}\b(album|record|release|ep|lp)\b', -3),
-        (r'\bwas later released\b', -3),
-        (r'\bsingles?\s+"', -2),
-        (r'\bspawned the\b', -2),
-        (r'\bformat\b.{0,20}\b(cd|vinyl|mp3|wav|digital)\b', -4),
-        (r'\bas of (january|february|march|april|may|june|july|august|september|october|november|december|\d{4})\b', -3),
-        (r'\b#\d+ in (the|ireland|uk|us|australia)\b', -5),
-        (r'\b\d+,\d+ copies\b', -4),
-        (r'\boverall world charts\b', -5),
-        (r'\bsleeve artwork\b', -3),
-        (r'\bcopy control\b|\bcopy protection\b', -5),
-        (r'\btrack listing\b|\bbonus (disc|track)\b', -3),
-        (r'\bdeluxe edition\b|\bremaster\b|\bre-?issue\b', -2),
-    ]
-    for pat, penalty in boring:
-        if re.search(pat, s_lower):
-            score += penalty
-
-    # Reward interesting content
-    interesting = [
-        (r'\brecorded (at|in|during)\b', 3),
-        (r'\bproduced by\b', 2),
-        (r'\binfluen(ce|ced)\b', 4),
-        (r'\binspired\b', 3),
-        (r'\bexperiment\w*\b', 3),
-        (r'\bsound(s|ed|scape)?\b', 2),
-        (r'\btheme[sd]?\b', 3),
-        (r'\blyric(s|al|ally)\b', 2),
-        (r'\batmospher\w+\b', 4),
-        (r'\btexture[sd]?\b', 3),
-        (r'\bmelod(y|ic|ies)\b', 2),
-        (r'\brhythm\w*\b', 2),
-        (r'\bgroove[sd]?\b', 3),
-        (r'\braw\b', 2),
-        (r'\babrasive\b', 3),
-        (r'\blush\b', 3),
-        (r'\bhaunting\b', 3),
-        (r'\bfuzz(y|ed)?\b', 3),
-        (r'\bdistort(ed|ion)\b', 2),
-        (r'\borchestral\b', 3),
-        (r'\bsynthesi[sz]\w*\b', 2),
-        (r'\bsampl(e[sd]?|ing)\b', 2),
-        (r'\bloop(s|ed|ing)\b', 2),
-        (r'\bgenre\b', 2),
-        (r'\bpunk\b|\bgrunge\b|\belectronica\b|\bhip[- ]?hop\b', 2),
-        (r'\bfolk\b|\bjazz\b|\bclassical\b|\bambient\b', 2),
-        (r'\bdeparture\b', 3),
-        (r'\bshift(ed|ing)?\b', 2),
-        (r'\bevol(ve|ution|ved)\b', 3),
-        (r'\bgroundbreaking\b|\bpioneering\b|\binnovativ\w+\b', 4),
-        (r'\blandmark\b|\bseminal\b|\bdefinitive\b', 3),
-        (r'\bpolitical\b|\bsocial\b|\bcultural\b', 2),
-        (r'\bconcept album\b', 3),
-        (r'\bdark(er|ness)?\b|\bintense\b|\bintimate\b', 2),
-        (r'\bcollaborat\w+\b', 2),
-        (r'\bfeaturing\b|\bside musicians\b|\bguest\b', 2),
-        (r'\bNigel Godrich\b|\bSteve Albini\b|\bBrian Eno\b|\bButch Vig\b', 3),
-        (r'\bwriter.s block\b|\bpersonal\b|\bdivorce\b|\baddiction\b|\bdeath\b', 3),
-        (r'\bstudio\b.{0,30}\b(session|record|track)\b', 2),
-        (r'\blive (in|at|session)\b', 2),
-        (r'\bcritics?\b.{0,20}\b(acclaim|prais|hail|call)\b', 2),
-    ]
-    for pat, pts in interesting:
-        if re.search(pat, s_lower):
-            score += pts
-
-    # Slight preference for medium-length sentences (not too short, not too long)
-    words = len(s.split())
-    if 10 <= words <= 35:
-        score += 1
-    elif words < 6:
-        score -= 2
-
-    return score
 
 
-def _extract_best_description(content, summary, max_sentences=4, max_chars=500):
-    """Pick the most interesting sentences from Last.fm wiki content."""
-    import html as html_mod
+AI_DESC_SYSTEM_PROMPT = """You write album and artist descriptions for a record collection gallery.
 
-    # Prefer full content, fall back to summary
-    text = content or summary or ""
-    if not text:
-        return ""
+When given an album, return TWO sections separated by a blank line:
 
-    # Clean HTML
-    text = re.sub(r'<a\s.*?</a>', '', text)
-    text = re.sub(r'<[^>]+>', '', text)
-    text = html_mod.unescape(text).strip()
+FIRST: A 2-sentence factual artist bio. Who they are, where they're from, when they formed, what they're known for. Plain facts, no opinions.
 
-    # Remove "Read more on Last.fm" and CC license boilerplate
-    text = re.sub(r'Read more on Last\.fm.*$', '', text, flags=re.DOTALL).strip()
-    text = re.sub(r'User-contributed text.*$', '', text, flags=re.DOTALL).strip()
+SECOND: A 3-4 sentence album description. Stick to facts — recording location, producer, notable session details or stories, what instruments or techniques were used. Say where it fits in the artist's discography. Mention what it sounds like in plain terms.
 
-    # Split into sentences
-    sentences = re.split(r'(?<=[.!?])\s+', text)
-    sentences = [s.strip() for s in sentences if len(s.strip()) > 15]
-
-    if not sentences:
-        return ""
-
-    # Score each sentence
-    scored = [(s, _score_sentence(s)) for s in sentences]
-
-    # Always include the highest-scoring sentence
-    scored_sorted = sorted(scored, key=lambda x: x[1], reverse=True)
-
-    # Pick top sentences but try to maintain reading order
-    top_n = scored_sorted[:max_sentences * 2]  # candidates
-    top_set = set(s for s, _ in top_n)
-
-    # Re-order by original position and take the best ones
-    ordered = [(s, sc) for s, sc in scored if s in top_set]
-    # Take top max_sentences by score, then re-sort by position
-    best = sorted(ordered, key=lambda x: x[1], reverse=True)[:max_sentences]
-    best_set = set(s for s, _ in best)
-    result = [s for s in sentences if s in best_set]
-
-    # Join and trim to max chars
-    desc = ' '.join(result)
-    if len(desc) > max_chars:
-        # Trim at sentence boundary
-        trimmed = ""
-        for s in result:
-            if len(trimmed) + len(s) + 1 > max_chars:
-                break
-            trimmed = (trimmed + " " + s).strip()
-        desc = trimmed
-
-    return desc.strip()
+No editorializing. No flowery language. No superlatives. Liner notes style."""
 
 
-def fetch_album_descriptions(albums):
-    """Fetch album descriptions from Last.fm album.getInfo.
+def generate_ai_descriptions(albums):
+    """Generate artist bios and album descriptions using Claude API.
 
-    Uses full wiki content and picks the most interesting sentences —
-    recording context, influences, sound, themes — rather than dry
-    release dates and chart positions. Caches permanently by MBID.
+    Makes one API call per album. Caches permanently — descriptions in
+    description_cache.json (keyed by MBID), artist bios in
+    artist_bio_cache.json (keyed by lowercase artist name).
+
+    Requires ANTHROPIC_API_KEY environment variable.
     """
     import time
 
-    api_key = os.environ.get("LASTFM_API_KEY", "").strip()
+    api_key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
     if not api_key:
-        print("  Skipping descriptions: LASTFM_API_KEY not set")
+        print("  Skipping AI descriptions: ANTHROPIC_API_KEY not set")
         return albums
 
-    # Load cache
-    cache = {}
+    try:
+        import anthropic
+    except ImportError:
+        print("  Skipping AI descriptions: pip install anthropic")
+        return albums
+
+    client = anthropic.Anthropic(api_key=api_key)
+
+    # Load caches
+    desc_cache = {}
     if DESCRIPTION_CACHE_FILE.exists():
         try:
-            cache = json.loads(DESCRIPTION_CACHE_FILE.read_text(encoding="utf-8"))
+            desc_cache = json.loads(DESCRIPTION_CACHE_FILE.read_text(encoding="utf-8"))
         except Exception:
             pass
 
-    to_fetch = []
-    cached_count = 0
-    for i, a in enumerate(albums):
-        mbid = a.get("mbid", "")
-        if mbid and mbid in cache:
-            albums[i]["description"] = cache[mbid]
-            cached_count += 1
-        elif a.get("artist") and a.get("title"):
-            to_fetch.append((i, a))
-
-    if cached_count:
-        print(f"  {cached_count} descriptions from cache")
-
-    if not to_fetch:
-        print(f"  No new descriptions to fetch")
-        return albums
-
-    print(f"  Fetching descriptions for {len(to_fetch)} albums...")
-    fetched = 0
-
-    for idx, album in to_fetch:
-        mbid = album.get("mbid", "")
-        try:
-            resp = requests.get("https://ws.audioscrobbler.com/2.0/", params={
-                "method": "album.getInfo",
-                "artist": album["artist"],
-                "album": album["title"],
-                "api_key": api_key,
-                "format": "json",
-            }, timeout=10)
-
-            if resp.status_code == 200:
-                data = resp.json()
-                wiki = data.get("album", {}).get("wiki", {})
-                content = wiki.get("content", "")
-                summary = wiki.get("summary", "")
-                desc = _extract_best_description(content, summary)
-                if desc:
-                    albums[idx]["description"] = desc
-                    if mbid:
-                        cache[mbid] = desc
-                    fetched += 1
-                    time.sleep(0.2)
-                    continue
-
-            # Mark as empty so we don't retry
-            if mbid:
-                cache[mbid] = ""
-        except Exception:
-            pass
-        time.sleep(0.25)
-
-        if fetched % 25 == 0 and fetched > 0:
-            print(f"    ...{fetched}/{len(to_fetch)}")
-            DESCRIPTION_CACHE_FILE.write_text(json.dumps(cache, ensure_ascii=False), encoding="utf-8")
-
-    DESCRIPTION_CACHE_FILE.write_text(json.dumps(cache, ensure_ascii=False), encoding="utf-8")
-    print(f"  Fetched {fetched}/{len(to_fetch)} descriptions")
-    return albums
-
-
-def fetch_artist_bios(albums):
-    """Fetch artist bios from Last.fm artist.getInfo.
-
-    Caches permanently by artist name. Assigns bio to every album by that artist.
-    """
-    import time
-    import html as html_mod
-
-    api_key = os.environ.get("LASTFM_API_KEY", "").strip()
-    if not api_key:
-        print("  Skipping artist bios: LASTFM_API_KEY not set")
-        return albums
-
-    cache = {}
+    bio_cache = {}
     if ARTIST_BIO_CACHE_FILE.exists():
         try:
-            cache = json.loads(ARTIST_BIO_CACHE_FILE.read_text(encoding="utf-8"))
+            bio_cache = json.loads(ARTIST_BIO_CACHE_FILE.read_text(encoding="utf-8"))
         except Exception:
             pass
 
-    # Collect unique artists
-    artists_seen = {}
+    # Figure out what needs generating
+    to_generate = []
+    desc_cached = 0
     for i, a in enumerate(albums):
-        artist = a.get("artist", "").strip()
-        if not artist:
-            continue
-        key = artist.lower()
-        if key not in artists_seen:
-            artists_seen[key] = artist
+        mbid = a.get("mbid", "")
+        artist_key = a.get("artist", "").strip().lower()
 
-    cached_count = 0
-    to_fetch = []
-    for key, artist in artists_seen.items():
-        if key in cache:
-            cached_count += 1
-        else:
-            to_fetch.append((key, artist))
+        # Apply cached values
+        if mbid and mbid in desc_cache:
+            albums[i]["description"] = desc_cache[mbid]
+            desc_cached += 1
+        if artist_key and artist_key in bio_cache:
+            albums[i]["artist_bio"] = bio_cache[artist_key]
 
-    if cached_count:
-        print(f"  {cached_count} artist bios from cache")
+        # Need to generate if missing description
+        if mbid and mbid not in desc_cache and a.get("artist") and a.get("title"):
+            to_generate.append((i, a))
 
-    if to_fetch:
-        print(f"  Fetching bios for {len(to_fetch)} artists...")
-        fetched = 0
+    if desc_cached:
+        print(f"  {desc_cached} descriptions from cache")
 
-        for key, artist in to_fetch:
-            try:
-                resp = requests.get("https://ws.audioscrobbler.com/2.0/", params={
-                    "method": "artist.getInfo",
-                    "artist": artist,
-                    "api_key": api_key,
-                    "format": "json",
-                }, timeout=10)
+    if not to_generate:
+        print(f"  No new descriptions to generate")
+        return albums
 
-                if resp.status_code == 200:
-                    data = resp.json()
-                    bio = data.get("artist", {}).get("bio", {})
-                    content = bio.get("content", "")
-                    summary = bio.get("summary", "")
-                    desc = _extract_best_description(content, summary, max_sentences=4, max_chars=600)
-                    if desc:
-                        cache[key] = desc
-                        fetched += 1
-                        time.sleep(0.2)
-                        continue
+    print(f"  Generating AI descriptions for {len(to_generate)} albums...")
+    generated = 0
 
-                cache[key] = ""
-            except Exception:
-                cache[key] = ""
-            time.sleep(0.2)
+    for idx, album in to_generate:
+        mbid = album.get("mbid", "")
+        artist = album.get("artist", "")
+        title = album.get("title", "")
+        year = album.get("year", "")
+        genres = album.get("genres", [])
+        genre_str = ", ".join(genres) if genres else "unknown"
+        artist_key = artist.strip().lower()
 
-            if fetched % 25 == 0 and fetched > 0:
-                print(f"    ...{fetched}/{len(to_fetch)}")
-                ARTIST_BIO_CACHE_FILE.write_text(json.dumps(cache, ensure_ascii=False), encoding="utf-8")
+        try:
+            msg = client.messages.create(
+                model="claude-sonnet-4-20250514",
+                max_tokens=250,
+                system=AI_DESC_SYSTEM_PROMPT,
+                messages=[{
+                    "role": "user",
+                    "content": f"{artist} — {title} ({year}). Genres: {genre_str}."
+                }]
+            )
+            text = msg.content[0].text.strip()
 
-        ARTIST_BIO_CACHE_FILE.write_text(json.dumps(cache, ensure_ascii=False), encoding="utf-8")
-        print(f"  Fetched {fetched}/{len(to_fetch)} artist bios")
-    else:
-        print(f"  No new artist bios to fetch")
+            # Split into bio and description on blank line
+            parts = re.split(r'\n\s*\n', text, maxsplit=1)
+            if len(parts) == 2:
+                bio_text = parts[0].strip()
+                desc_text = parts[1].strip()
+            else:
+                bio_text = ""
+                desc_text = text
 
-    # Assign bios to albums
-    for i, a in enumerate(albums):
-        artist = a.get("artist", "").strip()
-        key = artist.lower()
-        if key in cache and cache[key]:
-            albums[i]["artist_bio"] = cache[key]
+            # Cache description by MBID
+            if mbid and desc_text:
+                desc_cache[mbid] = desc_text
+                albums[idx]["description"] = desc_text
 
+            # Cache artist bio (only if we don't already have one)
+            if artist_key and bio_text and artist_key not in bio_cache:
+                bio_cache[artist_key] = bio_text
+            if artist_key and artist_key in bio_cache:
+                albums[idx]["artist_bio"] = bio_cache[artist_key]
+
+            generated += 1
+
+        except Exception as e:
+            print(f"    Error for {artist} - {title}: {e}")
+            if mbid:
+                desc_cache[mbid] = ""
+
+        time.sleep(0.3)
+
+        if generated % 25 == 0 and generated > 0:
+            print(f"    ...{generated}/{len(to_generate)}")
+            DESCRIPTION_CACHE_FILE.write_text(json.dumps(desc_cache, ensure_ascii=False), encoding="utf-8")
+            ARTIST_BIO_CACHE_FILE.write_text(json.dumps(bio_cache, ensure_ascii=False), encoding="utf-8")
+
+    # Save caches
+    DESCRIPTION_CACHE_FILE.write_text(json.dumps(desc_cache, ensure_ascii=False), encoding="utf-8")
+    ARTIST_BIO_CACHE_FILE.write_text(json.dumps(bio_cache, ensure_ascii=False), encoding="utf-8")
+    print(f"  Generated {generated}/{len(to_generate)} descriptions")
     return albums
 
 
@@ -1116,8 +935,7 @@ def export_to_site():
     # Fetch Last.fm listening data + album descriptions
     all_albums = cd + vinyl
     all_albums = fetch_lastfm_data(all_albums)
-    all_albums = fetch_album_descriptions(all_albums)
-    all_albums = fetch_artist_bios(all_albums)
+    all_albums = generate_ai_descriptions(all_albums)
     # Re-split after enrichment
     cd_count = len(cd)
     cd = all_albums[:cd_count]
