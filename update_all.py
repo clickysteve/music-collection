@@ -769,6 +769,7 @@ def _apply_lastfm(albums, cache):
 
 
 DESCRIPTION_CACHE_FILE = SITE_DIR / "description_cache.json"
+ARTIST_BIO_CACHE_FILE = SITE_DIR / "artist_bio_cache.json"
 
 
 def fetch_album_descriptions(albums):
@@ -858,6 +859,100 @@ def fetch_album_descriptions(albums):
     return albums
 
 
+def fetch_artist_bios(albums):
+    """Fetch artist bios from Last.fm artist.getInfo.
+
+    Caches permanently by artist name. Assigns bio to every album by that artist.
+    """
+    import time
+    import html as html_mod
+
+    api_key = os.environ.get("LASTFM_API_KEY", "").strip()
+    if not api_key:
+        print("  Skipping artist bios: LASTFM_API_KEY not set")
+        return albums
+
+    cache = {}
+    if ARTIST_BIO_CACHE_FILE.exists():
+        try:
+            cache = json.loads(ARTIST_BIO_CACHE_FILE.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+
+    # Collect unique artists
+    artists_seen = {}
+    for i, a in enumerate(albums):
+        artist = a.get("artist", "").strip()
+        if not artist:
+            continue
+        key = artist.lower()
+        if key not in artists_seen:
+            artists_seen[key] = artist
+
+    cached_count = 0
+    to_fetch = []
+    for key, artist in artists_seen.items():
+        if key in cache:
+            cached_count += 1
+        else:
+            to_fetch.append((key, artist))
+
+    if cached_count:
+        print(f"  {cached_count} artist bios from cache")
+
+    if to_fetch:
+        print(f"  Fetching bios for {len(to_fetch)} artists...")
+        fetched = 0
+
+        for key, artist in to_fetch:
+            try:
+                resp = requests.get("https://ws.audioscrobbler.com/2.0/", params={
+                    "method": "artist.getInfo",
+                    "artist": artist,
+                    "api_key": api_key,
+                    "format": "json",
+                }, timeout=10)
+
+                if resp.status_code == 200:
+                    data = resp.json()
+                    bio = data.get("artist", {}).get("bio", {})
+                    summary = bio.get("summary", "")
+                    if summary:
+                        summary = re.sub(r'<a\s.*?</a>', '', summary)
+                        summary = re.sub(r'<[^>]+>', '', summary)
+                        summary = html_mod.unescape(summary).strip()
+                        sentences = re.split(r'(?<=[.!?])\s+', summary)
+                        summary = ' '.join(sentences[:4]).strip()
+                        if summary:
+                            cache[key] = summary
+                            fetched += 1
+                            time.sleep(0.2)
+                            continue
+
+                cache[key] = ""
+            except Exception:
+                cache[key] = ""
+            time.sleep(0.2)
+
+            if fetched % 25 == 0 and fetched > 0:
+                print(f"    ...{fetched}/{len(to_fetch)}")
+                ARTIST_BIO_CACHE_FILE.write_text(json.dumps(cache, ensure_ascii=False), encoding="utf-8")
+
+        ARTIST_BIO_CACHE_FILE.write_text(json.dumps(cache, ensure_ascii=False), encoding="utf-8")
+        print(f"  Fetched {fetched}/{len(to_fetch)} artist bios")
+    else:
+        print(f"  No new artist bios to fetch")
+
+    # Assign bios to albums
+    for i, a in enumerate(albums):
+        artist = a.get("artist", "").strip()
+        key = artist.lower()
+        if key in cache and cache[key]:
+            albums[i]["artist_bio"] = cache[key]
+
+    return albums
+
+
 def export_to_site():
     print(f"\n{'='*60}")
     print("Exporting to GitHub Pages site")
@@ -880,6 +975,7 @@ def export_to_site():
     all_albums = cd + vinyl
     all_albums = fetch_lastfm_data(all_albums)
     all_albums = fetch_album_descriptions(all_albums)
+    all_albums = fetch_artist_bios(all_albums)
     # Re-split after enrichment
     cd_count = len(cd)
     cd = all_albums[:cd_count]

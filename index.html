@@ -1891,14 +1891,12 @@
         <div style="text-align:center;padding:4px 0 8px;display:flex;justify-content:center;gap:10px;">
             <button class="stats-expand-btn" id="statsExpandBtn">More Stats <span class="chevron">&#9660;</span></button>
             <button class="suggestions-btn" id="suggestionsBtn" style="display:none;">What am I missing?</button>
-            <button class="suggestions-btn" id="exploreBtn" style="display:none;">Artists to Explore</button>
             <button class="influence-btn" id="influenceBtn">
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="3" cy="7" r="2" stroke="currentColor" stroke-width="1"/><circle cx="11" cy="3" r="2" stroke="currentColor" stroke-width="1"/><circle cx="11" cy="11" r="2" stroke="currentColor" stroke-width="1"/><path d="M5 6.5L9 3.5M5 7.5L9 10.5" stroke="currentColor" stroke-width="0.8"/></svg>
                 Who Influenced Who
             </button>
         </div>
         <div class="suggestions-panel" id="suggestionsPanel"></div>
-        <div class="suggestions-panel" id="explorePanel"></div>
         <div class="stats-detail" id="statsDetail">
             <div class="stats-detail-grid">
                 <div class="stats-section" style="grid-column: 1 / -1;">
@@ -2045,6 +2043,7 @@
                     </div>
                 </div>
 
+                <div class="modal-artist-bio" id="modalArtistBio" style="display:none;font-size:13px;color:var(--text-dim);line-height:1.6;margin:12px 0;padding:12px;background:var(--surface-2);border-radius:8px;border-left:3px solid var(--vinyl-color);"></div>
                 <div class="modal-description" id="modalDescription" style="display:none;font-size:13px;color:var(--text-dim);line-height:1.6;margin:12px 0;padding:12px;background:var(--surface-2);border-radius:8px;border-left:3px solid var(--accent);"></div>
 
                 <div class="modal-links" id="modalLinks"></div>
@@ -2770,13 +2769,13 @@
                 const group = genreGroups[genre];
                 // Distribute groups around center in a circle
                 const gAngle = (gi / groupKeys.length) * Math.PI * 2 - Math.PI / 2;
-                const gDist = Math.min(usableW, usableH) * 0.3;
+                const gDist = Math.min(usableW, usableH) * 0.38;
                 const cx = W / 2 + Math.cos(gAngle) * gDist;
                 const cy = H / 2 + Math.sin(gAngle) * gDist;
 
                 group.forEach((a, ai) => {
                     const subAngle = (ai / Math.max(1, group.length)) * Math.PI * 2;
-                    const subDist = Math.min(50, 15 + group.length * 4);
+                    const subDist = Math.min(80, 20 + group.length * 6);
                     const radius = Math.max(8, Math.min(28, 6 + a.count * 3));
                     nodes.push({
                         id: nodeIdx,
@@ -2813,7 +2812,7 @@
             influenceEdges = edges;
 
             // Stable force simulation with fast cooling
-            const REPULSION = 600;
+            const REPULSION = 1200;
             const ATTRACTION = 0.005;
             const DAMPING = 0.75;
             const CENTER_GRAVITY = 0.01;
@@ -2830,9 +2829,9 @@
                         const dx = nodes[j].x - nodes[i].x;
                         const dy = nodes[j].y - nodes[i].y;
                         const distSq = dx * dx + dy * dy;
-                        if (distSq > 200 * 200) continue; // skip distant pairs
+                        if (distSq > 400 * 400) continue; // skip distant pairs
                         const dist = Math.sqrt(distSq) || 1;
-                        const force = Math.min(3, REPULSION / distSq);
+                        const force = Math.min(5, REPULSION / distSq);
                         const fx = (dx / dist) * force;
                         const fy = (dy / dist) * force;
                         if (!nodes[i].pinned) { nodes[i].vx -= fx; nodes[i].vy -= fy; }
@@ -2846,7 +2845,7 @@
                     const dx = b.x - a.x;
                     const dy = b.y - a.y;
                     const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-                    const idealDist = 60;
+                    const idealDist = 100;
                     const force = (dist - idealDist) * ATTRACTION * e.strength;
                     const fx = (dx / dist) * force;
                     const fy = (dy / dist) * force;
@@ -3560,10 +3559,19 @@
                 scrobblesItem.style.display = 'none';
             }
 
-            // Description
+            // Artist bio
+            const bioEl = document.getElementById('modalArtistBio');
+            if (album.artist_bio) {
+                bioEl.innerHTML = '<strong style="color:var(--text-main);font-size:11px;text-transform:uppercase;letter-spacing:0.5px;">About ' + album.artist + '</strong><br>' + album.artist_bio;
+                bioEl.style.display = '';
+            } else {
+                bioEl.style.display = 'none';
+            }
+
+            // Album description
             const descEl = document.getElementById('modalDescription');
             if (album.description) {
-                descEl.textContent = album.description;
+                descEl.innerHTML = '<strong style="color:var(--text-main);font-size:11px;text-transform:uppercase;letter-spacing:0.5px;">About this album</strong><br>' + album.description;
                 descEl.style.display = '';
             } else {
                 descEl.style.display = 'none';
@@ -3968,82 +3976,21 @@
 
         document.getElementById('heatmapBtn').addEventListener('click', toggleHeatmap);
 
-        // ============ WHAT AM I MISSING? (albums from artists you already own) ============
+        // ============ WHAT AM I MISSING? (genre DNA, shallow dips, discovery) ============
         function initSuggestions() {
-            if (!SUGGESTIONS || SUGGESTIONS.length === 0) return;
             const btn = document.getElementById('suggestionsBtn');
             const panel = document.getElementById('suggestionsPanel');
             btn.style.display = '';
 
             btn.addEventListener('click', () => {
                 const isOpen = panel.classList.toggle('open');
-                btn.textContent = isOpen ? 'Hide missing' : 'What am I missing?';
+                btn.textContent = isOpen ? 'Hide' : 'What am I missing?';
                 if (isOpen && !panel.hasChildNodes()) renderSuggestions();
             });
         }
 
         function renderSuggestions() {
             const panel = document.getElementById('suggestionsPanel');
-            panel.innerHTML = '';
-
-            const recs = SUGGESTIONS.filter(s => s.missing.length >= 1)
-                .sort((a, b) => b.missing.length - a.missing.length);
-
-            if (recs.length === 0) {
-                panel.innerHTML = '<div style="font-size:13px;color:var(--text-dim);">Your collection is impressively complete!</div>';
-                return;
-            }
-
-            const heading = document.createElement('div');
-            heading.style.cssText = 'font-size:12px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;';
-            heading.textContent = 'Albums you\'re missing from artists you own';
-            panel.appendChild(heading);
-
-            recs.forEach(s => {
-                const div = document.createElement('div');
-                div.className = 'suggestion-artist';
-                const ownedPct = Math.round((s.owned / s.total) * 100);
-                const barColor = ownedPct > 60 ? 'var(--accent)' : ownedPct > 30 ? 'var(--vinyl-color)' : 'var(--scrobble-color)';
-                const missing = s.missing.slice(0, 5).map(m => {
-                    const mbLink = m.mbid ? `https://musicbrainz.org/release-group/${m.mbid}` : '';
-                    const label = m.title + (m.year ? ` (${m.year})` : '');
-                    const inner = mbLink
-                        ? `<a href="${mbLink}" target="_blank" rel="noopener">${label}</a>`
-                        : label;
-                    return `<span class="suggestion-album">${inner}</span>`;
-                }).join('');
-                const moreText = s.missing.length > 5 ? `<span style="font-size:11px;color:var(--text-dim);margin-left:4px;">+${s.missing.length - 5} more</span>` : '';
-                div.innerHTML = `
-                    <div class="suggestion-header">
-                        <span class="suggestion-artist-name">${s.artist}</span>
-                        <span class="suggestion-count">${s.owned} of ${s.total} (${ownedPct}%)</span>
-                    </div>
-                    <div style="height:4px;background:var(--surface-2);border-radius:2px;margin-bottom:8px;overflow:hidden;">
-                        <div style="width:${ownedPct}%;height:100%;background:${barColor};border-radius:2px;transition:width 0.5s;"></div>
-                    </div>
-                    <div class="suggestion-missing">${missing}${moreText}</div>
-                `;
-                panel.appendChild(div);
-            });
-        }
-
-        initSuggestions();
-
-        // ============ ARTISTS TO EXPLORE (new artists based on your genres) ============
-        function initExplore() {
-            const btn = document.getElementById('exploreBtn');
-            const panel = document.getElementById('explorePanel');
-            btn.style.display = '';
-
-            btn.addEventListener('click', () => {
-                const isOpen = panel.classList.toggle('open');
-                btn.textContent = isOpen ? 'Hide explore' : 'Artists to Explore';
-                if (isOpen && !panel.hasChildNodes()) renderExplorePanel();
-            });
-        }
-
-        function renderExplorePanel() {
-            const panel = document.getElementById('explorePanel');
             panel.innerHTML = '';
 
             // Build genre profile
@@ -4062,7 +4009,7 @@
 
             const topGenres = Object.entries(gCounts).sort((a, b) => b[1] - a[1]).slice(0, 8);
 
-            // Genre profile header
+            // Genre DNA
             if (topGenres.length) {
                 const profileDiv = document.createElement('div');
                 profileDiv.style.cssText = 'margin-bottom:18px;';
@@ -4102,7 +4049,7 @@
                 panel.appendChild(profileDiv);
             }
 
-            // "Shallow dips" — artists where user owns just 1 album (potential deep dives)
+            // Shallow dips — artists where user owns just 1 album
             const shallowArtists = Object.entries(artistAlbumCount)
                 .filter(([_, count]) => count === 1)
                 .map(([artist]) => artist)
@@ -4178,7 +4125,7 @@
             }
         }
 
-        initExplore();
+        initSuggestions();
 
         // ============ LOGO / HOME RESET ============
         document.getElementById('logoHome').addEventListener('click', resetAllFilters);
@@ -4225,10 +4172,6 @@
             window.scrollTo({ top: 0, behavior: 'smooth' });
             // Close panels
             document.getElementById('topbarControls').classList.remove('open');
-            const explorePanel = document.getElementById('explorePanel');
-            if (explorePanel) { explorePanel.classList.remove('open'); }
-            const exploreBtn = document.getElementById('exploreBtn');
-            if (exploreBtn) { exploreBtn.textContent = 'Artists to Explore'; }
             const suggestionsPanel = document.getElementById('suggestionsPanel');
             if (suggestionsPanel) { suggestionsPanel.classList.remove('open'); }
             const suggestionsBtn = document.getElementById('suggestionsBtn');
