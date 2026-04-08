@@ -354,6 +354,12 @@
             opacity: 0.8;
         }
 
+        .card-plays {
+            font-size: 10px;
+            color: var(--accent);
+            opacity: 0.8;
+        }
+
         .card-genres {
             display: flex;
             flex-wrap: wrap;
@@ -1438,6 +1444,7 @@
                 <button class="dropdown-item" data-sort="year-desc">Year (New First)</button>
                 <button class="dropdown-item" data-sort="year-asc">Year (Old First)</button>
                 <button class="dropdown-item" data-sort="recently-played">Recently Played</button>
+                <button class="dropdown-item" data-sort="most-played">Most Scrobbled</button>
             </div>
         </div>
 
@@ -1524,6 +1531,14 @@
                     <div class="stats-section-title">Top Genres</div>
                     <div class="type-breakdown" id="genreBreakdown"></div>
                 </div>
+                <div class="stats-section" id="mostPlayedSection" style="display:none;">
+                    <div class="stats-section-title">Most Played</div>
+                    <div class="top-artists" id="mostPlayed"></div>
+                </div>
+                <div class="stats-section" id="mostNeglectedSection" style="display:none;">
+                    <div class="stats-section-title">Most Neglected</div>
+                    <div class="top-artists" id="mostNeglected"></div>
+                </div>
             </div>
         </div>
         <div class="grid" id="grid"></div>
@@ -1594,6 +1609,10 @@
                     <div class="metadata-item">
                         <div class="metadata-label">Last Played</div>
                         <div class="metadata-value" id="modalLastPlayed"></div>
+                    </div>
+                    <div class="metadata-item" id="modalScrobblesItem" style="display:none;">
+                        <div class="metadata-label">Scrobbles</div>
+                        <div class="metadata-value" id="modalScrobbles"></div>
                     </div>
                 </div>
 
@@ -1845,6 +1864,9 @@
                         return bDate - aDate;
                     });
                     break;
+                case 'most-played':
+                    result.sort((a, b) => (b.lastfm_plays || 0) - (a.lastfm_plays || 0));
+                    break;
             }
             return result;
         }
@@ -1895,6 +1917,14 @@
             content.appendChild(title);
             content.appendChild(meta);
             content.appendChild(runtime);
+
+            // Last.fm play count
+            if (album.lastfm_plays) {
+                const plays = document.createElement('div');
+                plays.className = 'card-plays';
+                plays.textContent = `${album.lastfm_plays} scrobble${album.lastfm_plays !== 1 ? 's' : ''}`;
+                content.appendChild(plays);
+            }
 
             // Genre chips
             if (album.genres && album.genres.length) {
@@ -2344,6 +2374,47 @@
                 chip.textContent = `${genre} (${count})`;
                 genreEl.appendChild(chip);
             });
+
+            // ---- Last.fm: Most Played & Most Neglected ----
+            const hasLastfm = albums.some(a => a.lastfm_plays);
+            const mpSection = document.getElementById('mostPlayedSection');
+            const mnSection = document.getElementById('mostNeglectedSection');
+
+            if (hasLastfm) {
+                mpSection.style.display = '';
+                mnSection.style.display = '';
+
+                const byPlays = [...albums].filter(a => a.lastfm_plays).sort((a, b) => b.lastfm_plays - a.lastfm_plays);
+                const mpEl = document.getElementById('mostPlayed');
+                mpEl.innerHTML = '';
+                byPlays.slice(0, 10).forEach(a => {
+                    const row = document.createElement('div');
+                    row.style.cssText = 'display:flex;justify-content:space-between;padding:4px 0;font-size:13px;border-bottom:1px solid rgba(255,255,255,0.04);';
+                    row.innerHTML = `<span style="color:var(--text)">${a.artist} — ${a.title}</span><span style="color:var(--accent);font-weight:600;">${a.lastfm_plays}</span>`;
+                    mpEl.appendChild(row);
+                });
+
+                const unplayed = albums.filter(a => !a.lastfm_plays);
+                const mnEl = document.getElementById('mostNeglected');
+                mnEl.innerHTML = '';
+                if (unplayed.length > 0) {
+                    // Show random 10 from unplayed
+                    const shuffled = [...unplayed].sort(() => Math.random() - 0.5).slice(0, 10);
+                    shuffled.forEach(a => {
+                        const row = document.createElement('div');
+                        row.style.cssText = 'display:flex;justify-content:space-between;padding:4px 0;font-size:13px;border-bottom:1px solid rgba(255,255,255,0.04);';
+                        row.innerHTML = `<span style="color:var(--text)">${a.artist} — ${a.title}</span><span style="color:var(--text-dim)">0 plays</span>`;
+                        mnEl.appendChild(row);
+                    });
+                    const note = document.createElement('div');
+                    note.style.cssText = 'font-size:11px;color:var(--text-dim);margin-top:8px;';
+                    note.textContent = `${unplayed.length} unscrobbled albums total`;
+                    mnEl.appendChild(note);
+                }
+            } else {
+                mpSection.style.display = 'none';
+                mnSection.style.display = 'none';
+            }
         }
 
         // ============ MODAL ============
@@ -2368,6 +2439,17 @@
             modalRuntime.textContent = album.length;
             modalTypeValue.textContent = album.type;
             modalLastPlayed.textContent = fmtDate(album.last_played);
+
+            // Last.fm scrobbles
+            const scrobblesItem = document.getElementById('modalScrobblesItem');
+            const scrobblesValue = document.getElementById('modalScrobbles');
+            if (album.lastfm_plays) {
+                scrobblesItem.style.display = '';
+                scrobblesValue.textContent = album.lastfm_plays.toLocaleString();
+            } else {
+                scrobblesItem.style.display = 'none';
+            }
+
             modalCollectionBadge.textContent = album.collection === 'cd' ? 'CD Collection' : 'Vinyl Collection';
             modalCollectionBadge.style.color = album.collection === 'cd' ? 'var(--cd-color)' : 'var(--vinyl-color)';
 

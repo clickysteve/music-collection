@@ -566,6 +566,126 @@ def itunes_cover_fallback(albums, label=""):
     return albums
 
 
+LASTFM_CACHE_FILE = SITE_DIR / "lastfm_cache.json"
+
+
+def fetch_lastfm_data(all_albums):
+    """Fetch listening data from Last.fm and match against collection.
+
+    Requires LASTFM_API_KEY and LASTFM_USER environment variables.
+    Uses user.getTopAlbums (paginated) to get play counts for all albums.
+    Caches for 24 hours.
+    """
+    import time
+
+    api_key = os.environ.get("LASTFM_API_KEY", "").strip()
+    username = os.environ.get("LASTFM_USER", "").strip()
+
+    if not api_key or not username:
+        print("  Skipping Last.fm: set LASTFM_API_KEY and LASTFM_USER")
+        return all_albums
+
+    # Check cache
+    cache = {}
+    if LASTFM_CACHE_FILE.exists():
+        try:
+            cache = json.loads(LASTFM_CACHE_FILE.read_text(encoding="utf-8"))
+            if time.time() - cache.get("_ts", 0) < 24 * 3600:
+                print("  Using cached Last.fm data (< 24h old)")
+                return _apply_lastfm(all_albums, cache)
+        except Exception:
+            pass
+
+    print(f"  Fetching Last.fm data for user '{username}'...")
+
+    # Fetch all top albums (paginated)
+    lastfm_albums = {}
+    page = 1
+    total_pages = 1
+
+    while page <= total_pages:
+        try:
+            resp = requests.get("https://ws.audioscrobbler.com/2.0/", params={
+                "method": "user.getTopAlbums",
+                "user": username,
+                "api_key": api_key,
+                "format": "json",
+                "limit": 200,
+                "page": page,
+            }, timeout=15)
+            resp.raise_for_status()
+            data = resp.json()
+
+            top = data.get("topalbums", {})
+            total_pages = int(top.get("@attr", {}).get("totalPages", 1))
+            albums_page = top.get("album", [])
+
+            for a in albums_page:
+                artist = a.get("artist", {}).get("name", "").lower()
+                name = a.get("name", "").lower()
+                plays = int(a.get("playcount", 0))
+                key = f"{artist}|||{name}"
+                lastfm_albums[key] = plays
+
+            print(f"    Page {page}/{total_pages} ({len(albums_page)} albums)")
+            page += 1
+            time.sleep(0.3)
+
+        except Exception as e:
+            print(f"    Error on page {page}: {e}")
+            break
+
+    # Also fetch recent tracks to get last-played timestamps (last 200)
+    lastfm_recent = {}
+    try:
+        resp = requests.get("https://ws.audioscrobbler.com/2.0/", params={
+            "method": "user.getRecentTracks",
+            "user": username,
+            "api_key": api_key,
+            "format": "json",
+            "limit": 200,
+        }, timeout=15)
+        resp.raise_for_status()
+        tracks = resp.json().get("recenttracks", {}).get("track", [])
+        for t in tracks:
+            artist = t.get("artist", {}).get("#text", "").lower()
+            album_name = t.get("album", {}).get("#text", "").lower()
+            date_str = t.get("date", {}).get("#text", "")
+            if artist and album_name and date_str:
+                key = f"{artist}|||{album_name}"
+                if key not in lastfm_recent:
+                    lastfm_recent[key] = date_str
+        print(f"    Recent tracks: {len(lastfm_recent)} unique albums")
+    except Exception as e:
+        print(f"    Recent tracks error: {e}")
+
+    cache = {"_ts": time.time(), "plays": lastfm_albums, "recent": lastfm_recent}
+    LASTFM_CACHE_FILE.write_text(json.dumps(cache, ensure_ascii=False), encoding="utf-8")
+    print(f"  Last.fm: {len(lastfm_albums)} albums with play counts")
+
+    return _apply_lastfm(all_albums, cache)
+
+
+def _apply_lastfm(albums, cache):
+    """Apply cached Last.fm data to album list."""
+    plays_data = cache.get("plays", {})
+    recent_data = cache.get("recent", {})
+    matched = 0
+
+    for a in albums:
+        key = f"{a['artist'].lower()}|||{a['title'].lower()}"
+        plays = plays_data.get(key, 0)
+        recent = recent_data.get(key, "")
+        if plays > 0:
+            a["lastfm_plays"] = plays
+            matched += 1
+        if recent:
+            a["lastfm_recent"] = recent
+
+    print(f"  Last.fm matched {matched}/{len(albums)} albums with play counts")
+    return albums
+
+
 def export_to_site():
     print(f"\n{'='*60}")
     print("Exporting to GitHub Pages site")
@@ -584,9 +704,16 @@ def export_to_site():
     cd = extract_dominant_colors(cd, "CDs")
     vinyl = extract_dominant_colors(vinyl, "Vinyl")
 
+    # Fetch Last.fm listening data
+    all_albums = cd + vinyl
+    all_albums = fetch_lastfm_data(all_albums)
+    # Re-split after lastfm enrichment
+    cd_count = len(cd)
+    cd = all_albums[:cd_count]
+    vinyl = all_albums[cd_count:]
+
     # Find missing album suggestions for top artists
     print("\n  Finding missing album suggestions...")
-    all_albums = cd + vinyl
     suggestions = find_missing_albums(all_albums)
 
     inject_into_html(cd, vinyl, INDEX_HTML, suggestions=suggestions)
