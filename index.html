@@ -56,6 +56,13 @@
             flex-wrap: wrap;
         }
 
+        .topbar-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+        }
+
         .topbar-logo {
             font-size: 18px;
             font-weight: 700;
@@ -67,6 +74,23 @@
             flex: 1;
             min-width: 150px;
             max-width: 300px;
+        }
+
+        .topbar-toggle {
+            display: none;
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            border-radius: 6px;
+            padding: 6px 8px;
+            cursor: pointer;
+            margin-left: auto;
+            flex-shrink: 0;
+        }
+        .topbar-toggle:hover { color: var(--text-main); border-color: var(--text-dim); }
+
+        .topbar-controls {
+            display: contents;
         }
 
         .search-input {
@@ -677,8 +701,30 @@
                 align-items: stretch;
             }
 
-            .topbar > * {
+            .topbar-header {
                 width: 100%;
+            }
+
+            .topbar-toggle {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+            }
+
+            .topbar-controls {
+                display: flex;
+                flex-direction: column;
+                gap: 8px;
+                width: 100%;
+                overflow: hidden;
+                max-height: 0;
+                opacity: 0;
+                transition: max-height 0.3s ease, opacity 0.2s ease;
+            }
+
+            .topbar-controls.open {
+                max-height: 500px;
+                opacity: 1;
             }
 
             .topbar-search,
@@ -714,6 +760,10 @@
 
             .topbar-logo {
                 font-size: 16px;
+            }
+
+            .topbar-search {
+                max-width: none;
             }
 
             .search-input {
@@ -1378,17 +1428,23 @@
 <body>
     <!-- Top Bar -->
     <div class="topbar">
-        <div class="topbar-logo">Music.Collection</div>
-
-        <div class="topbar-search">
-            <input
-                type="text"
-                class="search-input"
-                id="searchInput"
-                placeholder="Search albums, artists..."
-                aria-label="Search albums and artists"
-            >
+        <div class="topbar-header">
+            <div class="topbar-logo">Music.Collection</div>
+            <div class="topbar-search">
+                <input
+                    type="text"
+                    class="search-input"
+                    id="searchInput"
+                    placeholder="Search albums, artists..."
+                    aria-label="Search albums and artists"
+                >
+            </div>
+            <button class="topbar-toggle" id="topbarToggle" aria-label="Toggle controls">
+                <svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 6H15M3 12H15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            </button>
         </div>
+
+        <div class="topbar-controls" id="topbarControls">
 
         <div class="pill-group">
             <button class="pill-btn active" data-filter="all" aria-label="Show all albums">
@@ -1487,6 +1543,8 @@
                 aria-label="Adjust tile size"
             >
         </div>
+
+        </div><!-- /topbar-controls -->
     </div>
 
     <!-- Main Container -->
@@ -2539,6 +2597,11 @@
                 currentFilter = btn.getAttribute('data-filter');
                 applyFiltersAndSort();
             });
+        });
+
+        // Mobile topbar toggle
+        document.getElementById('topbarToggle').addEventListener('click', () => {
+            document.getElementById('topbarControls').classList.toggle('open');
         });
 
         // Type filter dropdown
