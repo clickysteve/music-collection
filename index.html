@@ -2442,7 +2442,13 @@
                 mpSection.style.display = '';
                 mnSection.style.display = '';
 
-                const byPlays = [...albums].filter(a => a.lastfm_plays).sort((a, b) => b.lastfm_plays - a.lastfm_plays);
+                // Deduplicate by artist+title (keep highest play count)
+                const seen = new Map();
+                albums.filter(a => a.lastfm_plays).forEach(a => {
+                    const key = `${a.artist.toLowerCase()}|||${a.title.toLowerCase()}`;
+                    if (!seen.has(key) || a.lastfm_plays > seen.get(key).lastfm_plays) seen.set(key, a);
+                });
+                const byPlays = [...seen.values()].sort((a, b) => b.lastfm_plays - a.lastfm_plays);
                 const mpEl = document.getElementById('mostPlayed');
                 mpEl.innerHTML = '';
                 byPlays.slice(0, 10).forEach(a => {
