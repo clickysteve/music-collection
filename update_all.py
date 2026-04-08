@@ -449,6 +449,45 @@ def resolve_cover_urls(albums, label=""):
     return albums
 
 
+def itunes_cover_fallback(albums, label=""):
+    """For albums missing cover art, try the iTunes Search API as a fallback."""
+    import time
+    import urllib.parse
+
+    missing = [(i, a) for i, a in enumerate(albums)
+               if not a.get("cover_url") or a["cover_url"].startswith("https://coverartarchive.org/")]
+
+    if not missing:
+        return albums
+
+    print(f"  iTunes fallback: looking up {len(missing)} {label} albums without covers...")
+    found = 0
+
+    for idx, album in missing:
+        query = f"{album['artist']} {album['title']}"
+        try:
+            resp = requests.get(
+                "https://itunes.apple.com/search",
+                params={"term": query, "media": "music", "entity": "album", "limit": 1},
+                timeout=10,
+            )
+            if resp.status_code == 200:
+                results = resp.json().get("results", [])
+                if results:
+                    art_url = results[0].get("artworkUrl100", "")
+                    if art_url:
+                        # Get 250px version
+                        art_url = art_url.replace("100x100bb", "250x250bb")
+                        albums[idx]["cover_url"] = art_url
+                        found += 1
+        except Exception:
+            pass
+        time.sleep(0.3)  # Be polite
+
+    print(f"  iTunes fallback: found {found}/{len(missing)} covers for {label}")
+    return albums
+
+
 def export_to_site():
     print(f"\n{'='*60}")
     print("Exporting to GitHub Pages site")
@@ -460,6 +499,8 @@ def export_to_site():
     vinyl = export_database(VINYL_DATABASE_ID, "Vinyl Collection", headers)
     cd = resolve_cover_urls(cd, "CDs")
     vinyl = resolve_cover_urls(vinyl, "Vinyl")
+    cd = itunes_cover_fallback(cd, "CDs")
+    vinyl = itunes_cover_fallback(vinyl, "Vinyl")
     cd = extract_dominant_colors(cd, "CDs")
     vinyl = extract_dominant_colors(vinyl, "Vinyl")
 

@@ -949,7 +949,7 @@
         }
 
         .stats-detail.open {
-            max-height: 800px;
+            max-height: 2000px;
             padding: 20px 0;
             border-bottom-color: var(--border);
         }
@@ -1238,6 +1238,8 @@
         .list-view {
             display: none;
             margin-top: 16px;
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
         }
 
         .list-view.active {
@@ -1246,6 +1248,7 @@
 
         .list-table {
             width: 100%;
+            min-width: 540px;
             border-collapse: collapse;
         }
 
@@ -1783,7 +1786,7 @@
             const imgWrapper = document.createElement('div');
             imgWrapper.className = 'card-image-wrapper';
             if (album.color) {
-                imgWrapper.style.background = `linear-gradient(135deg, ${album.color}33 0%, var(--surface-2) 100%)`;
+                card.style.background = `linear-gradient(180deg, ${album.color}22 0%, var(--surface-1) 50%)`;
             }
 
             const img = document.createElement('img');
