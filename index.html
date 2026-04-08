@@ -345,6 +345,24 @@
             justify-content: space-between;
         }
 
+        /* Heatmap button */
+        .heatmap-btn {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            border-radius: 6px;
+            padding: 6px 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .heatmap-btn:hover { border-color: var(--text-dim); color: var(--text-main); }
+        .heatmap-btn.active { border-color: var(--accent); color: var(--accent); }
+
+        /* Heatmap glow on cards */
+        .heatmap-active .card {
+            transition: box-shadow 0.4s ease, border-color 0.4s ease;
+        }
+
         .card-content-vinyl {
             background: rgba(232, 135, 58, 0.08);
             border-bottom: 3px solid rgba(232, 135, 58, 0.5);
@@ -1521,6 +1539,10 @@
             </button>
         </div>
 
+        <button class="heatmap-btn" id="heatmapBtn" aria-label="Toggle scrobble heatmap" title="Scrobble heatmap">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M8 2C5 2 3 5 3 8C3 12 8 14 8 14C8 14 13 12 13 8C13 5 11 2 8 2Z" stroke="currentColor" stroke-width="1.2" fill="none"/><circle cx="8" cy="7" r="2" stroke="currentColor" stroke-width="1"/></svg>
+        </button>
+
         <div class="size-slider-group" id="sizeSliderGroup">
             <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <rect x="1" y="1" width="3" height="3" stroke="currentColor" stroke-width="1"/>
@@ -1597,6 +1619,10 @@
                     <div class="stats-section-title">Most Neglected</div>
                     <div class="top-artists" id="mostNeglected"></div>
                 </div>
+                <div class="stats-section" id="compatSection" style="display:none;grid-column: 1 / -1;">
+                    <div class="stats-section-title">Collection vs Listening</div>
+                    <div id="compatScores"></div>
+                </div>
             </div>
         </div>
         <div class="grid" id="grid"></div>
@@ -1632,6 +1658,7 @@
             <div class="random-pick-label">You should listen to...</div>
             <div class="random-pick-title" id="pickTitle"></div>
             <div class="random-pick-meta" id="pickMeta"></div>
+            <div class="random-pick-reason" id="pickReason" style="font-size:12px;color:var(--accent);margin-top:6px;min-height:18px;"></div>
             <div class="random-pick-actions">
                 <button class="pick-again-btn" id="pickAgainBtn">Pick Another</button>
                 <button class="pick-close-btn" id="pickCloseBtn">Close</button>
@@ -2122,6 +2149,9 @@
             if (document.getElementById('statsDetail').classList.contains('open')) {
                 updateDetailedStats();
             }
+            if (heatmapActive) {
+                requestAnimationFrame(applyHeatmap);
+            }
         }
 
         function renderListView() {
@@ -2479,6 +2509,82 @@
                 mpSection.style.display = 'none';
                 mnSection.style.display = 'none';
             }
+
+            // ---- Collection vs Listening compatibility ----
+            const compatSection = document.getElementById('compatSection');
+            const compatEl = document.getElementById('compatScores');
+
+            if (hasLastfm) {
+                compatSection.style.display = '';
+                compatEl.innerHTML = '';
+
+                // Collection genre distribution (equal weight per album)
+                const collGenres = {};
+                let collTotal = 0;
+                albums.forEach(a => {
+                    (a.genres || []).forEach(g => { collGenres[g] = (collGenres[g] || 0) + 1; collTotal++; });
+                });
+
+                // Listening genre distribution (weighted by scrobble count)
+                const listenGenres = {};
+                let listenTotal = 0;
+                albums.forEach(a => {
+                    const plays = a.lastfm_plays || 0;
+                    if (plays > 0) {
+                        (a.genres || []).forEach(g => { listenGenres[g] = (listenGenres[g] || 0) + plays; listenTotal += plays; });
+                    }
+                });
+
+                if (collTotal && listenTotal) {
+                    // Get top genres across both
+                    const allGenreKeys = new Set([...Object.keys(collGenres), ...Object.keys(listenGenres)]);
+                    const compared = [];
+                    allGenreKeys.forEach(g => {
+                        const collPct = ((collGenres[g] || 0) / collTotal) * 100;
+                        const listenPct = ((listenGenres[g] || 0) / listenTotal) * 100;
+                        const diff = listenPct - collPct;
+                        if (collPct > 2 || listenPct > 2) {
+                            compared.push({ genre: g, collPct, listenPct, diff });
+                        }
+                    });
+
+                    compared.sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff));
+
+                    // Header
+                    const header = document.createElement('div');
+                    header.style.cssText = 'display:grid;grid-template-columns:1fr 70px 70px 80px;gap:8px;font-size:11px;color:var(--text-dim);font-weight:700;text-transform:uppercase;letter-spacing:0.3px;padding-bottom:8px;border-bottom:1px solid var(--border);margin-bottom:4px;';
+                    header.innerHTML = '<span>Genre</span><span style="text-align:right">Own</span><span style="text-align:right">Listen</span><span style="text-align:right">Drift</span>';
+                    compatEl.appendChild(header);
+
+                    compared.slice(0, 10).forEach(c => {
+                        const row = document.createElement('div');
+                        row.style.cssText = 'display:grid;grid-template-columns:1fr 70px 70px 80px;gap:8px;font-size:13px;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.04);';
+
+                        const driftColor = c.diff > 2 ? 'var(--accent)' : c.diff < -2 ? 'var(--vinyl-color)' : 'var(--text-dim)';
+                        const driftSign = c.diff > 0 ? '+' : '';
+                        const arrow = c.diff > 2 ? ' ↑' : c.diff < -2 ? ' ↓' : '';
+
+                        row.innerHTML = `<span style="color:var(--text)">${c.genre}</span><span style="text-align:right;color:var(--text-dim)">${c.collPct.toFixed(1)}%</span><span style="text-align:right;color:var(--text-dim)">${c.listenPct.toFixed(1)}%</span><span style="text-align:right;color:${driftColor};font-weight:600">${driftSign}${c.diff.toFixed(1)}%${arrow}</span>`;
+                        compatEl.appendChild(row);
+                    });
+
+                    // Summary
+                    const overlistened = compared.filter(c => c.diff > 3).slice(0, 3).map(c => c.genre);
+                    const underlistened = compared.filter(c => c.diff < -3).slice(0, 3).map(c => c.genre);
+                    if (overlistened.length || underlistened.length) {
+                        const summary = document.createElement('div');
+                        summary.style.cssText = 'font-size:12px;color:var(--text-dim);margin-top:12px;line-height:1.6;';
+                        let text = '';
+                        if (overlistened.length) text += `<span style="color:var(--accent)">Listening more than you own:</span> ${overlistened.join(', ')}`;
+                        if (overlistened.length && underlistened.length) text += '<br>';
+                        if (underlistened.length) text += `<span style="color:var(--vinyl-color)">Own more than you listen:</span> ${underlistened.join(', ')}`;
+                        summary.innerHTML = text;
+                        compatEl.appendChild(summary);
+                    }
+                }
+            } else {
+                compatSection.style.display = 'none';
+            }
         }
 
         // ============ MODAL ============
@@ -2720,8 +2826,41 @@
         // Random pick
         function showRandomPick() {
             const pool = filteredAlbums.length > 0 ? filteredAlbums : allAlbums;
-            const album = pool[Math.floor(Math.random() * pool.length)];
-            if (!album) return;
+            if (!pool.length) return;
+
+            // Smart weighting: heavily favour unscrobbled/neglected albums
+            const hasLastfm = pool.some(a => a.lastfm_plays);
+            let album;
+            let reason = '';
+
+            if (hasLastfm) {
+                const maxPlays = Math.max(...pool.map(a => a.lastfm_plays || 0));
+                // Weight: inverse of play count, unplayed get max weight
+                const weights = pool.map(a => {
+                    const plays = a.lastfm_plays || 0;
+                    return plays === 0 ? maxPlays + 10 : Math.max(1, maxPlays - plays);
+                });
+                const totalWeight = weights.reduce((s, w) => s + w, 0);
+                let r = Math.random() * totalWeight;
+                let idx = 0;
+                for (let i = 0; i < weights.length; i++) {
+                    r -= weights[i];
+                    if (r <= 0) { idx = i; break; }
+                }
+                album = pool[idx];
+
+                // Generate reason
+                const plays = album.lastfm_plays || 0;
+                if (plays === 0) {
+                    reason = 'Never scrobbled — give it a spin!';
+                } else if (plays < 10) {
+                    reason = `Only ${plays} scrobble${plays !== 1 ? 's' : ''} — barely touched`;
+                } else {
+                    reason = `${plays} scrobbles — revisit this one`;
+                }
+            } else {
+                album = pool[Math.floor(Math.random() * pool.length)];
+            }
 
             const overlay = document.getElementById('pickOverlay');
             const img = document.getElementById('pickImage');
@@ -2729,6 +2868,7 @@
             img.alt = `${album.artist} - ${album.title}`;
             document.getElementById('pickTitle').textContent = album.title;
             document.getElementById('pickMeta').textContent = `${album.artist} · ${album.year || ''}`;
+            document.getElementById('pickReason').textContent = reason;
 
             // Color tint on the pick card
             const card = document.getElementById('pickCard');
@@ -2751,6 +2891,58 @@
         document.getElementById('pickOverlay').addEventListener('click', (e) => {
             if (e.target === document.getElementById('pickOverlay')) closeRandomPick();
         });
+
+        // ============ HEATMAP ============
+        let heatmapActive = false;
+
+        function toggleHeatmap() {
+            heatmapActive = !heatmapActive;
+            document.getElementById('heatmapBtn').classList.toggle('active', heatmapActive);
+            document.getElementById('grid').classList.toggle('heatmap-active', heatmapActive);
+            applyHeatmap();
+        }
+
+        function applyHeatmap() {
+            const cards = document.querySelectorAll('#grid .card');
+            if (!heatmapActive) {
+                cards.forEach(c => { c.style.boxShadow = ''; c.style.borderColor = ''; c.style.opacity = ''; });
+                return;
+            }
+
+            const maxPlays = Math.max(1, ...filteredAlbums.map(a => a.lastfm_plays || 0));
+
+            cards.forEach((card, i) => {
+                const album = filteredAlbums[i];
+                if (!album) return;
+                const plays = album.lastfm_plays || 0;
+                const ratio = plays / maxPlays;
+
+                if (plays === 0) {
+                    // Cold: dim and grey border
+                    card.style.borderColor = 'rgba(255,255,255,0.05)';
+                    card.style.boxShadow = 'none';
+                    card.style.opacity = '0.5';
+                } else if (ratio < 0.2) {
+                    // Cool
+                    card.style.borderColor = `rgba(74, 158, 237, ${0.3 + ratio})`;
+                    card.style.boxShadow = `0 0 8px rgba(74, 158, 237, ${ratio * 0.5})`;
+                    card.style.opacity = `${0.7 + ratio * 1.5}`;
+                } else if (ratio < 0.5) {
+                    // Warm
+                    card.style.borderColor = `rgba(29, 185, 84, ${0.3 + ratio})`;
+                    card.style.boxShadow = `0 0 12px rgba(29, 185, 84, ${ratio * 0.5})`;
+                    card.style.opacity = '1';
+                } else {
+                    // Hot
+                    const glow = 0.3 + ratio * 0.7;
+                    card.style.borderColor = `rgba(232, 135, 58, ${glow})`;
+                    card.style.boxShadow = `0 0 ${10 + ratio * 15}px rgba(232, 135, 58, ${ratio * 0.6})`;
+                    card.style.opacity = '1';
+                }
+            });
+        }
+
+        document.getElementById('heatmapBtn').addEventListener('click', toggleHeatmap);
 
         // ============ SUGGESTIONS ============
         function initSuggestions() {
