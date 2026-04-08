@@ -1158,18 +1158,21 @@
             playedBtn.style.pointerEvents = 'none';
             actions.appendChild(playedBtn);
 
-            // Scrobble pill link
+            // Scrobble pill link — direct URL if available, otherwise OpenScrobbler search
+            const scrobbleLink = document.createElement('a');
+            scrobbleLink.className = 'scrobble-pill';
+            scrobbleLink.target = '_blank';
+            scrobbleLink.textContent = 'Scrobble';
             if (album.direct_scrobble_url) {
-                const scrobbleLink = document.createElement('a');
-                scrobbleLink.className = 'scrobble-pill';
                 scrobbleLink.href = album.direct_scrobble_url;
-                scrobbleLink.target = '_blank';
-                scrobbleLink.textContent = 'Scrobble';
-                scrobbleLink.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                });
-                actions.appendChild(scrobbleLink);
+            } else {
+                const q = encodeURIComponent((album.artist + ' ' + album.title).toLowerCase());
+                scrobbleLink.href = 'https://openscrobbler.com/scrobble/album/search/' + q;
             }
+            scrobbleLink.addEventListener('click', (e) => {
+                e.stopPropagation();
+            });
+            actions.appendChild(scrobbleLink);
 
             // Collection badge
             const badge = document.createElement('div');
@@ -1316,14 +1319,17 @@
                 link.innerHTML = `${createLinkIcon('external').outerHTML} Discogs`;
                 modalLinks.appendChild(link);
             }
+            const scrobbleModalLink = document.createElement('a');
+            scrobbleModalLink.target = '_blank';
+            scrobbleModalLink.className = 'link-btn';
+            scrobbleModalLink.innerHTML = `${createHeadphonesIcon().outerHTML} Scrobble`;
             if (album.direct_scrobble_url) {
-                const link = document.createElement('a');
-                link.href = album.direct_scrobble_url;
-                link.target = '_blank';
-                link.className = 'link-btn';
-                link.innerHTML = `${createHeadphonesIcon().outerHTML} Scrobble`;
-                modalLinks.appendChild(link);
+                scrobbleModalLink.href = album.direct_scrobble_url;
+            } else {
+                const sq = encodeURIComponent((album.artist + ' ' + album.title).toLowerCase());
+                scrobbleModalLink.href = 'https://openscrobbler.com/scrobble/album/search/' + sq;
             }
+            modalLinks.appendChild(scrobbleModalLink);
 
             modalOverlay.classList.add('show');
             document.getElementById('modal').focus();
