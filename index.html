@@ -1151,13 +1151,13 @@
         /* Scroll to top */
         .scroll-top {
             position: fixed;
-            bottom: 28px;
-            right: 28px;
-            width: 48px;
-            height: 48px;
+            bottom: 32px;
+            right: 32px;
+            width: 52px;
+            height: 52px;
             border-radius: 50%;
             background: var(--accent);
-            border: none;
+            border: 2px solid rgba(255,255,255,0.2);
             color: #fff;
             cursor: pointer;
             display: flex;
@@ -1165,11 +1165,10 @@
             justify-content: center;
             opacity: 0;
             pointer-events: none;
-            font-size: 20px;
-            box-shadow: 0 4px 16px rgba(0,0,0,0.4);
-            z-index: 200;
-            transition: opacity 0.3s, background 0.2s;
-            z-index: 90;
+            font-size: 22px;
+            box-shadow: 0 4px 20px rgba(29,185,84,0.4), 0 2px 8px rgba(0,0,0,0.3);
+            z-index: 9999;
+            transition: opacity 0.3s, transform 0.2s, background 0.2s;
         }
         .scroll-top.visible {
             opacity: 1;
@@ -1178,7 +1177,7 @@
         .scroll-top:hover {
             background: #17a34a;
             color: #fff;
-            transform: scale(1.1);
+            transform: scale(1.15);
         }
 
         .random-pick-overlay {
@@ -3897,7 +3896,7 @@
 
         document.getElementById('heatmapBtn').addEventListener('click', toggleHeatmap);
 
-        // ============ SUGGESTIONS ============
+        // ============ WHAT AM I MISSING? (albums from artists you already own) ============
         function initSuggestions() {
             if (!SUGGESTIONS || SUGGESTIONS.length === 0) return;
             const btn = document.getElementById('suggestionsBtn');
@@ -3906,7 +3905,7 @@
 
             btn.addEventListener('click', () => {
                 const isOpen = panel.classList.toggle('open');
-                btn.textContent = isOpen ? 'Hide suggestions' : 'What am I missing?';
+                btn.textContent = isOpen ? 'Hide missing' : 'What am I missing?';
                 if (isOpen && !panel.hasChildNodes()) renderSuggestions();
             });
         }
@@ -3914,72 +3913,18 @@
         function renderSuggestions() {
             const panel = document.getElementById('suggestionsPanel');
             panel.innerHTML = '';
-            SUGGESTIONS.forEach(s => {
-                const div = document.createElement('div');
-                div.className = 'suggestion-artist';
-                const missing = s.missing.map(m => {
-                    const mbLink = m.mbid ? `https://musicbrainz.org/release-group/${m.mbid}` : '';
-                    const label = m.title + (m.year ? ` (${m.year})` : '');
-                    const inner = mbLink
-                        ? `<a href="${mbLink}" target="_blank" rel="noopener">${label}</a>`
-                        : label;
-                    return `<span class="suggestion-album">${inner}</span>`;
-                }).join('');
-                div.innerHTML = `
-                    <div class="suggestion-header">
-                        <span class="suggestion-artist-name">${s.artist}</span>
-                        <span class="suggestion-count">You have ${s.owned} of ${s.total}</span>
-                    </div>
-                    <div class="suggestion-missing">${missing}</div>
-                `;
-                panel.appendChild(div);
-            });
-        }
 
-        initSuggestions();
-
-        // ============ ARTISTS TO EXPLORE (own panel) ============
-        function initExplore() {
-            if (!SUGGESTIONS || SUGGESTIONS.length === 0) return;
-            const btn = document.getElementById('exploreBtn');
-            const panel = document.getElementById('explorePanel');
-            btn.style.display = '';
-
-            btn.addEventListener('click', () => {
-                const isOpen = panel.classList.toggle('open');
-                btn.textContent = isOpen ? 'Hide explore' : 'Artists to Explore';
-                if (isOpen && !panel.hasChildNodes()) renderExplorePanel();
-            });
-        }
-
-        function renderExplorePanel() {
-            const panel = document.getElementById('explorePanel');
-            panel.innerHTML = '';
-
-            // Genre summary
-            const gCounts = {};
-            allAlbums.forEach(a => (a.genres || []).forEach(g => gCounts[g] = (gCounts[g] || 0) + 1));
-            const top5 = Object.entries(gCounts).sort((a, b) => b[1] - a[1]).slice(0, 5).map(e => e[0]);
-
-            if (top5.length) {
-                const genreRow = document.createElement('div');
-                genreRow.style.cssText = 'margin-bottom:14px;font-size:13px;color:var(--text-dim);';
-                genreRow.innerHTML = 'Your top genres: ' + top5.map(g => `<span style="color:var(--accent);font-weight:600;">${g}</span>`).join(', ');
-                panel.appendChild(genreRow);
-            }
-
-            // Artists with most missing albums
-            const recs = SUGGESTIONS.filter(s => s.missing.length >= 2)
+            const recs = SUGGESTIONS.filter(s => s.missing.length >= 1)
                 .sort((a, b) => b.missing.length - a.missing.length);
 
             if (recs.length === 0) {
-                panel.innerHTML += '<div style="font-size:13px;color:var(--text-dim);">Your collection is impressively complete!</div>';
+                panel.innerHTML = '<div style="font-size:13px;color:var(--text-dim);">Your collection is impressively complete!</div>';
                 return;
             }
 
             const heading = document.createElement('div');
             heading.style.cssText = 'font-size:12px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;';
-            heading.textContent = 'Artists you could expand';
+            heading.textContent = 'Albums you\'re missing from artists you own';
             panel.appendChild(heading);
 
             recs.forEach(s => {
@@ -4008,6 +3953,157 @@
                 `;
                 panel.appendChild(div);
             });
+        }
+
+        initSuggestions();
+
+        // ============ ARTISTS TO EXPLORE (new artists based on your genres) ============
+        function initExplore() {
+            const btn = document.getElementById('exploreBtn');
+            const panel = document.getElementById('explorePanel');
+            btn.style.display = '';
+
+            btn.addEventListener('click', () => {
+                const isOpen = panel.classList.toggle('open');
+                btn.textContent = isOpen ? 'Hide explore' : 'Artists to Explore';
+                if (isOpen && !panel.hasChildNodes()) renderExplorePanel();
+            });
+        }
+
+        function renderExplorePanel() {
+            const panel = document.getElementById('explorePanel');
+            panel.innerHTML = '';
+
+            // Build genre profile
+            const gCounts = {};
+            const genreArtists = {};
+            const artistAlbumCount = {};
+            allAlbums.forEach(a => {
+                const key = a.artist;
+                artistAlbumCount[key] = (artistAlbumCount[key] || 0) + 1;
+                (a.genres || []).forEach(g => {
+                    gCounts[g] = (gCounts[g] || 0) + 1;
+                    if (!genreArtists[g]) genreArtists[g] = new Set();
+                    genreArtists[g].add(a.artist);
+                });
+            });
+
+            const topGenres = Object.entries(gCounts).sort((a, b) => b[1] - a[1]).slice(0, 8);
+
+            // Genre profile header
+            if (topGenres.length) {
+                const profileDiv = document.createElement('div');
+                profileDiv.style.cssText = 'margin-bottom:18px;';
+                const profileLabel = document.createElement('div');
+                profileLabel.style.cssText = 'font-size:12px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:10px;';
+                profileLabel.textContent = 'Your genre DNA';
+                profileDiv.appendChild(profileLabel);
+
+                const maxCount = topGenres[0][1];
+                topGenres.forEach(([genre, count]) => {
+                    const row = document.createElement('div');
+                    row.style.cssText = 'display:flex;align-items:center;gap:8px;margin-bottom:6px;';
+
+                    const label = document.createElement('a');
+                    label.href = 'https://www.last.fm/tag/' + encodeURIComponent(genre);
+                    label.target = '_blank';
+                    label.rel = 'noopener';
+                    label.style.cssText = 'font-size:12px;color:var(--accent);text-decoration:none;min-width:100px;flex-shrink:0;';
+                    label.textContent = genre;
+
+                    const barWrap = document.createElement('div');
+                    barWrap.style.cssText = 'flex:1;height:6px;background:var(--surface-2);border-radius:3px;overflow:hidden;';
+                    const bar = document.createElement('div');
+                    const pct = Math.round((count / maxCount) * 100);
+                    bar.style.cssText = `width:${pct}%;height:100%;background:var(--accent);border-radius:3px;transition:width 0.5s;`;
+                    barWrap.appendChild(bar);
+
+                    const num = document.createElement('span');
+                    num.style.cssText = 'font-size:11px;color:var(--text-dim);min-width:40px;text-align:right;';
+                    num.textContent = count + ' albums';
+
+                    row.appendChild(label);
+                    row.appendChild(barWrap);
+                    row.appendChild(num);
+                    profileDiv.appendChild(row);
+                });
+                panel.appendChild(profileDiv);
+            }
+
+            // "Shallow dips" — artists where user owns just 1 album (potential deep dives)
+            const shallowArtists = Object.entries(artistAlbumCount)
+                .filter(([_, count]) => count === 1)
+                .map(([artist]) => artist)
+                .sort();
+
+            if (shallowArtists.length > 0) {
+                const shallowDiv = document.createElement('div');
+                shallowDiv.style.cssText = 'margin-bottom:18px;';
+                const shallowLabel = document.createElement('div');
+                shallowLabel.style.cssText = 'font-size:12px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px;';
+                shallowLabel.textContent = 'Worth a deeper dive? (1 album owned)';
+                shallowDiv.appendChild(shallowLabel);
+                const shallowHint = document.createElement('div');
+                shallowHint.style.cssText = 'font-size:11px;color:var(--text-dim);margin-bottom:10px;';
+                shallowHint.textContent = 'You only have one album from these artists — maybe there\'s more to discover.';
+                shallowDiv.appendChild(shallowHint);
+
+                const chips = document.createElement('div');
+                chips.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;';
+                const shown = shallowArtists.slice(0, 30);
+                shown.forEach(artist => {
+                    const chip = document.createElement('a');
+                    chip.href = 'https://www.last.fm/music/' + encodeURIComponent(artist);
+                    chip.target = '_blank';
+                    chip.rel = 'noopener';
+                    chip.style.cssText = 'font-size:11px;padding:3px 10px;border-radius:12px;background:rgba(255,255,255,0.06);color:var(--text-main);text-decoration:none;border:1px solid var(--border);transition:all 0.2s;';
+                    chip.textContent = artist;
+                    chip.addEventListener('mouseenter', () => { chip.style.borderColor = 'var(--accent)'; chip.style.color = 'var(--accent)'; });
+                    chip.addEventListener('mouseleave', () => { chip.style.borderColor = 'var(--border)'; chip.style.color = 'var(--text-main)'; });
+                    chips.appendChild(chip);
+                });
+                if (shallowArtists.length > 30) {
+                    const more = document.createElement('span');
+                    more.style.cssText = 'font-size:11px;color:var(--text-dim);padding:3px 6px;';
+                    more.textContent = '+' + (shallowArtists.length - 30) + ' more';
+                    chips.appendChild(more);
+                }
+                shallowDiv.appendChild(chips);
+                panel.appendChild(shallowDiv);
+            }
+
+            // Genre exploration links
+            if (topGenres.length) {
+                const linksDiv = document.createElement('div');
+                const linksLabel = document.createElement('div');
+                linksLabel.style.cssText = 'font-size:12px;font-weight:700;color:var(--text-dim);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:8px;';
+                linksLabel.textContent = 'Discover new artists';
+                linksDiv.appendChild(linksLabel);
+                const linksHint = document.createElement('div');
+                linksHint.style.cssText = 'font-size:11px;color:var(--text-dim);margin-bottom:10px;';
+                linksHint.textContent = 'Based on your top genres — click to explore on Last.fm:';
+                linksDiv.appendChild(linksHint);
+
+                const linkChips = document.createElement('div');
+                linkChips.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;';
+                topGenres.forEach(([genre]) => {
+                    const chip = document.createElement('a');
+                    chip.href = 'https://www.last.fm/tag/' + encodeURIComponent(genre) + '/artists';
+                    chip.target = '_blank';
+                    chip.rel = 'noopener';
+                    chip.style.cssText = 'font-size:11px;padding:4px 12px;border-radius:12px;background:var(--accent);color:#fff;text-decoration:none;font-weight:600;transition:opacity 0.2s;';
+                    chip.textContent = genre;
+                    chip.addEventListener('mouseenter', () => { chip.style.opacity = '0.8'; });
+                    chip.addEventListener('mouseleave', () => { chip.style.opacity = '1'; });
+                    linkChips.appendChild(chip);
+                });
+                linksDiv.appendChild(linkChips);
+                panel.appendChild(linksDiv);
+            }
+
+            if (!topGenres.length && shallowArtists.length === 0) {
+                panel.innerHTML = '<div style="font-size:13px;color:var(--text-dim);">Not enough genre data to make recommendations yet.</div>';
+            }
         }
 
         initExplore();
@@ -4064,7 +4160,7 @@
             const suggestionsPanel = document.getElementById('suggestionsPanel');
             if (suggestionsPanel) { suggestionsPanel.classList.remove('open'); }
             const suggestionsBtn = document.getElementById('suggestionsBtn');
-            if (suggestionsBtn) { suggestionsBtn.textContent = 'What am I missing?'; }
+            if (suggestionsBtn) { suggestionsBtn.textContent = 'What am I missing?'; suggestionsPanel.innerHTML = ''; }
             applyFiltersAndSort();
             updateClearFiltersVisibility();
         }
