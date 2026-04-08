@@ -197,6 +197,48 @@ def inject_into_html(cd_albums, vinyl_albums, html_path):
     print(f"  Injected {len(cd_albums)} CDs + {len(vinyl_albums)} vinyl into {html_path.name}")
 
 
+def resolve_cover_urls(albums, label=""):
+    """Resolve Cover Art Archive redirects to final archive.org URLs.
+
+    coverartarchive.org/release-group/{mbid}/front-250 redirects (302) to
+    an archive.org URL. Resolving at export time saves the browser a round-trip
+    per image and lets CDN/browser caching work much better.
+    """
+    import time
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    to_resolve = [(i, a) for i, a in enumerate(albums)
+                  if a.get("cover_url", "").startswith("https://coverartarchive.org/")]
+
+    if not to_resolve:
+        return albums
+
+    print(f"  Resolving {len(to_resolve)} cover art URLs for {label}...")
+    resolved_count = 0
+
+    def resolve_one(idx, album):
+        url = album["cover_url"]
+        try:
+            resp = requests.head(url, allow_redirects=True, timeout=10)
+            if resp.status_code == 200 and "archive.org" in resp.url:
+                return idx, resp.url
+        except Exception:
+            pass
+        return idx, None
+
+    # Use 6 threads to be polite to Cover Art Archive
+    with ThreadPoolExecutor(max_workers=6) as pool:
+        futures = [pool.submit(resolve_one, i, a) for i, a in to_resolve]
+        for future in as_completed(futures):
+            idx, final_url = future.result()
+            if final_url:
+                albums[idx]["cover_url"] = final_url
+                resolved_count += 1
+
+    print(f"  Resolved {resolved_count}/{len(to_resolve)} cover URLs to archive.org")
+    return albums
+
+
 def export_to_site():
     print(f"\n{'='*60}")
     print("Exporting to GitHub Pages site")
@@ -206,6 +248,8 @@ def export_to_site():
     headers = get_notion_headers()
     cd = export_database(CD_DATABASE_ID, "CD Collection", headers)
     vinyl = export_database(VINYL_DATABASE_ID, "Vinyl Collection", headers)
+    cd = resolve_cover_urls(cd, "CDs")
+    vinyl = resolve_cover_urls(vinyl, "Vinyl")
     inject_into_html(cd, vinyl, INDEX_HTML)
     print(f"\n  Total: {len(cd)} CDs + {len(vinyl)} vinyl = {len(cd) + len(vinyl)} albums")
 
