@@ -10,6 +10,7 @@ A static gallery site for browsing a physical music collection (CDs + vinyl), po
 - Resolves cover art from Cover Art Archive (with iTunes fallback)
 - Fetches genre tags from MusicBrainz
 - Optionally pulls listening stats from Last.fm
+- Fetches album descriptions/bios from Last.fm
 - Generates missing album suggestions for your top artists
 - Bakes everything into a single static HTML file and pushes to GitHub Pages
 
@@ -19,11 +20,20 @@ A static gallery site for browsing a physical music collection (CDs + vinyl), po
 - Filter by collection (CD/Vinyl), type (Album/EP/Single), and genre
 - Sort by artist, title, year, recently played, or most scrobbled
 - Search across artists and titles
-- Album detail modal with metadata and links
-- Stats dashboard with year chart, decade breakdown, top artists, genre breakdown, and collection split
-- "Pick One" random album selector
-- "What am I missing?" suggestions panel showing gaps in your top artists' discographies
+- Album detail modal with metadata, description/bio, and links
+- Stats dashboard with year chart, decade breakdown, top artists, genre breakdown, collection split, and collection vs listening compatibility
+- Scrobble heatmap — cards glow by listening intensity
+- Ambient background — subtle color shifts based on visible album art
+- "Pick One" smart random album selector (weighted toward neglected albums)
+- "I Have Time..." — pick albums that fit your available listening time
+- Collector's indicator — shows when you own an album on both CD and vinyl
+- "What am I missing?" gap identifier showing gaps in your top artists' discographies
+- "Artists to Explore" — genre-based recommendations for expanding your collection
+- Album descriptions/bios from Last.fm shown on cards and in the detail modal
+- Clear all filters button and clickable logo to reset everything
+- Collapsible toolbar for mobile browsing
 - Scrobble links (direct or via OpenScrobbler)
+- Scroll-to-top floating button
 - Service Worker for cover art caching
 - Fully responsive dark theme
 
@@ -93,8 +103,9 @@ python update_all.py
 This will:
 1. Update your Notion databases with MusicBrainz/Discogs metadata
 2. Export everything, resolve cover art, fetch genres, extract colors
-3. Inject the data into `index.html`
-4. Commit and push to GitHub
+3. Fetch Last.fm stats and album descriptions (if API key set)
+4. Inject the data into `index.html`
+5. Commit and push to GitHub
 
 Use `--export-only` to skip the Notion metadata update (faster if you just want to refresh the site), or `--notion-only` to just update Notion without exporting.
 
@@ -113,6 +124,7 @@ The export script maintains several cache files to keep subsequent runs fast:
 - `color_cache.json` — dominant colors extracted from covers (permanent)
 - `suggestions_cache.json` — artist discography data (30-day TTL)
 - `lastfm_cache.json` — Last.fm listening stats (24-hour TTL)
+- `description_cache.json` — Last.fm album descriptions (permanent)
 
 After the first run, only newly added albums trigger network requests.
 

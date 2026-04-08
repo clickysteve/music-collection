@@ -68,6 +68,169 @@
             font-weight: 700;
             white-space: nowrap;
             letter-spacing: -0.5px;
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+        .topbar-logo:hover { color: var(--accent); }
+
+        .clear-filters-btn {
+            background: none;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            font-size: 12px;
+            padding: 5px 12px;
+            border-radius: 16px;
+            cursor: pointer;
+            font-family: Inter, sans-serif;
+            transition: all 0.2s;
+            white-space: nowrap;
+            display: none;
+        }
+        .clear-filters-btn:hover { color: var(--text); border-color: var(--text-dim); }
+        .clear-filters-btn.visible { display: inline-flex; align-items: center; gap: 4px; }
+
+        /* Time picker */
+        .time-picker-btn {
+            padding: 6px 14px;
+            border: 1px solid var(--border);
+            background: transparent;
+            color: var(--text-dim);
+            border-radius: 20px;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 500;
+            font-family: Inter, sans-serif;
+            transition: all 0.2s ease;
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .time-picker-btn:hover { color: var(--text); border-color: var(--accent); }
+
+        .time-picker-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.85);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 300;
+            backdrop-filter: blur(8px);
+            padding: 20px;
+        }
+        .time-picker-overlay.show { display: flex; }
+        .time-picker-card {
+            background: var(--surface-1);
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 400px;
+            width: 100%;
+            animation: slideUp 0.4s ease;
+            text-align: center;
+        }
+        .time-picker-card h3 {
+            font-size: 20px;
+            margin-bottom: 6px;
+            color: var(--text);
+        }
+        .time-picker-card p {
+            font-size: 13px;
+            color: var(--text-dim);
+            margin-bottom: 24px;
+        }
+        .time-presets {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+        .time-preset {
+            padding: 10px 20px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 24px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: Inter, sans-serif;
+            transition: all 0.2s;
+        }
+        .time-preset:hover { border-color: var(--accent); color: var(--accent); }
+        .time-custom-row {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            justify-content: center;
+            margin-top: 12px;
+        }
+        .time-custom-input {
+            width: 80px;
+            padding: 8px 12px;
+            background: var(--surface-2);
+            border: 1px solid var(--border);
+            color: var(--text);
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: Inter, sans-serif;
+            text-align: center;
+        }
+        .time-custom-input:focus { outline: none; border-color: var(--accent); }
+        .time-go-btn {
+            padding: 8px 18px;
+            background: var(--accent);
+            color: var(--bg);
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            font-family: Inter, sans-serif;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .time-go-btn:hover { transform: scale(1.05); }
+        .time-result {
+            margin-top: 24px;
+            display: none;
+        }
+        .time-result.show { display: block; }
+        .time-result-list {
+            text-align: left;
+            margin-top: 12px;
+        }
+        .time-result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            cursor: pointer;
+            transition: color 0.15s;
+        }
+        .time-result-item:hover { color: var(--accent); }
+        .time-result-total {
+            font-size: 13px;
+            color: var(--accent);
+            font-weight: 600;
+            margin-top: 12px;
+        }
+
+        /* Collector badge */
+        .collector-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            font-size: 9px;
+            font-weight: 700;
+            color: #d4af37;
+            background: rgba(212, 175, 55, 0.12);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            padding: 1px 6px;
+            border-radius: 8px;
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
         }
 
         .topbar-search {
@@ -1481,7 +1644,7 @@
     <!-- Top Bar -->
     <div class="topbar">
         <div class="topbar-header">
-            <div class="topbar-logo">Music.Collection</div>
+            <div class="topbar-logo" id="logoHome" title="Reset all filters">Music.Collection</div>
             <div class="topbar-search">
                 <input
                     type="text"
@@ -1557,6 +1720,16 @@
         </div>
 
         <button class="pick-btn" id="pickBtn" aria-label="Pick random album">Pick One</button>
+
+        <button class="time-picker-btn" id="timePickerBtn" aria-label="Find albums by available time">
+            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.2"/><path d="M7 4V7L9.5 8.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+            I have time...
+        </button>
+
+        <button class="clear-filters-btn" id="clearFiltersBtn" aria-label="Clear all filters">
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 2L10 10M10 2L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            Clear
+        </button>
 
         <button class="icon-btn shuffle-btn" id="shuffleBtn" aria-label="Shuffle albums">
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1657,6 +1830,15 @@
                     <div class="stats-section-title">Collection vs Listening</div>
                     <div id="compatScores"></div>
                 </div>
+                <div class="stats-section" id="collectorSection" style="grid-column: 1 / -1;">
+                    <div class="stats-section-title">Collector's Items (CD &amp; Vinyl)</div>
+                    <div id="collectorList" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+                </div>
+                <div class="stats-section" id="exploreSection" style="grid-column: 1 / -1;">
+                    <div class="stats-section-title">Artists to Explore</div>
+                    <p style="font-size:12px;color:var(--text-dim);margin-bottom:12px;">Based on your collection's top genres — artists you don't own yet</p>
+                    <div id="exploreList" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+                </div>
             </div>
         </div>
         <div class="grid" id="grid"></div>
@@ -1700,6 +1882,34 @@
             <div class="random-pick-actions">
                 <button class="pick-again-btn" id="pickAgainBtn">Pick Another</button>
                 <button class="pick-close-btn" id="pickCloseBtn">Close</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Time Picker -->
+    <div class="time-picker-overlay" id="timePickerOverlay">
+        <div class="time-picker-card">
+            <h3>I have time for...</h3>
+            <p>Pick how much time you've got and we'll find the perfect album(s)</p>
+            <div class="time-presets">
+                <button class="time-preset" data-mins="30">30 min</button>
+                <button class="time-preset" data-mins="45">45 min</button>
+                <button class="time-preset" data-mins="60">1 hour</button>
+                <button class="time-preset" data-mins="90">90 min</button>
+                <button class="time-preset" data-mins="120">2 hours</button>
+            </div>
+            <div class="time-custom-row">
+                <input type="number" class="time-custom-input" id="timeCustomInput" placeholder="mins" min="10" max="600">
+                <button class="time-go-btn" id="timeGoBtn">Go</button>
+            </div>
+            <div class="time-result" id="timeResult">
+                <div style="font-size:14px;font-weight:600;color:var(--text);">Your listening session:</div>
+                <div class="time-result-list" id="timeResultList"></div>
+                <div class="time-result-total" id="timeResultTotal"></div>
+                <div style="margin-top:16px;display:flex;gap:8px;justify-content:center;">
+                    <button class="pick-again-btn" id="timeRerollBtn">Reroll</button>
+                    <button class="pick-close-btn" id="timeCloseBtn">Close</button>
+                </div>
             </div>
         </div>
     </div>
@@ -1905,6 +2115,7 @@
                 ...CD_ALBUMS.map(a => ({ ...a, collection: 'cd' })),
                 ...VINYL_ALBUMS.map(a => ({ ...a, collection: 'vinyl' }))
             ];
+            buildCollectorMap();
             populateGenreDropdown();
             applyFiltersAndSort();
             updateCounts();
@@ -2051,11 +2262,26 @@
                 content.appendChild(plays);
             }
 
-            // Genre chips
-            if (album.genres && album.genres.length) {
+            // Bio snippet (truncated description)
+            if (album.description) {
+                const bio = document.createElement('div');
+                bio.style.cssText = 'font-size:10px;color:var(--text-dim);opacity:0.7;margin-top:4px;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;';
+                bio.textContent = album.description;
+                content.appendChild(bio);
+            }
+
+            // Genre chips + collector badge row
+            if ((album.genres && album.genres.length) || album._isCollector) {
                 const genreDiv = document.createElement('div');
                 genreDiv.className = 'card-genres';
-                album.genres.slice(0, 2).forEach(g => {
+                if (album._isCollector) {
+                    const cb = document.createElement('span');
+                    cb.className = 'collector-badge';
+                    cb.title = 'You own this on both CD and Vinyl';
+                    cb.innerHTML = '&#9830; 2x';
+                    genreDiv.appendChild(cb);
+                }
+                (album.genres || []).slice(0, 2).forEach(g => {
                     const chip = document.createElement('span');
                     chip.className = 'genre-chip';
                     chip.textContent = g;
@@ -2627,6 +2853,89 @@
             } else {
                 compatSection.style.display = 'none';
             }
+
+            // ---- Collector's Items ----
+            const collectorEl = document.getElementById('collectorList');
+            collectorEl.innerHTML = '';
+            const collectorAlbums = new Map();
+            albums.forEach(a => {
+                if (a._isCollector) {
+                    const key = `${a.artist.toLowerCase()}|||${a.title.toLowerCase()}`;
+                    if (!collectorAlbums.has(key)) collectorAlbums.set(key, a);
+                }
+            });
+            if (collectorAlbums.size > 0) {
+                document.getElementById('collectorSection').style.display = '';
+                [...collectorAlbums.values()].forEach(a => {
+                    const chip = document.createElement('span');
+                    chip.className = 'type-chip';
+                    chip.style.cssText = 'cursor:pointer;border:1px solid rgba(212,175,55,0.3);';
+                    chip.innerHTML = `<span style="color:#d4af37;">&#9830;</span> ${a.artist} — ${a.title}`;
+                    chip.addEventListener('click', () => openModal(a));
+                    collectorEl.appendChild(chip);
+                });
+            } else {
+                document.getElementById('collectorSection').style.display = 'none';
+            }
+
+            // ---- Artists to Explore (genre-based recommendations) ----
+            const exploreEl = document.getElementById('exploreList');
+            exploreEl.innerHTML = '';
+            // Use suggestions data to recommend artists the user doesn't own
+            if (SUGGESTIONS && SUGGESTIONS.length > 0) {
+                document.getElementById('exploreSection').style.display = '';
+                // Show top artists from suggestions who have many missing albums
+                const recs = SUGGESTIONS.filter(s => s.missing.length >= 2).slice(0, 8);
+                if (recs.length > 0) {
+                    recs.forEach(s => {
+                        const chip = document.createElement('span');
+                        chip.className = 'type-chip';
+                        chip.style.cursor = 'pointer';
+                        chip.innerHTML = `<span style="color:var(--accent);font-weight:700;">${s.artist}</span> <span style="color:var(--text-dim);font-size:11px;">${s.missing.length} missing</span>`;
+                        chip.addEventListener('click', () => {
+                            // Open suggestions panel and scroll to this artist
+                            const panel = document.getElementById('suggestionsPanel');
+                            if (!panel.classList.contains('open')) {
+                                document.getElementById('suggestionsBtn').click();
+                            }
+                            setTimeout(() => {
+                                const artists = panel.querySelectorAll('.suggestion-artist-name');
+                                artists.forEach(el => {
+                                    if (el.textContent === s.artist) {
+                                        el.closest('.suggestion-artist').scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    }
+                                });
+                            }, 300);
+                        });
+                        exploreEl.appendChild(chip);
+                    });
+                } else {
+                    exploreEl.innerHTML = '<span style="font-size:12px;color:var(--text-dim);">Your collection is very complete!</span>';
+                }
+
+                // Also show genre-based exploration suggestions
+                const ownedArtistsSet = new Set(allAlbums.map(a => a.artist.toLowerCase()));
+                const genreArtists = {};
+                allAlbums.forEach(a => {
+                    (a.genres || []).forEach(g => {
+                        if (!genreArtists[g]) genreArtists[g] = new Set();
+                        genreArtists[g].add(a.artist);
+                    });
+                });
+                // Get user's top 3 genres
+                const gCounts = {};
+                allAlbums.forEach(a => (a.genres || []).forEach(g => gCounts[g] = (gCounts[g] || 0) + 1));
+                const top3 = Object.entries(gCounts).sort((a, b) => b[1] - a[1]).slice(0, 3).map(e => e[0]);
+
+                if (top3.length > 0) {
+                    const genreNote = document.createElement('div');
+                    genreNote.style.cssText = 'width:100%;font-size:12px;color:var(--text-dim);margin-top:12px;';
+                    genreNote.textContent = `Your top genres: ${top3.join(', ')}`;
+                    exploreEl.appendChild(genreNote);
+                }
+            } else {
+                document.getElementById('exploreSection').style.display = 'none';
+            }
         }
 
         // ============ MODAL ============
@@ -2683,6 +2992,13 @@
 
             // Badges
             modalBadges.innerHTML = '';
+            if (album._isCollector) {
+                const badge = document.createElement('div');
+                badge.className = 'badge';
+                badge.style.cssText = 'border-color: #d4af37; color: #d4af37;';
+                badge.innerHTML = '<span>&#9830; Collector\'s Item — CD &amp; Vinyl</span>';
+                modalBadges.appendChild(badge);
+            }
             if (album.played) {
                 const badge = document.createElement('div');
                 badge.className = 'badge played';
@@ -2746,6 +3062,7 @@
             if (e.key === 'Escape') {
                 closeModal();
                 closeRandomPick();
+                closeTimePicker();
             }
         });
 
@@ -3104,6 +3421,179 @@
         }
 
         initSuggestions();
+
+        // ============ LOGO / HOME RESET ============
+        document.getElementById('logoHome').addEventListener('click', resetAllFilters);
+
+        // ============ CLEAR FILTERS ============
+        function resetAllFilters() {
+            // Reset search
+            document.getElementById('searchInput').value = '';
+            // Reset collection pills
+            document.querySelectorAll('.pill-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('.pill-btn[data-filter="all"]').classList.add('active');
+            currentFilter = 'all';
+            // Reset type filter
+            document.querySelectorAll('#filterMenu .dropdown-item').forEach(i => i.classList.remove('active'));
+            document.querySelector('#filterMenu .dropdown-item[data-type="all"]').classList.add('active');
+            currentTypeFilter = 'all';
+            // Reset genre filter
+            document.querySelectorAll('#genreMenu .dropdown-item').forEach(i => i.classList.remove('active'));
+            document.querySelector('#genreMenu .dropdown-item[data-genre="all"]').classList.add('active');
+            currentGenreFilter = 'all';
+            document.getElementById('genreBtn').textContent = 'Genre';
+            // Reset sort
+            document.querySelectorAll('#sortMenu .dropdown-item').forEach(i => i.classList.remove('active'));
+            document.querySelector('#sortMenu .dropdown-item[data-sort="artist"]').classList.add('active');
+            currentSort = 'artist';
+            // Reset shuffle
+            isShuffled = false;
+            document.getElementById('shuffleBtn').classList.remove('active');
+            // Reset heatmap
+            if (heatmapActive) toggleHeatmap();
+            // Reset view to grid
+            currentView = 'grid';
+            document.getElementById('gridViewBtn').classList.add('active');
+            document.getElementById('listViewBtn').classList.remove('active');
+            document.getElementById('sizeSliderGroup').style.display = '';
+            // Scroll to top
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            // Close mobile controls
+            document.getElementById('topbarControls').classList.remove('open');
+            applyFiltersAndSort();
+            updateClearFiltersVisibility();
+        }
+
+        function updateClearFiltersVisibility() {
+            const hasFilters = currentFilter !== 'all' ||
+                currentTypeFilter !== 'all' ||
+                currentGenreFilter !== 'all' ||
+                document.getElementById('searchInput').value.trim() !== '' ||
+                isShuffled;
+            document.getElementById('clearFiltersBtn').classList.toggle('visible', hasFilters);
+        }
+
+        document.getElementById('clearFiltersBtn').addEventListener('click', resetAllFilters);
+        // Hook clear button visibility into filter changes
+        const _origApplyFilters = applyFiltersAndSort;
+        applyFiltersAndSort = function() {
+            _origApplyFilters();
+            updateClearFiltersVisibility();
+        };
+
+        // ============ COLLECTOR INDICATOR (own on both CD + vinyl) ============
+        function buildCollectorMap() {
+            const map = {};
+            allAlbums.forEach(a => {
+                const key = `${a.artist.toLowerCase()}|||${a.title.toLowerCase()}`;
+                if (!map[key]) map[key] = new Set();
+                map[key].add(a.collection);
+            });
+            // Mark albums that exist on both
+            allAlbums.forEach(a => {
+                const key = `${a.artist.toLowerCase()}|||${a.title.toLowerCase()}`;
+                a._isCollector = map[key].size > 1;
+            });
+        }
+
+        // ============ TIME PICKER ============
+        let timePickerMins = 0;
+
+        function openTimePicker() {
+            document.getElementById('timePickerOverlay').classList.add('show');
+            document.getElementById('timeResult').classList.remove('show');
+            document.getElementById('timeCustomInput').value = '';
+        }
+
+        function closeTimePicker() {
+            document.getElementById('timePickerOverlay').classList.remove('show');
+        }
+
+        function pickAlbumsForTime(minutes) {
+            timePickerMins = minutes;
+            const pool = (filteredAlbums.length > 0 ? filteredAlbums : allAlbums).filter(a => a.runtime && a.runtime > 0);
+            if (pool.length === 0) return;
+
+            // Greedy knapsack with slight randomisation
+            const shuffled = [...pool].sort(() => Math.random() - 0.5);
+            const selected = [];
+            let remaining = minutes;
+
+            for (const album of shuffled) {
+                if (album.runtime <= remaining) {
+                    selected.push(album);
+                    remaining -= album.runtime;
+                    if (remaining < 5) break; // close enough
+                }
+            }
+
+            // If nothing fit, just pick the shortest
+            if (selected.length === 0) {
+                const shortest = [...pool].sort((a, b) => a.runtime - b.runtime)[0];
+                if (shortest) selected.push(shortest);
+            }
+
+            // Render results
+            const list = document.getElementById('timeResultList');
+            list.innerHTML = '';
+            let totalMins = 0;
+            selected.forEach(a => {
+                totalMins += a.runtime;
+                const item = document.createElement('div');
+                item.className = 'time-result-item';
+                item.innerHTML = `<span>${a.artist} — ${a.title}</span><span style="color:var(--text-dim);font-size:12px;">${a.length || Math.round(a.runtime) + 'm'}</span>`;
+                item.addEventListener('click', () => { closeTimePicker(); openModal(a); });
+                list.appendChild(item);
+            });
+
+            document.getElementById('timeResultTotal').textContent = `Total: ~${Math.round(totalMins)} min of ${minutes} min available`;
+            document.getElementById('timeResult').classList.add('show');
+        }
+
+        document.getElementById('timePickerBtn').addEventListener('click', openTimePicker);
+        document.querySelectorAll('.time-preset').forEach(btn => {
+            btn.addEventListener('click', () => pickAlbumsForTime(parseInt(btn.dataset.mins)));
+        });
+        document.getElementById('timeGoBtn').addEventListener('click', () => {
+            const v = parseInt(document.getElementById('timeCustomInput').value);
+            if (v > 0) pickAlbumsForTime(v);
+        });
+        document.getElementById('timeCustomInput').addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                const v = parseInt(e.target.value);
+                if (v > 0) pickAlbumsForTime(v);
+            }
+        });
+        document.getElementById('timeRerollBtn').addEventListener('click', () => pickAlbumsForTime(timePickerMins));
+        document.getElementById('timeCloseBtn').addEventListener('click', closeTimePicker);
+        document.getElementById('timePickerOverlay').addEventListener('click', (e) => {
+            if (e.target === document.getElementById('timePickerOverlay')) closeTimePicker();
+        });
+
+        // ============ ARTIST RECOMMENDATIONS ============
+        function renderArtistRecommendations() {
+            // Build genre-to-artist map from collection
+            const artistGenres = {};
+            const ownedArtists = new Set();
+            allAlbums.forEach(a => {
+                ownedArtists.add(a.artist.toLowerCase());
+                (a.genres || []).forEach(g => {
+                    if (!artistGenres[g]) artistGenres[g] = new Set();
+                    artistGenres[g].add(a.artist);
+                });
+            });
+
+            // Find the user's top genres
+            const genreCounts = {};
+            allAlbums.forEach(a => {
+                (a.genres || []).forEach(g => {
+                    genreCounts[g] = (genreCounts[g] || 0) + 1;
+                });
+            });
+            const topGenres = Object.entries(genreCounts).sort((a, b) => b[1] - a[1]).slice(0, 5).map(e => e[0]);
+
+            return { topGenres, ownedArtists, artistGenres };
+        }
 
         // ============ UTILITY FUNCTIONS ============
         function updateCounts() {
