@@ -476,7 +476,7 @@
             width: 100px;
             height: 4px;
             border-radius: 2px;
-            background: var(--surface-1);
+            background: rgba(255, 255, 255, 0.15);
             outline: none;
             -webkit-appearance: none;
             cursor: pointer;
@@ -1933,7 +1933,7 @@
                     <div id="compatScores"></div>
                 </div>
                 <div class="stats-section" id="collectorSection" style="grid-column: 1 / -1;">
-                    <div class="stats-section-title">Collector's Items (CD &amp; Vinyl)</div>
+                    <div class="stats-section-title">Full Set (CD &amp; Vinyl)</div>
                     <div id="collectorList" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
                 </div>
                 <div class="stats-section" id="exploreSection" style="grid-column: 1 / -1;">
@@ -2384,16 +2384,14 @@
             const actions = document.createElement('div');
             actions.className = 'card-actions';
 
-            // Played button
-            const playedBtn = document.createElement('button');
-            playedBtn.className = 'icon-btn';
-            if (!album.played) {
-                playedBtn.classList.add('disabled');
+            // Collector diamond (if owned on both formats) — replaces the old played icon
+            if (album._isCollector) {
+                const diamond = document.createElement('span');
+                diamond.style.cssText = 'color:#d4af37;font-size:14px;line-height:1;';
+                diamond.title = 'Full Set — you own this on both CD and Vinyl';
+                diamond.innerHTML = '&#9830;';
+                actions.appendChild(diamond);
             }
-            playedBtn.setAttribute('aria-label', album.played ? 'Album played' : 'Album not played');
-            playedBtn.appendChild(createPlayedIcon(album.played));
-            playedBtn.style.pointerEvents = 'none';
-            actions.appendChild(playedBtn);
 
             // Scrobble pill link — direct URL if available, otherwise OpenScrobbler search
             const scrobbleLink = document.createElement('a');
@@ -2410,15 +2408,6 @@
                 e.stopPropagation();
             });
             actions.appendChild(scrobbleLink);
-
-            // Collector badge (if owned on both formats)
-            if (album._isCollector) {
-                const cb = document.createElement('span');
-                cb.className = 'collector-badge';
-                cb.title = 'You own this on both CD and Vinyl';
-                cb.innerHTML = '&#9830; 2x';
-                actions.appendChild(cb);
-            }
 
             // Collection badge
             const badge = document.createElement('div');
@@ -3510,7 +3499,7 @@
                 const badge = document.createElement('div');
                 badge.className = 'badge';
                 badge.style.cssText = 'border-color: #d4af37; color: #d4af37;';
-                badge.innerHTML = '<span>&#9830; Collector\'s Item — CD &amp; Vinyl</span>';
+                badge.innerHTML = '<span>&#9830; Full Set — CD &amp; Vinyl</span>';
                 modalBadges.appendChild(badge);
             }
             if (album.played) {
