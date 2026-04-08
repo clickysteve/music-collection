@@ -768,6 +768,96 @@ def _apply_lastfm(albums, cache):
     return albums
 
 
+DESCRIPTION_CACHE_FILE = SITE_DIR / "description_cache.json"
+
+
+def fetch_album_descriptions(albums):
+    """Fetch album wiki summaries from Last.fm album.getInfo.
+
+    Caches permanently by MBID. Returns first ~2 sentences.
+    """
+    import time
+    import html as html_mod
+
+    api_key = os.environ.get("LASTFM_API_KEY", "").strip()
+    if not api_key:
+        print("  Skipping descriptions: LASTFM_API_KEY not set")
+        return albums
+
+    # Load cache
+    cache = {}
+    if DESCRIPTION_CACHE_FILE.exists():
+        try:
+            cache = json.loads(DESCRIPTION_CACHE_FILE.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+
+    to_fetch = []
+    cached_count = 0
+    for i, a in enumerate(albums):
+        mbid = a.get("mbid", "")
+        if mbid and mbid in cache:
+            albums[i]["description"] = cache[mbid]
+            cached_count += 1
+        elif a.get("artist") and a.get("title"):
+            to_fetch.append((i, a))
+
+    if cached_count:
+        print(f"  {cached_count} descriptions from cache")
+
+    if not to_fetch:
+        print(f"  No new descriptions to fetch")
+        return albums
+
+    print(f"  Fetching descriptions for {len(to_fetch)} albums...")
+    fetched = 0
+
+    for idx, album in to_fetch:
+        mbid = album.get("mbid", "")
+        try:
+            resp = requests.get("https://ws.audioscrobbler.com/2.0/", params={
+                "method": "album.getInfo",
+                "artist": album["artist"],
+                "album": album["title"],
+                "api_key": api_key,
+                "format": "json",
+            }, timeout=10)
+
+            if resp.status_code == 200:
+                data = resp.json()
+                wiki = data.get("album", {}).get("wiki", {})
+                summary = wiki.get("summary", "")
+                if summary:
+                    # Clean HTML tags and "Read more on Last.fm" link
+                    summary = re.sub(r'<a\s.*?</a>', '', summary)
+                    summary = re.sub(r'<[^>]+>', '', summary)
+                    summary = html_mod.unescape(summary).strip()
+                    # Trim to ~2-3 sentences
+                    sentences = re.split(r'(?<=[.!?])\s+', summary)
+                    summary = ' '.join(sentences[:3]).strip()
+                    if summary:
+                        albums[idx]["description"] = summary
+                        if mbid:
+                            cache[mbid] = summary
+                        fetched += 1
+                        continue
+
+            # Mark as empty so we don't retry
+            if mbid:
+                cache[mbid] = ""
+        except Exception:
+            pass
+        time.sleep(0.25)
+
+        if fetched % 25 == 0 and fetched > 0:
+            print(f"    ...{fetched}/{len(to_fetch)}")
+            DESCRIPTION_CACHE_FILE.write_text(json.dumps(cache, ensure_ascii=False), encoding="utf-8")
+
+    DESCRIPTION_CACHE_FILE.write_text(json.dumps(cache, ensure_ascii=False), encoding="utf-8")
+    print(f"  Fetched {fetched}/{len(to_fetch)} descriptions")
+    return albums
+
+
 def export_to_site():
     print(f"\n{'='*60}")
     print("Exporting to GitHub Pages site")
@@ -786,10 +876,11 @@ def export_to_site():
     cd = extract_dominant_colors(cd, "CDs")
     vinyl = extract_dominant_colors(vinyl, "Vinyl")
 
-    # Fetch Last.fm listening data
+    # Fetch Last.fm listening data + album descriptions
     all_albums = cd + vinyl
     all_albums = fetch_lastfm_data(all_albums)
-    # Re-split after lastfm enrichment
+    all_albums = fetch_album_descriptions(all_albums)
+    # Re-split after enrichment
     cd_count = len(cd)
     cd = all_albums[:cd_count]
     vinyl = all_albums[cd_count:]
