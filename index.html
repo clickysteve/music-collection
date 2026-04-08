@@ -2351,18 +2351,18 @@
             const yearRuntime = document.createElement('div');
             yearRuntime.style.cssText = 'display:flex;align-items:center;gap:6px;margin-top:2px;';
 
-            if (album.year) {
-                const yearBadge = document.createElement('span');
-                yearBadge.style.cssText = 'font-size:10px;font-weight:700;color:var(--text-dim);background:rgba(255,255,255,0.06);padding:1px 6px;border-radius:4px;letter-spacing:0.3px;';
-                yearBadge.textContent = album.year;
-                yearRuntime.appendChild(yearBadge);
-            }
-
             if (album.length) {
                 const runtime = document.createElement('span');
                 runtime.className = 'card-runtime';
                 runtime.textContent = album.length;
                 yearRuntime.appendChild(runtime);
+            }
+
+            if (album.year) {
+                const yearBadge = document.createElement('span');
+                yearBadge.style.cssText = 'font-size:10px;font-weight:700;color:var(--text-dim);background:rgba(255,255,255,0.06);padding:1px 6px;border-radius:4px;letter-spacing:0.3px;';
+                yearBadge.textContent = album.year;
+                yearRuntime.appendChild(yearBadge);
             }
 
             content.appendChild(title);
@@ -2708,7 +2708,7 @@
             const H = wrap.clientHeight;
             const dpr = window.devicePixelRatio || 1;
 
-            // Build artist nodes from collection
+            // Build artist nodes — only artists with 2+ albums to keep it readable
             const artistMap = {};
             allAlbums.forEach(a => {
                 const key = a.artist;
@@ -2720,71 +2720,119 @@
                 (a.genres || []).forEach(g => artistMap[key].genres.add(g));
             });
 
-            const artists = Object.values(artistMap);
+            // Filter to artists with 2+ albums for clarity, cap at 60
+            let artists = Object.values(artistMap)
+                .filter(a => a.count >= 2 && a.genres.size > 0)
+                .sort((a, b) => b.count - a.count)
+                .slice(0, 60);
 
-            // Build influence edges based on shared genres
-            // The more genres two artists share, the stronger the connection
-            const nodes = [];
-            const edges = [];
-            const nodeMap = {};
+            if (artists.length < 5) {
+                // Fallback: use all artists with genres
+                artists = Object.values(artistMap)
+                    .filter(a => a.genres.size > 0)
+                    .sort((a, b) => b.count - a.count)
+                    .slice(0, 60);
+            }
 
-            artists.forEach((a, i) => {
-                const radius = Math.max(6, Math.min(30, a.count * 5 + (a.plays > 0 ? 3 : 0)));
-                // Initial position: spread in a circle with jitter
-                const angle = (i / artists.length) * Math.PI * 2;
-                const spread = Math.min(W, H) * 0.35;
-                nodes.push({
-                    id: i,
-                    name: a.name,
-                    x: W / 2 + Math.cos(angle) * spread + (Math.random() - 0.5) * 40,
-                    y: H / 2 + Math.sin(angle) * spread + (Math.random() - 0.5) * 40,
-                    vx: 0, vy: 0,
-                    radius,
-                    count: a.count,
-                    plays: a.plays,
-                    genres: a.genres,
-                    color: a.color,
-                    pinned: false
-                });
-                nodeMap[a.name] = i;
+            // Assign each artist a primary genre (most common in their set)
+            const globalGenreCounts = {};
+            artists.forEach(a => a.genres.forEach(g => globalGenreCounts[g] = (globalGenreCounts[g] || 0) + 1));
+            const genreColors = {};
+            const palette = ['#1db954','#e8873a','#4a9eed','#e33','#d4af37','#9b59b6','#2ecc71','#e74c3c','#3498db','#f39c12','#1abc9c','#e91e63'];
+            const topGenresSorted = Object.entries(globalGenreCounts).sort((a,b) => b[1] - a[1]);
+            topGenresSorted.forEach(([g], i) => { genreColors[g] = palette[i % palette.length]; });
+
+            artists.forEach(a => {
+                // Primary genre = most specific (least globally common) among their genres
+                const sorted = [...a.genres].sort((x, y) => (globalGenreCounts[x] || 0) - (globalGenreCounts[y] || 0));
+                a.primaryGenre = sorted[0] || 'other';
+                a.nodeColor = genreColors[a.primaryGenre] || '#1db954';
             });
 
-            // Connect artists who share 2+ genres
+            // Group artists by primary genre for initial cluster layout
+            const genreGroups = {};
+            artists.forEach(a => {
+                if (!genreGroups[a.primaryGenre]) genreGroups[a.primaryGenre] = [];
+                genreGroups[a.primaryGenre].push(a);
+            });
+            const groupKeys = Object.keys(genreGroups);
+
+            const nodes = [];
+            const edges = [];
+
+            // Place each genre cluster in a region of the canvas
+            const padding = 60;
+            const usableW = W - padding * 2;
+            const usableH = H - padding * 2;
+
+            let nodeIdx = 0;
+            groupKeys.forEach((genre, gi) => {
+                const group = genreGroups[genre];
+                // Distribute groups around center in a circle
+                const gAngle = (gi / groupKeys.length) * Math.PI * 2 - Math.PI / 2;
+                const gDist = Math.min(usableW, usableH) * 0.3;
+                const cx = W / 2 + Math.cos(gAngle) * gDist;
+                const cy = H / 2 + Math.sin(gAngle) * gDist;
+
+                group.forEach((a, ai) => {
+                    const subAngle = (ai / Math.max(1, group.length)) * Math.PI * 2;
+                    const subDist = Math.min(50, 15 + group.length * 4);
+                    const radius = Math.max(8, Math.min(28, 6 + a.count * 3));
+                    nodes.push({
+                        id: nodeIdx,
+                        name: a.name,
+                        x: cx + Math.cos(subAngle) * subDist + (Math.random() - 0.5) * 10,
+                        y: cy + Math.sin(subAngle) * subDist + (Math.random() - 0.5) * 10,
+                        vx: 0, vy: 0,
+                        radius,
+                        count: a.count,
+                        plays: a.plays,
+                        genres: a.genres,
+                        primaryGenre: a.primaryGenre,
+                        color: a.nodeColor,
+                        pinned: false
+                    });
+                    nodeIdx++;
+                });
+            });
+
+            // Build edges: only connect artists sharing 3+ genres (strong connection)
+            // or 2 genres if both are in the same primary genre group
             for (let i = 0; i < nodes.length; i++) {
                 for (let j = i + 1; j < nodes.length; j++) {
                     const shared = [...nodes[i].genres].filter(g => nodes[j].genres.has(g));
-                    if (shared.length >= 2) {
+                    const sameGroup = nodes[i].primaryGenre === nodes[j].primaryGenre;
+                    const minShared = sameGroup ? 2 : 3;
+                    if (shared.length >= minShared) {
                         edges.push({ source: i, target: j, strength: shared.length, genres: shared });
                     }
                 }
             }
 
-            // Also connect artists who appear on the same album (various artists compilations, etc.)
-            // Not common in this dataset but nice to have
-
             influenceNodes = nodes;
             influenceEdges = edges;
 
-            // Force simulation
-            const SIM_SPEED = 0.3;
-            const REPULSION = 800;
-            const ATTRACTION = 0.003;
-            const DAMPING = 0.85;
-            const CENTER_GRAVITY = 0.02;
-            let simTemp = 1.0; // cooling temperature
+            // Stable force simulation with fast cooling
+            const REPULSION = 600;
+            const ATTRACTION = 0.005;
+            const DAMPING = 0.75;
+            const CENTER_GRAVITY = 0.01;
+            let simTemp = 1.0;
 
             let dragNode = null;
             let hoveredNode = null;
             let mouseX = 0, mouseY = 0;
 
             function tick() {
-                // Repulsion between all nodes
+                // Repulsion — use spatial bucketing for performance
                 for (let i = 0; i < nodes.length; i++) {
                     for (let j = i + 1; j < nodes.length; j++) {
                         const dx = nodes[j].x - nodes[i].x;
                         const dy = nodes[j].y - nodes[i].y;
-                        const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-                        const force = Math.min(5, REPULSION / (dist * dist));
+                        const distSq = dx * dx + dy * dy;
+                        if (distSq > 200 * 200) continue; // skip distant pairs
+                        const dist = Math.sqrt(distSq) || 1;
+                        const force = Math.min(3, REPULSION / distSq);
                         const fx = (dx / dist) * force;
                         const fy = (dy / dist) * force;
                         if (!nodes[i].pinned) { nodes[i].vx -= fx; nodes[i].vy -= fy; }
@@ -2798,33 +2846,33 @@
                     const dx = b.x - a.x;
                     const dy = b.y - a.y;
                     const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-                    const force = dist * ATTRACTION * e.strength;
+                    const idealDist = 60;
+                    const force = (dist - idealDist) * ATTRACTION * e.strength;
                     const fx = (dx / dist) * force;
                     const fy = (dy / dist) * force;
                     if (!a.pinned) { a.vx += fx; a.vy += fy; }
                     if (!b.pinned) { b.vx -= fx; b.vy -= fy; }
                 });
 
-                // Center gravity
+                // Gentle center gravity
                 nodes.forEach(n => {
                     if (n.pinned) return;
                     n.vx += (W / 2 - n.x) * CENTER_GRAVITY;
                     n.vy += (H / 2 - n.y) * CENTER_GRAVITY;
                 });
 
-                // Cool down over time
-                simTemp = Math.max(0.05, simTemp * 0.998);
+                // Cool fast
+                simTemp = Math.max(0.01, simTemp * 0.995);
 
                 // Integrate
                 nodes.forEach(n => {
                     if (n.pinned) return;
                     n.vx *= DAMPING;
                     n.vy *= DAMPING;
-                    n.x += n.vx * SIM_SPEED * simTemp;
-                    n.y += n.vy * SIM_SPEED * simTemp;
-                    // Boundary
-                    n.x = Math.max(n.radius, Math.min(W - n.radius, n.x));
-                    n.y = Math.max(n.radius, Math.min(H - n.radius, n.y));
+                    n.x += n.vx * simTemp;
+                    n.y += n.vy * simTemp;
+                    n.x = Math.max(n.radius + 4, Math.min(W - n.radius - 4, n.x));
+                    n.y = Math.max(n.radius + 4, Math.min(H - n.radius - 4, n.y));
                 });
 
                 // Draw
@@ -2832,19 +2880,21 @@
                 ctx.save();
                 ctx.scale(dpr, dpr);
 
-                // Edges
+                // Edges (dimmed unless hovered)
                 edges.forEach(e => {
                     const a = nodes[e.source], b = nodes[e.target];
-                    const opacity = Math.min(0.4, e.strength * 0.08);
+                    const isHighlight = hoveredNode !== null && (e.source === hoveredNode || e.target === hoveredNode);
+                    if (isHighlight) return; // draw highlighted edges on top
+                    const opacity = Math.min(0.2, e.strength * 0.04);
                     ctx.beginPath();
                     ctx.moveTo(a.x, a.y);
                     ctx.lineTo(b.x, b.y);
-                    ctx.strokeStyle = `rgba(232, 135, 58, ${opacity})`;
-                    ctx.lineWidth = Math.min(3, e.strength * 0.6);
+                    ctx.strokeStyle = `rgba(255, 255, 255, ${opacity})`;
+                    ctx.lineWidth = 1;
                     ctx.stroke();
                 });
 
-                // Highlight edges for hovered node
+                // Highlighted edges for hovered node
                 if (hoveredNode !== null) {
                     edges.forEach(e => {
                         if (e.source === hoveredNode || e.target === hoveredNode) {
@@ -2852,8 +2902,8 @@
                             ctx.beginPath();
                             ctx.moveTo(a.x, a.y);
                             ctx.lineTo(b.x, b.y);
-                            ctx.strokeStyle = 'rgba(29, 185, 84, 0.6)';
-                            ctx.lineWidth = 2;
+                            ctx.strokeStyle = 'rgba(29, 185, 84, 0.7)';
+                            ctx.lineWidth = Math.min(3, e.strength * 0.8);
                             ctx.stroke();
                         }
                     });
@@ -2861,43 +2911,66 @@
 
                 // Nodes
                 nodes.forEach((n, i) => {
+                    const isConnected = hoveredNode !== null && edges.some(e =>
+                        (e.source === hoveredNode && e.target === i) || (e.target === hoveredNode && e.source === i));
+                    const dimmed = hoveredNode !== null && i !== hoveredNode && !isConnected;
+
                     ctx.beginPath();
                     ctx.arc(n.x, n.y, n.radius, 0, Math.PI * 2);
 
-                    // Glow for hovered
                     if (i === hoveredNode) {
-                        ctx.shadowColor = '#1db954';
-                        ctx.shadowBlur = 15;
+                        ctx.shadowColor = n.color;
+                        ctx.shadowBlur = 20;
                     } else {
-                        ctx.shadowColor = 'transparent';
                         ctx.shadowBlur = 0;
                     }
 
-                    ctx.fillStyle = n.color || '#1db954';
+                    ctx.globalAlpha = dimmed ? 0.15 : 1;
+                    ctx.fillStyle = n.color;
                     ctx.fill();
-                    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+                    ctx.strokeStyle = 'rgba(255,255,255,0.2)';
                     ctx.lineWidth = 1;
                     ctx.stroke();
                     ctx.shadowBlur = 0;
 
-                    // Labels for bigger nodes or hovered connections
-                    const showLabel = n.radius > 10 || i === hoveredNode ||
-                        (hoveredNode !== null && edges.some(e => (e.source === hoveredNode && e.target === i) || (e.target === hoveredNode && e.source === i)));
-
+                    // Labels
+                    const showLabel = (!dimmed && n.radius >= 12) || i === hoveredNode || isConnected;
                     if (showLabel) {
-                        ctx.font = `${i === hoveredNode ? '600 12px' : '500 10px'} Inter, sans-serif`;
+                        const isHov = i === hoveredNode;
+                        ctx.font = `${isHov ? '700 13px' : '500 10px'} Inter, system-ui, sans-serif`;
                         ctx.textAlign = 'center';
-                        ctx.fillStyle = i === hoveredNode ? '#ffffff' : 'rgba(255,255,255,0.7)';
-                        ctx.fillText(n.name, n.x, n.y - n.radius - 5);
+                        // Text shadow for readability
+                        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+                        ctx.fillText(n.name, n.x + 1, n.y - n.radius - 5);
+                        ctx.fillStyle = isHov ? '#fff' : 'rgba(255,255,255,0.85)';
+                        ctx.fillText(n.name, n.x, n.y - n.radius - 6);
 
-                        if (i === hoveredNode) {
-                            // Show album count and genre info
-                            ctx.font = '400 9px Inter, sans-serif';
-                            ctx.fillStyle = 'rgba(255,255,255,0.5)';
-                            ctx.fillText(`${n.count} album${n.count !== 1 ? 's' : ''}${n.plays ? ' · ' + n.plays + ' plays' : ''}`, n.x, n.y - n.radius - 18);
+                        if (isHov) {
+                            const genreList = [...n.genres].slice(0, 4).join(', ');
+                            ctx.font = '400 9px Inter, system-ui, sans-serif';
+                            ctx.fillStyle = 'rgba(255,255,255,0.6)';
+                            ctx.fillText(`${n.count} album${n.count !== 1 ? 's' : ''}${n.plays ? ' · ' + n.plays + ' plays' : ''}`, n.x, n.y - n.radius - 20);
+                            ctx.fillText(genreList, n.x, n.y - n.radius - 32);
                         }
                     }
+                    ctx.globalAlpha = 1;
                 });
+
+                // Genre legend in corner
+                if (hoveredNode === null) {
+                    const legendGenres = topGenresSorted.slice(0, 8);
+                    ctx.font = '600 10px Inter, system-ui, sans-serif';
+                    ctx.textAlign = 'left';
+                    legendGenres.forEach(([g], i) => {
+                        const ly = 20 + i * 18;
+                        ctx.fillStyle = genreColors[g];
+                        ctx.beginPath();
+                        ctx.arc(16, ly, 5, 0, Math.PI * 2);
+                        ctx.fill();
+                        ctx.fillStyle = 'rgba(255,255,255,0.6)';
+                        ctx.fillText(g, 28, ly + 4);
+                    });
+                }
 
                 ctx.restore();
                 influenceAnimId = requestAnimationFrame(tick);
@@ -2908,7 +2981,7 @@
                 for (let i = nodes.length - 1; i >= 0; i--) {
                     const dx = nodes[i].x - x;
                     const dy = nodes[i].y - y;
-                    if (dx * dx + dy * dy <= (nodes[i].radius + 4) * (nodes[i].radius + 4)) return i;
+                    if (dx * dx + dy * dy <= (nodes[i].radius + 6) * (nodes[i].radius + 6)) return i;
                 }
                 return null;
             }
@@ -2937,7 +3010,7 @@
                     dragNode = hit;
                     nodes[hit].pinned = true;
                     canvas.style.cursor = 'grabbing';
-                    simTemp = Math.max(simTemp, 0.3); // reheat on drag
+                    simTemp = Math.max(simTemp, 0.2);
                 }
             });
 
@@ -2954,7 +3027,6 @@
                 const hit = getNodeAt(e.clientX - rect.left, e.clientY - rect.top);
                 if (hit !== null) {
                     closeInfluenceGraph();
-                    // Filter to this artist
                     document.getElementById('searchInput').value = nodes[hit].name;
                     applyFiltersAndSort();
                 }
