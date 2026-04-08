@@ -185,7 +185,131 @@ def clean_album_data(albums):
     return cleaned
 
 
-def inject_into_html(cd_albums, vinyl_albums, html_path):
+SUGGESTIONS_CACHE_FILE = SITE_DIR / "suggestions_cache.json"
+
+
+def load_suggestions_cache():
+    if SUGGESTIONS_CACHE_FILE.exists():
+        try:
+            return json.loads(SUGGESTIONS_CACHE_FILE.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+    return {}
+
+
+def save_suggestions_cache(cache):
+    SUGGESTIONS_CACHE_FILE.write_text(json.dumps(cache, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def find_missing_albums(all_albums):
+    """Query MusicBrainz for top artists' discographies and find albums not in the collection."""
+    import time
+
+    mb_agent = os.environ.get("MB_USER_AGENT", "").strip()
+    if not mb_agent:
+        print("  Skipping suggestions: MB_USER_AGENT not set")
+        return []
+
+    mb_headers = {"User-Agent": mb_agent, "Accept": "application/json"}
+
+    # Count albums per artist
+    artist_counts = {}
+    owned_titles = {}  # artist_lower -> set of title_lower
+    for a in all_albums:
+        artist = a["artist"]
+        artist_counts[artist] = artist_counts.get(artist, 0) + 1
+        key = artist.lower()
+        if key not in owned_titles:
+            owned_titles[key] = set()
+        owned_titles[key].add(a["title"].lower())
+
+    # Top 15 artists by album count
+    top_artists = sorted(artist_counts.items(), key=lambda x: -x[1])[:15]
+
+    cache = load_suggestions_cache()
+    suggestions = []
+
+    for artist_name, owned_count in top_artists:
+        cache_key = artist_name.lower()
+
+        # Check cache (valid for 30 days)
+        if cache_key in cache:
+            cached = cache[cache_key]
+            if time.time() - cached.get("ts", 0) < 30 * 86400:
+                # Use cached discography
+                discog = cached["albums"]
+                owned = owned_titles.get(cache_key, set())
+                missing = [a for a in discog if a["title"].lower() not in owned]
+                if missing:
+                    suggestions.append({
+                        "artist": artist_name,
+                        "owned": owned_count,
+                        "total": len(discog),
+                        "missing": missing[:8],
+                    })
+                continue
+
+        # Query MusicBrainz for artist
+        time.sleep(1.2)  # Rate limit
+        try:
+            search_url = "https://musicbrainz.org/ws/2/artist"
+            resp = requests.get(search_url, params={"query": artist_name, "fmt": "json", "limit": 1},
+                                headers=mb_headers, timeout=10)
+            resp.raise_for_status()
+            artists = resp.json().get("artists", [])
+            if not artists:
+                continue
+
+            artist_id = artists[0]["id"]
+
+            # Get release groups (albums + EPs)
+            time.sleep(1.2)
+            rg_url = f"https://musicbrainz.org/ws/2/release-group"
+            resp = requests.get(rg_url, params={
+                "artist": artist_id, "type": "album", "fmt": "json", "limit": 100
+            }, headers=mb_headers, timeout=10)
+            resp.raise_for_status()
+
+            release_groups = resp.json().get("release-groups", [])
+            discog = []
+            for rg in release_groups:
+                title = rg.get("title", "")
+                year = rg.get("first-release-date", "")[:4]
+                mbid = rg.get("id", "")
+                if title:
+                    discog.append({
+                        "title": title,
+                        "year": int(year) if year.isdigit() else None,
+                        "mbid": mbid,
+                    })
+
+            # Cache the discography
+            cache[cache_key] = {"ts": time.time(), "albums": discog}
+
+            # Find missing
+            owned = owned_titles.get(cache_key, set())
+            missing = [a for a in discog if a["title"].lower() not in owned]
+            if missing:
+                # Sort missing by year (newest first), limit to 8
+                missing.sort(key=lambda x: -(x.get("year") or 0))
+                suggestions.append({
+                    "artist": artist_name,
+                    "owned": owned_count,
+                    "total": len(discog),
+                    "missing": missing[:8],
+                })
+
+            print(f"    {artist_name}: {len(discog)} total, {len(missing)} missing")
+
+        except Exception as e:
+            print(f"    {artist_name}: error - {e}")
+
+    save_suggestions_cache(cache)
+    print(f"  Found suggestions for {len(suggestions)} artists")
+    return suggestions
+
+
+def inject_into_html(cd_albums, vinyl_albums, html_path, suggestions=None):
     html = html_path.read_text(encoding="utf-8")
     for marker, data in [("CD", cd_albums), ("VINYL", vinyl_albums)]:
         data = clean_album_data(data)
@@ -193,6 +317,17 @@ def inject_into_html(cd_albums, vinyl_albums, html_path):
         pattern = rf'/\* __{marker}_DATA__ \*/.*?/\* __END_{marker}_DATA__ \*/'
         html, count = re.subn(pattern, f'/* __{marker}_DATA__ */\n{json_str}\n/* __END_{marker}_DATA__ */', html, flags=re.DOTALL)
         if count == 0: print(f"  Warning: __{marker}_DATA__ markers not found")
+
+    # Inject suggestions data
+    if suggestions is not None:
+        json_str = json.dumps(suggestions, ensure_ascii=False)
+        pattern = r'/\* __SUGGESTIONS_DATA__ \*/.*?/\* __END_SUGGESTIONS_DATA__ \*/'
+        html, count = re.subn(pattern, f'/* __SUGGESTIONS_DATA__ */\n{json_str}\n/* __END_SUGGESTIONS_DATA__ */', html, flags=re.DOTALL)
+        if count == 0:
+            print(f"  Warning: __SUGGESTIONS_DATA__ markers not found")
+        else:
+            print(f"  Injected {len(suggestions)} artist suggestions")
+
     html_path.write_text(html, encoding="utf-8")
     print(f"  Injected {len(cd_albums)} CDs + {len(vinyl_albums)} vinyl into {html_path.name}")
 
@@ -327,7 +462,13 @@ def export_to_site():
     vinyl = resolve_cover_urls(vinyl, "Vinyl")
     cd = extract_dominant_colors(cd, "CDs")
     vinyl = extract_dominant_colors(vinyl, "Vinyl")
-    inject_into_html(cd, vinyl, INDEX_HTML)
+
+    # Find missing album suggestions for top artists
+    print("\n  Finding missing album suggestions...")
+    all_albums = cd + vinyl
+    suggestions = find_missing_albums(all_albums)
+
+    inject_into_html(cd, vinyl, INDEX_HTML, suggestions=suggestions)
     print(f"\n  Total: {len(cd)} CDs + {len(vinyl)} vinyl = {len(cd) + len(vinyl)} albums")
 
 
