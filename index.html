@@ -89,134 +89,6 @@
         .clear-filters-btn:hover { color: var(--text); border-color: var(--text-dim); }
         .clear-filters-btn.visible { display: inline-flex; align-items: center; gap: 4px; }
 
-        /* Time picker */
-        .time-picker-btn {
-            padding: 6px 14px;
-            border: 1px solid var(--border);
-            background: transparent;
-            color: var(--text-dim);
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 500;
-            font-family: Inter, sans-serif;
-            transition: all 0.2s ease;
-            white-space: nowrap;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-        .time-picker-btn:hover { color: var(--text); border-color: var(--accent); }
-
-        .time-picker-overlay {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.85);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 300;
-            backdrop-filter: blur(8px);
-            padding: 20px;
-        }
-        .time-picker-overlay.show { display: flex; }
-        .time-picker-card {
-            background: var(--surface-1);
-            border-radius: 16px;
-            padding: 32px;
-            max-width: 400px;
-            width: 100%;
-            animation: slideUp 0.4s ease;
-            text-align: center;
-        }
-        .time-picker-card h3 {
-            font-size: 20px;
-            margin-bottom: 6px;
-            color: var(--text);
-        }
-        .time-picker-card p {
-            font-size: 13px;
-            color: var(--text-dim);
-            margin-bottom: 24px;
-        }
-        .time-presets {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 8px;
-            justify-content: center;
-            margin-bottom: 16px;
-        }
-        .time-preset {
-            padding: 10px 20px;
-            background: var(--surface-2);
-            border: 1px solid var(--border);
-            color: var(--text);
-            border-radius: 24px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            font-family: Inter, sans-serif;
-            transition: all 0.2s;
-        }
-        .time-preset:hover { border-color: var(--accent); color: var(--accent); }
-        .time-custom-row {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            justify-content: center;
-            margin-top: 12px;
-        }
-        .time-custom-input {
-            width: 80px;
-            padding: 8px 12px;
-            background: var(--surface-2);
-            border: 1px solid var(--border);
-            color: var(--text);
-            border-radius: 8px;
-            font-size: 14px;
-            font-family: Inter, sans-serif;
-            text-align: center;
-        }
-        .time-custom-input:focus { outline: none; border-color: var(--accent); }
-        .time-go-btn {
-            padding: 8px 18px;
-            background: var(--accent);
-            color: var(--bg);
-            border: none;
-            border-radius: 8px;
-            font-size: 14px;
-            font-weight: 600;
-            font-family: Inter, sans-serif;
-            cursor: pointer;
-            transition: transform 0.2s;
-        }
-        .time-go-btn:hover { transform: scale(1.05); }
-        .time-result {
-            margin-top: 24px;
-            display: none;
-        }
-        .time-result.show { display: block; }
-        .time-result-list {
-            text-align: left;
-            margin-top: 12px;
-        }
-        .time-result-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 8px 0;
-            border-bottom: 1px solid rgba(255,255,255,0.04);
-            cursor: pointer;
-            transition: color 0.15s;
-        }
-        .time-result-item:hover { color: var(--accent); }
-        .time-result-total {
-            font-size: 13px;
-            color: var(--accent);
-            font-weight: 600;
-            margin-top: 12px;
-        }
-
         /* ======== THE SHELF — 3D Spine View ======== */
         .shelf-view {
             display: none;
@@ -672,6 +544,11 @@
             border-color: var(--accent);
             box-shadow: 0 8px 20px rgba(29, 185, 84, 0.2);
         }
+        /* When heatmap is on, suppress the green hover entirely */
+        .heatmap-active .card:hover {
+            border-color: var(--border) !important;
+            box-shadow: none !important;
+        }
 
         .card:focus-visible {
             outline: 2px solid var(--accent);
@@ -736,11 +613,6 @@
         /* Heatmap glow on cards */
         .heatmap-active .card {
             transition: box-shadow 0.4s ease, border-color 0.4s ease, opacity 0.4s ease;
-        }
-        .heatmap-active .card:hover {
-            border-color: inherit;
-            box-shadow: inherit;
-            transform: translateY(-2px);
         }
 
         .card-content-vinyl {
@@ -1778,8 +1650,9 @@
             padding: 8px 12px;
             border-bottom: 1px solid var(--border);
             position: sticky;
-            top: 60px;
+            top: 0;
             background: var(--bg);
+            z-index: 10;
             cursor: pointer;
             user-select: none;
         }
@@ -1933,10 +1806,20 @@
 
         <button class="pick-btn" id="pickBtn" aria-label="Pick random album">Pick One</button>
 
-        <button class="time-picker-btn" id="timePickerBtn" aria-label="Find albums by available time">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.2"/><path d="M7 4V7L9.5 8.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
-            I have time...
-        </button>
+        <div class="dropdown">
+            <button class="dropdown-btn" id="timeBtn" aria-label="Filter by available time">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.2"/><path d="M7 4V7L9.5 8.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                I have time...
+            </button>
+            <div class="dropdown-menu" id="timeMenu">
+                <button class="dropdown-item active" data-time="0">Any length</button>
+                <button class="dropdown-item" data-time="30">30 min or less</button>
+                <button class="dropdown-item" data-time="45">45 min or less</button>
+                <button class="dropdown-item" data-time="60">1 hour or less</button>
+                <button class="dropdown-item" data-time="90">90 min or less</button>
+                <button class="dropdown-item" data-time="120">2 hours or less</button>
+            </div>
+        </div>
 
         <button class="clear-filters-btn" id="clearFiltersBtn" aria-label="Clear all filters">
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 2L10 10M10 2L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
@@ -2118,34 +2001,6 @@
                 <div><span class="influence-legend-dot" style="background:var(--accent);"></span> In your collection</div>
                 <div><span class="influence-legend-dot" style="background:var(--vinyl-color);"></span> Influence connection</div>
                 <div style="margin-top:4px;font-size:10px;">Node size = albums owned &middot; Drag to explore &middot; Click artist to filter</div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Time Picker -->
-    <div class="time-picker-overlay" id="timePickerOverlay">
-        <div class="time-picker-card">
-            <h3>I have time for...</h3>
-            <p>Pick how much time you've got and we'll find the perfect album(s)</p>
-            <div class="time-presets">
-                <button class="time-preset" data-mins="30">30 min</button>
-                <button class="time-preset" data-mins="45">45 min</button>
-                <button class="time-preset" data-mins="60">1 hour</button>
-                <button class="time-preset" data-mins="90">90 min</button>
-                <button class="time-preset" data-mins="120">2 hours</button>
-            </div>
-            <div class="time-custom-row">
-                <input type="number" class="time-custom-input" id="timeCustomInput" placeholder="mins" min="10" max="600">
-                <button class="time-go-btn" id="timeGoBtn">Go</button>
-            </div>
-            <div class="time-result" id="timeResult">
-                <div style="font-size:14px;font-weight:600;color:var(--text);">Your listening session:</div>
-                <div class="time-result-list" id="timeResultList"></div>
-                <div class="time-result-total" id="timeResultTotal"></div>
-                <div style="margin-top:16px;display:flex;gap:8px;justify-content:center;">
-                    <button class="pick-again-btn" id="timeRerollBtn">Reroll</button>
-                    <button class="pick-close-btn" id="timeCloseBtn">Close</button>
-                </div>
             </div>
         </div>
     </div>
@@ -2344,6 +2199,7 @@
         let isShuffled = false;
         let shuffledAlbums = [];
         let currentView = 'grid';
+        let currentTimeFilter = 0; // 0 = no filter, otherwise max minutes
 
         // ============ INITIALIZATION ============
         function initData() {
@@ -2392,6 +2248,11 @@
             // Filter by genre
             if (currentGenreFilter !== 'all') {
                 result = result.filter(a => a.genres && a.genres.includes(currentGenreFilter));
+            }
+
+            // Filter by runtime
+            if (currentTimeFilter > 0) {
+                result = result.filter(a => a.runtime && a.runtime <= currentTimeFilter);
             }
 
             // Filter by search
@@ -2506,18 +2367,11 @@
                 content.appendChild(bio);
             }
 
-            // Genre chips + collector badge row
-            if ((album.genres && album.genres.length) || album._isCollector) {
+            // Genre chips
+            if (album.genres && album.genres.length) {
                 const genreDiv = document.createElement('div');
                 genreDiv.className = 'card-genres';
-                if (album._isCollector) {
-                    const cb = document.createElement('span');
-                    cb.className = 'collector-badge';
-                    cb.title = 'You own this on both CD and Vinyl';
-                    cb.innerHTML = '&#9830; 2x';
-                    genreDiv.appendChild(cb);
-                }
-                (album.genres || []).slice(0, 2).forEach(g => {
+                album.genres.slice(0, 2).forEach(g => {
                     const chip = document.createElement('span');
                     chip.className = 'genre-chip';
                     chip.textContent = g;
@@ -2556,6 +2410,15 @@
                 e.stopPropagation();
             });
             actions.appendChild(scrobbleLink);
+
+            // Collector badge (if owned on both formats)
+            if (album._isCollector) {
+                const cb = document.createElement('span');
+                cb.className = 'collector-badge';
+                cb.title = 'You own this on both CD and Vinyl';
+                cb.innerHTML = '&#9830; 2x';
+                actions.appendChild(cb);
+            }
 
             // Collection badge
             const badge = document.createElement('div');
@@ -2740,9 +2603,8 @@
                     const spine = document.createElement('div');
                     spine.className = 'spine';
 
-                    // Height based on runtime (or default)
-                    const runtime = album.runtime || 40;
-                    const height = Math.max(80, Math.min(220, runtime * 3.5));
+                    // Height: vinyl records are tall (12" sleeve), CDs are short (jewel case)
+                    const height = album.collection === 'vinyl' ? 180 : 120;
                     spine.style.height = height + 'px';
 
                     // Color from album dominant color, or from collection type
@@ -2865,11 +2727,14 @@
 
             artists.forEach((a, i) => {
                 const radius = Math.max(6, Math.min(30, a.count * 5 + (a.plays > 0 ? 3 : 0)));
+                // Initial position: spread in a circle with jitter
+                const angle = (i / artists.length) * Math.PI * 2;
+                const spread = Math.min(W, H) * 0.35;
                 nodes.push({
                     id: i,
                     name: a.name,
-                    x: W * 0.2 + Math.random() * W * 0.6,
-                    y: H * 0.2 + Math.random() * H * 0.6,
+                    x: W / 2 + Math.cos(angle) * spread + (Math.random() - 0.5) * 40,
+                    y: H / 2 + Math.sin(angle) * spread + (Math.random() - 0.5) * 40,
                     vx: 0, vy: 0,
                     radius,
                     count: a.count,
@@ -2898,11 +2763,12 @@
             influenceEdges = edges;
 
             // Force simulation
-            const SIM_SPEED = 0.8;
-            const REPULSION = 1200;
-            const ATTRACTION = 0.005;
-            const DAMPING = 0.92;
-            const CENTER_GRAVITY = 0.01;
+            const SIM_SPEED = 0.3;
+            const REPULSION = 800;
+            const ATTRACTION = 0.003;
+            const DAMPING = 0.85;
+            const CENTER_GRAVITY = 0.02;
+            let simTemp = 1.0; // cooling temperature
 
             let dragNode = null;
             let hoveredNode = null;
@@ -2915,7 +2781,7 @@
                         const dx = nodes[j].x - nodes[i].x;
                         const dy = nodes[j].y - nodes[i].y;
                         const dist = Math.sqrt(dx * dx + dy * dy) || 1;
-                        const force = REPULSION / (dist * dist);
+                        const force = Math.min(5, REPULSION / (dist * dist));
                         const fx = (dx / dist) * force;
                         const fy = (dy / dist) * force;
                         if (!nodes[i].pinned) { nodes[i].vx -= fx; nodes[i].vy -= fy; }
@@ -2943,13 +2809,16 @@
                     n.vy += (H / 2 - n.y) * CENTER_GRAVITY;
                 });
 
+                // Cool down over time
+                simTemp = Math.max(0.05, simTemp * 0.998);
+
                 // Integrate
                 nodes.forEach(n => {
                     if (n.pinned) return;
                     n.vx *= DAMPING;
                     n.vy *= DAMPING;
-                    n.x += n.vx * SIM_SPEED;
-                    n.y += n.vy * SIM_SPEED;
+                    n.x += n.vx * SIM_SPEED * simTemp;
+                    n.y += n.vy * SIM_SPEED * simTemp;
                     // Boundary
                     n.x = Math.max(n.radius, Math.min(W - n.radius, n.x));
                     n.y = Math.max(n.radius, Math.min(H - n.radius, n.y));
@@ -3065,6 +2934,7 @@
                     dragNode = hit;
                     nodes[hit].pinned = true;
                     canvas.style.cursor = 'grabbing';
+                    simTemp = Math.max(simTemp, 0.3); // reheat on drag
                 }
             });
 
@@ -3706,7 +3576,6 @@
             if (e.key === 'Escape') {
                 closeModal();
                 closeRandomPick();
-                closeTimePicker();
             }
         });
 
@@ -4007,9 +3876,9 @@
                     card.style.boxShadow = `0 0 8px rgba(74, 158, 237, ${ratio * 0.5})`;
                     card.style.opacity = `${0.7 + ratio * 1.5}`;
                 } else if (ratio < 0.5) {
-                    // Warm
-                    card.style.borderColor = `rgba(29, 185, 84, ${0.3 + ratio})`;
-                    card.style.boxShadow = `0 0 12px rgba(29, 185, 84, ${ratio * 0.5})`;
+                    // Warm — yellow-orange transition
+                    card.style.borderColor = `rgba(218, 190, 50, ${0.3 + ratio})`;
+                    card.style.boxShadow = `0 0 12px rgba(218, 190, 50, ${ratio * 0.5})`;
                     card.style.opacity = '1';
                 } else {
                     // Hot
@@ -4084,6 +3953,11 @@
             document.querySelector('#genreMenu .dropdown-item[data-genre="all"]').classList.add('active');
             currentGenreFilter = 'all';
             document.getElementById('genreBtn').textContent = 'Genre';
+            // Reset time filter
+            document.querySelectorAll('#timeMenu .dropdown-item').forEach(i => i.classList.remove('active'));
+            document.querySelector('#timeMenu .dropdown-item[data-time="0"]').classList.add('active');
+            currentTimeFilter = 0;
+            document.getElementById('timeBtn').textContent = 'I have time...';
             // Reset sort
             document.querySelectorAll('#sortMenu .dropdown-item').forEach(i => i.classList.remove('active'));
             document.querySelector('#sortMenu .dropdown-item[data-sort="artist"]').classList.add('active');
@@ -4112,6 +3986,7 @@
             const hasFilters = currentFilter !== 'all' ||
                 currentTypeFilter !== 'all' ||
                 currentGenreFilter !== 'all' ||
+                currentTimeFilter > 0 ||
                 document.getElementById('searchInput').value.trim() !== '' ||
                 isShuffled;
             document.getElementById('clearFiltersBtn').classList.toggle('visible', hasFilters);
@@ -4140,78 +4015,26 @@
             });
         }
 
-        // ============ TIME PICKER ============
-        let timePickerMins = 0;
+        // ============ TIME FILTER ============
+        document.getElementById('timeBtn').addEventListener('click', () => {
+            const menu = document.getElementById('timeMenu');
+            menu.classList.toggle('show');
+            document.getElementById('filterMenu').classList.remove('show');
+            document.getElementById('sortMenu').classList.remove('show');
+            document.getElementById('genreMenu').classList.remove('show');
+        });
 
-        function openTimePicker() {
-            document.getElementById('timePickerOverlay').classList.add('show');
-            document.getElementById('timeResult').classList.remove('show');
-            document.getElementById('timeCustomInput').value = '';
-        }
-
-        function closeTimePicker() {
-            document.getElementById('timePickerOverlay').classList.remove('show');
-        }
-
-        function pickAlbumsForTime(minutes) {
-            timePickerMins = minutes;
-            const pool = (filteredAlbums.length > 0 ? filteredAlbums : allAlbums).filter(a => a.runtime && a.runtime > 0);
-            if (pool.length === 0) return;
-
-            // Greedy knapsack with slight randomisation
-            const shuffled = [...pool].sort(() => Math.random() - 0.5);
-            const selected = [];
-            let remaining = minutes;
-
-            for (const album of shuffled) {
-                if (album.runtime <= remaining) {
-                    selected.push(album);
-                    remaining -= album.runtime;
-                    if (remaining < 5) break; // close enough
-                }
-            }
-
-            // If nothing fit, just pick the shortest
-            if (selected.length === 0) {
-                const shortest = [...pool].sort((a, b) => a.runtime - b.runtime)[0];
-                if (shortest) selected.push(shortest);
-            }
-
-            // Render results
-            const list = document.getElementById('timeResultList');
-            list.innerHTML = '';
-            let totalMins = 0;
-            selected.forEach(a => {
-                totalMins += a.runtime;
-                const item = document.createElement('div');
-                item.className = 'time-result-item';
-                item.innerHTML = `<span>${a.artist} — ${a.title}</span><span style="color:var(--text-dim);font-size:12px;">${a.length || Math.round(a.runtime) + 'm'}</span>`;
-                item.addEventListener('click', () => { closeTimePicker(); openModal(a); });
-                list.appendChild(item);
+        document.querySelectorAll('#timeMenu .dropdown-item').forEach(item => {
+            item.addEventListener('click', () => {
+                document.querySelectorAll('#timeMenu .dropdown-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                currentTimeFilter = parseInt(item.getAttribute('data-time'));
+                document.getElementById('timeMenu').classList.remove('show');
+                document.getElementById('timeBtn').textContent = currentTimeFilter > 0
+                    ? (currentTimeFilter >= 60 ? `≤ ${currentTimeFilter / 60}h` : `≤ ${currentTimeFilter}m`)
+                    : 'I have time...';
+                applyFiltersAndSort();
             });
-
-            document.getElementById('timeResultTotal').textContent = `Total: ~${Math.round(totalMins)} min of ${minutes} min available`;
-            document.getElementById('timeResult').classList.add('show');
-        }
-
-        document.getElementById('timePickerBtn').addEventListener('click', openTimePicker);
-        document.querySelectorAll('.time-preset').forEach(btn => {
-            btn.addEventListener('click', () => pickAlbumsForTime(parseInt(btn.dataset.mins)));
-        });
-        document.getElementById('timeGoBtn').addEventListener('click', () => {
-            const v = parseInt(document.getElementById('timeCustomInput').value);
-            if (v > 0) pickAlbumsForTime(v);
-        });
-        document.getElementById('timeCustomInput').addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                const v = parseInt(e.target.value);
-                if (v > 0) pickAlbumsForTime(v);
-            }
-        });
-        document.getElementById('timeRerollBtn').addEventListener('click', () => pickAlbumsForTime(timePickerMins));
-        document.getElementById('timeCloseBtn').addEventListener('click', closeTimePicker);
-        document.getElementById('timePickerOverlay').addEventListener('click', (e) => {
-            if (e.target === document.getElementById('timePickerOverlay')) closeTimePicker();
         });
 
         // ============ ARTIST RECOMMENDATIONS ============
