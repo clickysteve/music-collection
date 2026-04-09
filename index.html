@@ -1857,6 +1857,19 @@
         </div>
 
         <div class="dropdown">
+            <button class="dropdown-btn" id="yearBtn" aria-label="Filter by year">
+                Year
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="2" y="3" width="10" height="8" rx="1" stroke="currentColor" stroke-width="1.2"/>
+                    <path d="M2 6H12" stroke="currentColor" stroke-width="1.2"/>
+                </svg>
+            </button>
+            <div class="dropdown-menu genre-dropdown" id="yearMenu">
+                <button class="dropdown-item active" data-year="all">All Years</button>
+            </div>
+        </div>
+
+        <div class="dropdown">
             <button class="dropdown-btn" id="sortBtn" aria-label="Sort albums">
                 Sort
                 <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -2266,6 +2279,8 @@
         let currentFilter = 'all';
         let currentTypeFilter = 'all';
         let currentGenreFilter = 'all';
+        let currentYearFilter = 'all';
+        let currentDecadeValue = 0;
         let currentSort = 'artist';
         let isShuffled = false;
         let shuffledAlbums = [];
@@ -2326,12 +2341,23 @@
                 result = result.filter(a => a.runtime && a.runtime <= currentTimeFilter);
             }
 
-            // Filter by search
+            // Filter by year
+            if (currentYearFilter !== 'all') {
+                if (currentYearFilter === 'decade') {
+                    result = result.filter(a => a.year && Math.floor(a.year / 10) * 10 === currentDecadeValue);
+                } else {
+                    result = result.filter(a => a.year && a.year === parseInt(currentYearFilter));
+                }
+            }
+
+            // Filter by search (artist, title, genre, year)
             const search = document.getElementById('searchInput').value.toLowerCase();
             if (search) {
                 result = result.filter(a =>
                     a.artist.toLowerCase().includes(search) ||
-                    a.title.toLowerCase().includes(search)
+                    a.title.toLowerCase().includes(search) ||
+                    (a.genres && a.genres.some(g => g.toLowerCase().includes(search))) ||
+                    (a.year && String(a.year).includes(search))
                 );
             }
 
@@ -3399,6 +3425,7 @@
             menu.classList.toggle('show');
             document.getElementById('sortMenu').classList.remove('show');
             document.getElementById('genreMenu').classList.remove('show');
+            document.getElementById('yearMenu').classList.remove('show');
         });
 
         document.querySelectorAll('#filterMenu .dropdown-item').forEach(item => {
@@ -3417,6 +3444,7 @@
             menu.classList.toggle('show');
             document.getElementById('filterMenu').classList.remove('show');
             document.getElementById('sortMenu').classList.remove('show');
+            document.getElementById('yearMenu').classList.remove('show');
         });
 
         document.getElementById('genreMenu').addEventListener('click', (e) => {
@@ -3430,12 +3458,81 @@
             applyFiltersAndSort();
         });
 
+        // Year filter dropdown — populate with decades and individual years
+        (function populateYearMenu() {
+            const yearMenu = document.getElementById('yearMenu');
+            const years = allAlbums.map(a => a.year).filter(y => y && y > 0);
+            const decades = {};
+            const yearCounts = {};
+            years.forEach(y => {
+                const d = Math.floor(y / 10) * 10;
+                decades[d] = (decades[d] || 0) + 1;
+                yearCounts[y] = (yearCounts[y] || 0) + 1;
+            });
+
+            const sortedDecades = Object.keys(decades).map(Number).sort((a, b) => b - a);
+            const sortedYears = Object.keys(yearCounts).map(Number).sort((a, b) => b - a);
+
+            // Add decade options
+            sortedDecades.forEach(d => {
+                const btn = document.createElement('button');
+                btn.className = 'dropdown-item';
+                btn.setAttribute('data-year', 'decade');
+                btn.setAttribute('data-decade', d);
+                btn.textContent = d + 's (' + decades[d] + ')';
+                btn.style.fontWeight = '600';
+                yearMenu.appendChild(btn);
+            });
+
+            // Separator
+            const sep = document.createElement('div');
+            sep.style.cssText = 'height:1px;background:var(--border);margin:4px 0;';
+            yearMenu.appendChild(sep);
+
+            // Add individual years
+            sortedYears.forEach(y => {
+                const btn = document.createElement('button');
+                btn.className = 'dropdown-item';
+                btn.setAttribute('data-year', String(y));
+                btn.textContent = y + ' (' + yearCounts[y] + ')';
+                yearMenu.appendChild(btn);
+            });
+        })();
+
+        document.getElementById('yearBtn').addEventListener('click', () => {
+            const menu = document.getElementById('yearMenu');
+            menu.classList.toggle('show');
+            document.getElementById('filterMenu').classList.remove('show');
+            document.getElementById('sortMenu').classList.remove('show');
+            document.getElementById('genreMenu').classList.remove('show');
+        });
+
+        document.getElementById('yearMenu').addEventListener('click', (e) => {
+            const item = e.target.closest('.dropdown-item');
+            if (!item) return;
+            document.querySelectorAll('#yearMenu .dropdown-item').forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+            const val = item.getAttribute('data-year');
+            if (val === 'decade') {
+                currentYearFilter = 'decade';
+                currentDecadeValue = parseInt(item.getAttribute('data-decade'));
+                document.getElementById('yearBtn').textContent = currentDecadeValue + 's';
+            } else {
+                currentYearFilter = val;
+                currentDecadeValue = 0;
+                document.getElementById('yearBtn').textContent = val === 'all' ? 'Year' : val;
+            }
+            document.getElementById('yearMenu').classList.remove('show');
+            applyFiltersAndSort();
+        });
+
         // Sort dropdown
         document.getElementById('sortBtn').addEventListener('click', () => {
             const menu = document.getElementById('sortMenu');
             menu.classList.toggle('show');
             document.getElementById('filterMenu').classList.remove('show');
             document.getElementById('genreMenu').classList.remove('show');
+            document.getElementById('yearMenu').classList.remove('show');
         });
 
         document.querySelectorAll('#sortMenu .dropdown-item').forEach(item => {
@@ -3896,8 +3993,10 @@
             currentFilter = 'all';
             currentTypeFilter = 'all';
             currentGenreFilter = 'all';
+            currentYearFilter = 'all';
+            currentDecadeValue = 0;
             currentTimeFilter = 0;
-            
+
             // Get unplayed albums sorted by year (oldest first = most shameful)
             const unplayed = allAlbums.filter(a => !a.played && !a.lastfm_plays && !a.last_played);
             unplayed.sort((a, b) => (a.year || 9999) - (b.year || 9999));
@@ -4010,6 +4109,11 @@
             document.querySelector('#genreMenu .dropdown-item[data-genre="all"]').classList.add('active');
             currentGenreFilter = 'all';
             document.getElementById('genreBtn').textContent = 'Genre';
+            // Reset year filter
+            document.querySelectorAll('#yearMenu .dropdown-item').forEach(i => i.classList.remove('active'));
+            currentYearFilter = 'all';
+            currentDecadeValue = 0;
+            document.getElementById('yearBtn').textContent = 'Year';
             // Reset time filter
             document.querySelectorAll('#timeMenu .dropdown-item').forEach(i => i.classList.remove('active'));
             document.querySelector('#timeMenu .dropdown-item[data-time="0"]').classList.add('active');
@@ -4047,6 +4151,7 @@
             const hasFilters = currentFilter !== 'all' ||
                 currentTypeFilter !== 'all' ||
                 currentGenreFilter !== 'all' ||
+                currentYearFilter !== 'all' ||
                 currentTimeFilter > 0 ||
                 document.getElementById('searchInput').value.trim() !== '' ||
                 isShuffled;
