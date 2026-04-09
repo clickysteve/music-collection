@@ -3908,10 +3908,11 @@
                 scroll.appendChild(item);
             });
 
+            let rotationOpen = false;
             rotBtn.addEventListener('click', () => {
-                const isOpen = container.style.display !== 'none' && container.style.display !== '';
-                container.style.display = isOpen ? 'none' : '';
-                rotBtn.classList.toggle('open', !isOpen);
+                rotationOpen = !rotationOpen;
+                container.style.display = rotationOpen ? '' : 'none';
+                rotBtn.classList.toggle('open', rotationOpen);
             });
         }
 
