@@ -1804,6 +1804,7 @@
             <div class="stat-item"><span class="stat-value" id="statOldest">—</span><span class="stat-label">Oldest</span></div>
             <div class="stat-item"><span class="stat-value" id="statNewest">—</span><span class="stat-label">Newest</span></div>
             <div class="stat-item"><span class="stat-value" id="statDecade">—</span><span class="stat-label">Top Decade</span></div>
+            <div class="stat-item"><span class="stat-value" id="statTopYear">—</span><span class="stat-label">Top Year</span></div>
         </div>
         <div style="text-align:center;padding:4px 0 8px;display:flex;justify-content:center;gap:10px;">
             <button class="stats-expand-btn" id="statsExpandBtn">More Stats <span class="chevron">&#9660;</span></button>
@@ -2611,6 +2612,16 @@
                 document.getElementById('statDecade').textContent = topDecade[0] + 's';
             } else {
                 document.getElementById('statDecade').textContent = '—';
+            }
+
+            // Top year
+            if (years.length) {
+                const yearCounts = {};
+                years.forEach(y => { yearCounts[y] = (yearCounts[y] || 0) + 1; });
+                const topYear = Object.entries(yearCounts).sort((a, b) => b[1] - a[1])[0];
+                document.getElementById('statTopYear').textContent = topYear[0];
+            } else {
+                document.getElementById('statTopYear').textContent = '—';
             }
         }
 
