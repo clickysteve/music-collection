@@ -1256,15 +1256,6 @@
             padding: 0 16px 12px;
             overflow: hidden;
         }
-        .in-rotation-title {
-            font-size: 12px;
-            font-weight: 600;
-            color: var(--text-dim);
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            margin-bottom: 10px;
-            padding-left: 2px;
-        }
         .in-rotation-scroll {
             display: flex;
             gap: 12px;
@@ -1311,10 +1302,6 @@
             color: var(--text-dim);
             opacity: 0.6;
         }
-        .in-rotation-title { cursor: pointer; user-select: none; }
-        .in-rotation-title .chevron { font-size: 10px; transition: transform 0.3s; display: inline-block; }
-        .in-rotation-title .chevron.open { transform: rotate(180deg); }
-        .in-rotation-scroll.collapsed { display: none; }
         @media (max-width: 600px) {
             .in-rotation-item { width: 80px; }
             .in-rotation-cover { width: 80px; height: 80px; }
@@ -1912,11 +1899,6 @@
 
     <!-- Main Container -->
     <div class="container">
-        <!-- In Rotation -->
-        <div class="in-rotation" id="inRotation" style="display:none;">
-            <div class="in-rotation-title" id="inRotationToggle">In Rotation <span class="chevron" id="inRotationChevron">&#9660;</span></div>
-            <div class="in-rotation-scroll" id="inRotationScroll"></div>
-        </div>
         <div class="stats-bar" id="statsBar">
             <div class="stat-item"><span class="stat-value" id="statTotal">0</span><span class="stat-label">Albums</span></div>
             <div class="stat-item"><span class="stat-value" id="statRuntime">0h</span><span class="stat-label">Total Runtime</span></div>
@@ -1928,8 +1910,12 @@
             <div class="stat-item"><span class="stat-value" id="statTopYear">—</span><span class="stat-label">Top Year</span></div>
         </div>
         <div style="text-align:center;padding:4px 0 8px;display:flex;justify-content:center;gap:10px;">
+            <button class="stats-expand-btn" id="inRotationBtn" style="display:none;">In Rotation <span class="chevron">&#9660;</span></button>
             <button class="stats-expand-btn" id="statsExpandBtn">More Stats <span class="chevron">&#9660;</span></button>
             <button class="suggestions-btn" id="suggestionsBtn" style="display:none;">What am I missing?</button>
+        </div>
+        <div class="in-rotation" id="inRotation" style="display:none;">
+            <div class="in-rotation-scroll" id="inRotationScroll"></div>
         </div>
         <div class="suggestions-panel" id="suggestionsPanel"></div>
         <div class="stats-detail" id="statsDetail">
@@ -3887,9 +3873,10 @@
 
             const container = document.getElementById('inRotation');
             const scroll = document.getElementById('inRotationScroll');
-            if (!recent.length) { container.style.display = 'none'; return; }
+            const rotBtn = document.getElementById('inRotationBtn');
+            if (!recent.length) { rotBtn.style.display = 'none'; container.style.display = 'none'; return; }
 
-            container.style.display = '';
+            rotBtn.style.display = '';
             scroll.innerHTML = '';
             recent.forEach(album => {
                 const item = document.createElement('div');
@@ -3921,11 +3908,10 @@
                 scroll.appendChild(item);
             });
 
-            // Start collapsed
-            scroll.classList.add('collapsed');
-            document.getElementById('inRotationToggle').addEventListener('click', () => {
-                scroll.classList.toggle('collapsed');
-                document.getElementById('inRotationChevron').classList.toggle('open');
+            rotBtn.addEventListener('click', () => {
+                const isOpen = container.style.display !== 'none' && container.style.display !== '';
+                container.style.display = isOpen ? 'none' : '';
+                rotBtn.classList.toggle('open', !isOpen);
             });
         }
 
