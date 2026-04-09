@@ -622,6 +622,117 @@ def itunes_cover_fallback(albums, label=""):
 
 
 LASTFM_CACHE_FILE = SITE_DIR / "lastfm_cache.json"
+TRACKCOUNT_CACHE_FILE = SITE_DIR / "trackcount_cache.json"
+LASTPLAYED_CACHE_FILE = SITE_DIR / "lastplayed_cache.json"
+
+
+def load_trackcount_cache():
+    if TRACKCOUNT_CACHE_FILE.exists():
+        try:
+            return json.loads(TRACKCOUNT_CACHE_FILE.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+    return {}
+
+
+def save_trackcount_cache(cache):
+    TRACKCOUNT_CACHE_FILE.write_text(json.dumps(cache, ensure_ascii=False), encoding="utf-8")
+
+
+def fetch_track_counts(albums):
+    """Fetch track counts per album from MusicBrainz release-groups.
+
+    Queries the release-group recordings count via the MusicBrainz API.
+    Uses Last.fm album.getInfo as fallback. Caches permanently by MBID.
+    """
+    import time
+
+    cache = load_trackcount_cache()
+    to_fetch = []
+
+    for i, a in enumerate(albums):
+        mbid = a.get("mbid", "")
+        if mbid and mbid in cache:
+            albums[i]["track_count"] = cache[mbid]
+        elif mbid:
+            to_fetch.append((i, a))
+
+    if not to_fetch:
+        print(f"  All track counts cached ({len(cache)} albums)")
+        return albums
+
+    mb_agent = os.environ.get("MB_USER_AGENT", "").strip()
+    if not mb_agent:
+        mb_agent = "MusicCollectionGallery/1.0 (steve.blythe@a8c.com)"
+    mb_headers = {"User-Agent": mb_agent, "Accept": "application/json"}
+
+    api_key = os.environ.get("LASTFM_API_KEY", "").strip()
+
+    print(f"  Fetching track counts for {len(to_fetch)} albums...")
+    fetched = 0
+
+    for idx, album in to_fetch:
+        mbid = album.get("mbid", "")
+        artist = album.get("artist", "")
+        title = album.get("title", "")
+        track_count = 0
+
+        # Try MusicBrainz first: get releases in the release-group, pick first
+        time.sleep(1.1)
+        try:
+            resp = requests.get(
+                f"https://musicbrainz.org/ws/2/release-group/{mbid}",
+                params={"fmt": "json", "inc": "releases"},
+                headers=mb_headers, timeout=10,
+            )
+            if resp.status_code == 200:
+                data = resp.json()
+                releases = data.get("releases", [])
+                if releases:
+                    # Pick the first release and get its media/track count
+                    release_id = releases[0].get("id", "")
+                    if release_id:
+                        time.sleep(1.1)
+                        resp2 = requests.get(
+                            f"https://musicbrainz.org/ws/2/release/{release_id}",
+                            params={"fmt": "json", "inc": "recordings"},
+                            headers=mb_headers, timeout=10,
+                        )
+                        if resp2.status_code == 200:
+                            media = resp2.json().get("media", [])
+                            track_count = sum(len(m.get("tracks", [])) for m in media)
+        except Exception:
+            pass
+
+        # Fallback: Last.fm album.getInfo
+        if not track_count and api_key:
+            try:
+                resp = requests.get("https://ws.audioscrobbler.com/2.0/", params={
+                    "method": "album.getInfo",
+                    "artist": artist,
+                    "album": title,
+                    "api_key": api_key,
+                    "format": "json",
+                }, timeout=10)
+                if resp.status_code == 200:
+                    tracks = resp.json().get("album", {}).get("tracks", {}).get("track", [])
+                    if tracks:
+                        track_count = len(tracks)
+            except Exception:
+                pass
+
+        if track_count:
+            cache[mbid] = track_count
+            albums[idx]["track_count"] = track_count
+            fetched += 1
+
+        if fetched % 25 == 0 and fetched > 0:
+            save_trackcount_cache(cache)
+            print(f"    ...{fetched}/{len(to_fetch)}")
+
+    save_trackcount_cache(cache)
+    print(f"  Fetched track counts for {fetched}/{len(to_fetch)} albums")
+    return albums
 
 
 def fetch_lastfm_data(all_albums):
@@ -690,31 +801,7 @@ def fetch_lastfm_data(all_albums):
             print(f"    Error on page {page}: {e}")
             break
 
-    # Also fetch recent tracks to get last-played timestamps (last 200)
-    lastfm_recent = {}
-    try:
-        resp = requests.get("https://ws.audioscrobbler.com/2.0/", params={
-            "method": "user.getRecentTracks",
-            "user": username,
-            "api_key": api_key,
-            "format": "json",
-            "limit": 200,
-        }, timeout=15)
-        resp.raise_for_status()
-        tracks = resp.json().get("recenttracks", {}).get("track", [])
-        for t in tracks:
-            artist = t.get("artist", {}).get("#text", "").lower()
-            album_name = t.get("album", {}).get("#text", "").lower()
-            date_str = t.get("date", {}).get("#text", "")
-            if artist and album_name and date_str:
-                key = f"{artist}|||{album_name}"
-                if key not in lastfm_recent:
-                    lastfm_recent[key] = date_str
-        print(f"    Recent tracks: {len(lastfm_recent)} unique albums")
-    except Exception as e:
-        print(f"    Recent tracks error: {e}")
-
-    cache = {"_ts": time.time(), "plays": lastfm_albums, "recent": lastfm_recent}
+    cache = {"_ts": time.time(), "plays": lastfm_albums}
     LASTFM_CACHE_FILE.write_text(json.dumps(cache, ensure_ascii=False), encoding="utf-8")
     print(f"  Last.fm: {len(lastfm_albums)} albums with play counts")
 
@@ -734,38 +821,227 @@ def _normalize_for_match(s):
 def _apply_lastfm(albums, cache):
     """Apply cached Last.fm data to album list using fuzzy matching."""
     plays_data = cache.get("plays", {})
-    recent_data = cache.get("recent", {})
     matched = 0
 
     # Build normalized lookup from Last.fm data
     norm_plays = {}
-    norm_recent = {}
     for key, val in plays_data.items():
         parts = key.split("|||")
         if len(parts) == 2:
             norm_key = f"{_normalize_for_match(parts[0])}|||{_normalize_for_match(parts[1])}"
-            # Keep highest play count if multiple normalizations collide
             if norm_key not in norm_plays or val > norm_plays[norm_key]:
                 norm_plays[norm_key] = val
-    for key, val in recent_data.items():
-        parts = key.split("|||")
-        if len(parts) == 2:
-            norm_key = f"{_normalize_for_match(parts[0])}|||{_normalize_for_match(parts[1])}"
-            if norm_key not in norm_recent:
-                norm_recent[norm_key] = val
 
     for a in albums:
         norm_key = f"{_normalize_for_match(a['artist'])}|||{_normalize_for_match(a['title'])}"
         plays = norm_plays.get(norm_key, 0)
-        recent = norm_recent.get(norm_key, "")
         if plays > 0:
             a["lastfm_plays"] = plays
             matched += 1
-        if recent:
-            a["lastfm_recent"] = recent
 
     print(f"  Last.fm matched {matched}/{len(albums)} albums with play counts")
     return albums
+
+
+def calculate_last_played(all_albums):
+    """Determine last-played dates from Last.fm scrobbles using 50% threshold.
+
+    Paginates through user.getRecentTracks, groups scrobbles by album into
+    sessions (scrobbles within 4 hours of each other), and marks an album as
+    "played" only if 50%+ of its tracks were scrobbled in a session.
+
+    Merges with Notion 'last_played' dates — whichever is more recent wins.
+    Caches results in lastplayed_cache.json.
+    """
+    import time
+    from datetime import datetime, timedelta
+
+    api_key = os.environ.get("LASTFM_API_KEY", "").strip()
+    username = os.environ.get("LASTFM_USER", "").strip()
+
+    if not api_key or not username:
+        print("  Skipping last-played calculation: set LASTFM_API_KEY and LASTFM_USER")
+        return all_albums
+
+    # Load existing last-played cache
+    lp_cache = {}
+    if LASTPLAYED_CACHE_FILE.exists():
+        try:
+            lp_cache = json.loads(LASTPLAYED_CACHE_FILE.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+
+    # Build lookup: normalized album key -> track_count
+    album_track_counts = {}
+    album_keys_by_norm = {}  # norm_key -> list of album indices
+    for i, a in enumerate(all_albums):
+        norm_key = f"{_normalize_for_match(a['artist'])}|||{_normalize_for_match(a['title'])}"
+        tc = a.get("track_count", 0)
+        if tc:
+            album_track_counts[norm_key] = tc
+        if norm_key not in album_keys_by_norm:
+            album_keys_by_norm[norm_key] = []
+        album_keys_by_norm[norm_key].append(i)
+
+    # Determine how far back to scan — if we have cached data, only go back
+    # to 1 day before the last scan timestamp to catch anything new
+    last_scan_ts = lp_cache.get("_last_scan_ts", 0)
+    scan_from = None
+    if last_scan_ts:
+        # Go back 1 day before last scan to catch stragglers
+        scan_from = int(last_scan_ts) - 86400
+
+    print(f"  Fetching scrobbles for last-played calculation...")
+    if scan_from:
+        print(f"    Scanning from {datetime.utcfromtimestamp(scan_from).strftime('%Y-%m-%d')}")
+
+    # Paginate through getRecentTracks
+    all_scrobbles = []  # list of (timestamp, norm_artist, norm_album, track_name)
+    page = 1
+    total_pages = 1
+    max_pages = 500  # safety cap
+
+    while page <= total_pages and page <= max_pages:
+        try:
+            params = {
+                "method": "user.getRecentTracks",
+                "user": username,
+                "api_key": api_key,
+                "format": "json",
+                "limit": 200,
+                "page": page,
+            }
+            if scan_from:
+                params["from"] = scan_from
+
+            resp = requests.get("https://ws.audioscrobbler.com/2.0/",
+                                params=params, timeout=15)
+            resp.raise_for_status()
+            data = resp.json()
+
+            rt = data.get("recenttracks", {})
+            total_pages = int(rt.get("@attr", {}).get("totalPages", 1))
+            tracks = rt.get("track", [])
+
+            for t in tracks:
+                # Skip "now playing" entries (no date)
+                if t.get("@attr", {}).get("nowplaying"):
+                    continue
+                artist = t.get("artist", {}).get("#text", "")
+                album_name = t.get("album", {}).get("#text", "")
+                track_name = t.get("name", "")
+                date_uts = t.get("date", {}).get("uts", "")
+
+                if artist and album_name and date_uts:
+                    ts = int(date_uts)
+                    norm_key = f"{_normalize_for_match(artist)}|||{_normalize_for_match(album_name)}"
+                    # Only collect scrobbles for albums in our collection
+                    if norm_key in album_keys_by_norm:
+                        all_scrobbles.append((ts, norm_key, _normalize_for_match(track_name)))
+
+            if page % 10 == 0:
+                print(f"    Page {page}/{total_pages} ({len(all_scrobbles)} relevant scrobbles)")
+            page += 1
+            time.sleep(0.25)
+
+        except Exception as e:
+            print(f"    Error on page {page}: {e}")
+            break
+
+    print(f"  Collected {len(all_scrobbles)} relevant scrobbles across {page-1} pages")
+
+    if not all_scrobbles:
+        # Still apply any cached + Notion dates
+        _apply_last_played(all_albums, lp_cache)
+        return all_albums
+
+    # Group scrobbles by album, then into sessions (4-hour window)
+    SESSION_GAP = 4 * 3600  # 4 hours
+
+    # Sort by album key then timestamp
+    from collections import defaultdict
+    scrobbles_by_album = defaultdict(list)
+    for ts, norm_key, track_name in all_scrobbles:
+        scrobbles_by_album[norm_key].append((ts, track_name))
+
+    # For each album, find sessions where 50%+ tracks were played
+    new_last_played = {}  # norm_key -> ISO date string of most recent qualifying session
+
+    for norm_key, scrobbles in scrobbles_by_album.items():
+        track_count = album_track_counts.get(norm_key, 0)
+        if not track_count:
+            # No track count data — fall back to "any scrobble counts"
+            threshold = 1
+        else:
+            threshold = max(1, (track_count + 1) // 2)  # ceil(50%)
+
+        # Sort by timestamp descending (newest first)
+        scrobbles.sort(key=lambda x: -x[0])
+
+        # Walk through scrobbles and group into sessions
+        sessions = []
+        current_session = []
+
+        for ts, track_name in scrobbles:
+            if not current_session:
+                current_session = [(ts, track_name)]
+            elif current_session[-1][0] - ts <= SESSION_GAP:
+                current_session.append((ts, track_name))
+            else:
+                sessions.append(current_session)
+                current_session = [(ts, track_name)]
+        if current_session:
+            sessions.append(current_session)
+
+        # Check each session (newest first) for 50% threshold
+        for session in sessions:
+            unique_tracks = len(set(tn for _, tn in session))
+            if unique_tracks >= threshold:
+                # This session qualifies — take the newest timestamp
+                session_date = datetime.utcfromtimestamp(session[0][0]).strftime("%Y-%m-%d")
+                new_last_played[norm_key] = session_date
+                break  # Only need the most recent qualifying session
+
+    print(f"  Found qualifying listens for {len(new_last_played)} albums (50%+ threshold)")
+
+    # Merge into cache: keep whichever date is newer
+    existing_dates = lp_cache.get("dates", {})
+    for norm_key, date_str in new_last_played.items():
+        existing = existing_dates.get(norm_key, "")
+        if not existing or date_str > existing:
+            existing_dates[norm_key] = date_str
+
+    lp_cache["dates"] = existing_dates
+    lp_cache["_last_scan_ts"] = time.time()
+    LASTPLAYED_CACHE_FILE.write_text(json.dumps(lp_cache, ensure_ascii=False), encoding="utf-8")
+
+    _apply_last_played(all_albums, lp_cache)
+    return all_albums
+
+
+def _apply_last_played(albums, lp_cache):
+    """Apply last-played dates to albums. Uses scrobble data from cache,
+    merged with Notion last_played — whichever is more recent wins."""
+    dates = lp_cache.get("dates", {})
+    applied = 0
+
+    for a in albums:
+        norm_key = f"{_normalize_for_match(a['artist'])}|||{_normalize_for_match(a['title'])}"
+        scrobble_date = dates.get(norm_key, "")
+        notion_date = a.get("last_played", "")
+
+        # Pick whichever is more recent
+        best_date = ""
+        if scrobble_date and notion_date:
+            best_date = max(scrobble_date, notion_date)
+        else:
+            best_date = scrobble_date or notion_date
+
+        if best_date:
+            a["last_played"] = best_date
+            applied += 1
+
+    print(f"  Applied last-played dates to {applied}/{len(albums)} albums")
 
 
 DESCRIPTION_CACHE_FILE = SITE_DIR / "description_cache.json"
@@ -932,9 +1208,11 @@ def export_to_site():
     cd = extract_dominant_colors(cd, "CDs")
     vinyl = extract_dominant_colors(vinyl, "Vinyl")
 
-    # Fetch Last.fm listening data + album descriptions
+    # Fetch Last.fm listening data, track counts, last played, and AI descriptions
     all_albums = cd + vinyl
     all_albums = fetch_lastfm_data(all_albums)
+    all_albums = fetch_track_counts(all_albums)
+    all_albums = calculate_last_played(all_albums)
     all_albums = generate_ai_descriptions(all_albums)
     # Re-split after enrichment
     cd_count = len(cd)
