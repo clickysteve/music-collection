@@ -111,16 +111,53 @@ def fetch_top_albums(api_key, username):
     return lastfm_albums
 
 
+def fetch_track_counts_lastfm(api_key, all_albums):
+    """Fetch track counts from Last.fm album.getInfo, cache by MBID."""
+    tc_cache = {}
+    if TRACKCOUNT_CACHE_FILE.exists():
+        try:
+            tc_cache = json.loads(TRACKCOUNT_CACHE_FILE.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+
+    to_fetch = [a for a in all_albums if a.get("mbid") and a["mbid"] not in tc_cache]
+    if not to_fetch:
+        has_tc = sum(1 for v in tc_cache.values() if v > 0)
+        print(f"  All track counts cached ({has_tc} albums with data)")
+        return tc_cache
+
+    print(f"  Fetching track counts from Last.fm for {len(to_fetch)} albums...")
+    fetched = 0
+    for a in to_fetch:
+        try:
+            resp = requests.get("https://ws.audioscrobbler.com/2.0/", params={
+                "method": "album.getInfo",
+                "artist": a["artist"],
+                "album": a["title"],
+                "api_key": api_key,
+                "format": "json",
+            }, timeout=10)
+            if resp.status_code == 200:
+                tracks = resp.json().get("album", {}).get("tracks", {}).get("track", [])
+                tc_cache[a["mbid"]] = len(tracks) if tracks else 0
+                if tracks:
+                    fetched += 1
+        except Exception:
+            pass
+        time.sleep(0.2)
+        if fetched % 50 == 0 and fetched > 0:
+            TRACKCOUNT_CACHE_FILE.write_text(json.dumps(tc_cache, ensure_ascii=False), encoding="utf-8")
+
+    TRACKCOUNT_CACHE_FILE.write_text(json.dumps(tc_cache, ensure_ascii=False), encoding="utf-8")
+    print(f"  Fetched track counts for {fetched}/{len(to_fetch)} albums")
+    return tc_cache
+
+
 def fetch_scrobbles_and_calculate(api_key, username, all_albums):
     """Fetch recent scrobbles and calculate last-played dates using 50% threshold."""
 
-    # Load track count cache
-    track_counts = {}
-    if TRACKCOUNT_CACHE_FILE.exists():
-        try:
-            track_counts = json.loads(TRACKCOUNT_CACHE_FILE.read_text(encoding="utf-8"))
-        except Exception:
-            pass
+    # Fetch/load track counts from Last.fm
+    tc_cache = fetch_track_counts_lastfm(api_key, all_albums)
 
     # Build lookups
     album_track_counts = {}  # norm_key -> track count
@@ -129,7 +166,7 @@ def fetch_scrobbles_and_calculate(api_key, username, all_albums):
         norm_key = f"{_normalize_for_match(a['artist'])}|||{_normalize_for_match(a['title'])}"
         album_keys.add(norm_key)
         mbid = a.get("mbid", "")
-        tc = a.get("track_count") or (track_counts.get(mbid, 0) if mbid else 0)
+        tc = tc_cache.get(mbid, 0) if mbid else 0
         if tc:
             album_track_counts[norm_key] = tc
 

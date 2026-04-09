@@ -640,12 +640,16 @@ def save_trackcount_cache(cache):
 
 
 def fetch_track_counts(albums):
-    """Fetch track counts per album from MusicBrainz release-groups.
+    """Fetch track counts per album from Last.fm album.getInfo.
 
-    Queries the release-group recordings count via the MusicBrainz API.
-    Uses Last.fm album.getInfo as fallback. Caches permanently by MBID.
+    Caches permanently by MBID in trackcount_cache.json.
     """
     import time
+
+    api_key = os.environ.get("LASTFM_API_KEY", "").strip()
+    if not api_key:
+        print("  Skipping track counts: LASTFM_API_KEY not set")
+        return albums
 
     cache = load_trackcount_cache()
     to_fetch = []
@@ -658,75 +662,39 @@ def fetch_track_counts(albums):
             to_fetch.append((i, a))
 
     if not to_fetch:
-        print(f"  All track counts cached ({len(cache)} albums)")
+        has_tc = sum(1 for v in cache.values() if v > 0)
+        print(f"  All track counts cached ({has_tc} albums with data)")
         return albums
 
-    mb_agent = os.environ.get("MB_USER_AGENT", "").strip()
-    if not mb_agent:
-        mb_agent = "MusicCollectionGallery/1.0 (steve.blythe@a8c.com)"
-    mb_headers = {"User-Agent": mb_agent, "Accept": "application/json"}
-
-    api_key = os.environ.get("LASTFM_API_KEY", "").strip()
-
-    print(f"  Fetching track counts for {len(to_fetch)} albums...")
+    print(f"  Fetching track counts from Last.fm for {len(to_fetch)} albums...")
     fetched = 0
 
     for idx, album in to_fetch:
         mbid = album.get("mbid", "")
         artist = album.get("artist", "")
         title = album.get("title", "")
-        track_count = 0
 
-        # Try MusicBrainz first: get releases in the release-group, pick first
-        time.sleep(1.1)
         try:
-            resp = requests.get(
-                f"https://musicbrainz.org/ws/2/release-group/{mbid}",
-                params={"fmt": "json", "inc": "releases"},
-                headers=mb_headers, timeout=10,
-            )
+            resp = requests.get("https://ws.audioscrobbler.com/2.0/", params={
+                "method": "album.getInfo",
+                "artist": artist,
+                "album": title,
+                "api_key": api_key,
+                "format": "json",
+            }, timeout=10)
             if resp.status_code == 200:
-                data = resp.json()
-                releases = data.get("releases", [])
-                if releases:
-                    # Pick the first release and get its media/track count
-                    release_id = releases[0].get("id", "")
-                    if release_id:
-                        time.sleep(1.1)
-                        resp2 = requests.get(
-                            f"https://musicbrainz.org/ws/2/release/{release_id}",
-                            params={"fmt": "json", "inc": "recordings"},
-                            headers=mb_headers, timeout=10,
-                        )
-                        if resp2.status_code == 200:
-                            media = resp2.json().get("media", [])
-                            track_count = sum(len(m.get("tracks", [])) for m in media)
+                tracks = resp.json().get("album", {}).get("tracks", {}).get("track", [])
+                track_count = len(tracks) if tracks else 0
+                cache[mbid] = track_count
+                if track_count:
+                    albums[idx]["track_count"] = track_count
+                    fetched += 1
         except Exception:
             pass
 
-        # Fallback: Last.fm album.getInfo
-        if not track_count and api_key:
-            try:
-                resp = requests.get("https://ws.audioscrobbler.com/2.0/", params={
-                    "method": "album.getInfo",
-                    "artist": artist,
-                    "album": title,
-                    "api_key": api_key,
-                    "format": "json",
-                }, timeout=10)
-                if resp.status_code == 200:
-                    tracks = resp.json().get("album", {}).get("tracks", {}).get("track", [])
-                    if tracks:
-                        track_count = len(tracks)
-            except Exception:
-                pass
+        time.sleep(0.2)
 
-        if track_count:
-            cache[mbid] = track_count
-            albums[idx]["track_count"] = track_count
-            fetched += 1
-
-        if fetched % 25 == 0 and fetched > 0:
+        if fetched % 50 == 0 and fetched > 0:
             save_trackcount_cache(cache)
             print(f"    ...{fetched}/{len(to_fetch)}")
 
