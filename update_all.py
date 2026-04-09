@@ -777,12 +777,14 @@ def fetch_lastfm_data(all_albums):
 
 
 def _normalize_for_match(s):
-    """Normalize a string for fuzzy matching: strip punctuation, normalize whitespace."""
+    """Normalize a string for fuzzy matching: strip punctuation, articles, normalize whitespace."""
     import re as _re
     s = s.lower()
     s = s.replace("&", "and")
     s = _re.sub(r"[^\w\s]", "", s)  # Strip punctuation
     s = _re.sub(r"\s+", " ", s).strip()
+    # Strip leading articles (the, a, an)
+    s = _re.sub(r"^(the|a|an)\s+", "", s)
     return s
 
 

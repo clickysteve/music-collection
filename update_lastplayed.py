@@ -40,6 +40,8 @@ def _normalize_for_match(s):
     s = s.replace("&", "and")
     s = re.sub(r"[^\w\s]", "", s)
     s = re.sub(r"\s+", " ", s).strip()
+    # Strip leading articles (the, a, an)
+    s = re.sub(r"^(the|a|an)\s+", "", s)
     return s
 
 
