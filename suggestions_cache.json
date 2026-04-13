@@ -1,0 +1,2947 @@
+{
+  "green day": {
+    "ts": 1775671184.211514,
+    "albums": [
+      {
+        "title": "Uno...Dos...Tré!",
+        "year": 2012,
+        "mbid": "02d1a50e-3448-474c-b077-428d530a3f61"
+      },
+      {
+        "title": "Greatest Hits: God’s Favorite Band",
+        "year": 2017,
+        "mbid": "036b6fa3-f73d-4742-b224-595ca5880433"
+      },
+      {
+        "title": "Insomniac",
+        "year": 1995,
+        "mbid": "061f572e-7660-3c6b-b4cd-cf66d46da93c"
+      },
+      {
+        "title": "¡Dos!",
+        "year": 2012,
+        "mbid": "07176400-dcc4-4e7d-a72a-2dfda6073ce2"
+      },
+      {
+        "title": "More Boring Days",
+        "year": 1995,
+        "mbid": "10631f96-6cfb-381e-ab40-7fff562f5874"
+      },
+      {
+        "title": "Pop Disaster Tour 2002",
+        "year": 2002,
+        "mbid": "12346d90-8d5e-39c2-9ad9-f6aae9ca4c71"
+      },
+      {
+        "title": "1998-11-01: Live in Buenos Aires 1998: Parque Sarmiento, Buenos Aires, Argentina",
+        "year": 1999,
+        "mbid": "1352607e-509a-3b12-a450-3c3575155c33"
+      },
+      {
+        "title": "more",
+        "year": 1995,
+        "mbid": "15e635b6-534b-46d3-9adb-e49433a21651"
+      },
+      {
+        "title": "Demolicious",
+        "year": 2014,
+        "mbid": "165feb6e-7d26-4f46-8420-d54b1eaeda92"
+      },
+      {
+        "title": "1990-05-25 924 Gilman St,. Berkeley, CA",
+        "year": 1990,
+        "mbid": "1a725bf0-cf54-40b8-ae63-599ec90cebfb"
+      },
+      {
+        "title": "Spitting",
+        "year": 1995,
+        "mbid": "1b2b862d-dbe6-3163-bd80-5c264211f2ef"
+      },
+      {
+        "title": "Transmissions",
+        "year": 2007,
+        "mbid": "1b77c5db-baa1-3dc3-a5ff-81f19168b305"
+      },
+      {
+        "title": "Green Day - The Interview",
+        "year": 2010,
+        "mbid": "1dd33d5a-b357-4fbe-bead-de0113f8f1d2"
+      },
+      {
+        "title": "God Bless Amerika",
+        "year": 1995,
+        "mbid": "22b34f29-21f3-35d9-8253-dcc511f55f64"
+      },
+      {
+        "title": "Woodstock Festival, Saugerties, New York, August 13th, 1994 (Doxy Collection, Remastered, Live on Broadcasting)",
+        "year": 2016,
+        "mbid": "242bf96b-c50a-4c16-a8a0-7dc1ba68b423"
+      },
+      {
+        "title": "Lo nuevo y lo mejor",
+        "year": null,
+        "mbid": "26a0a2e3-5b9b-3a2a-833f-155f94fe83d7"
+      },
+      {
+        "title": "The Legendary FM Radio Broadcasts: WMFU-FM Studios, East Orange NJ 28th May 1992",
+        "year": 1992,
+        "mbid": "30425037-b332-3324-88c1-847bfe405613"
+      },
+      {
+        "title": "Dookie",
+        "year": 1994,
+        "mbid": "314cffd4-daa5-3337-85e5-e54165a96113"
+      },
+      {
+        "title": "Having a Blast",
+        "year": 1994,
+        "mbid": "33849b51-7c07-323a-8b56-3ff2d3a8f4bf"
+      },
+      {
+        "title": "Chicago Radio '95",
+        "year": 1995,
+        "mbid": "33f5fc6e-7a6c-4828-867c-a792a1616512"
+      },
+      {
+        "title": "Foot in Mouth",
+        "year": 1997,
+        "mbid": "352e1bea-3c45-334a-a34d-869d27239b83"
+      },
+      {
+        "title": "21st Century Breakdown",
+        "year": 2009,
+        "mbid": "37608ff2-3168-3e7c-a77e-04a4b7300c1b"
+      },
+      {
+        "title": "MTV Broadcast, Aragon Ballroom Chicago, November 10th, 1994",
+        "year": 2015,
+        "mbid": "3862836a-438d-435c-bbc1-702431ee96b3"
+      },
+      {
+        "title": "¡Tré!",
+        "year": 2012,
+        "mbid": "4853b957-05f2-457b-ba47-18b2565abc69"
+      },
+      {
+        "title": "Father of All Motherfuckers",
+        "year": 2020,
+        "mbid": "492ea613-a3cf-4c45-8b09-b8ce79943024"
+      },
+      {
+        "title": "Awesome as Fuck",
+        "year": 2011,
+        "mbid": "4a72d24c-c1b8-457e-94ca-7fa1df3eb3a3"
+      },
+      {
+        "title": "Woodstock 1994",
+        "year": 1995,
+        "mbid": "4b3c5a1d-550f-3213-a476-a52fe913cb17"
+      },
+      {
+        "title": "Just Before Bum-Out",
+        "year": 1999,
+        "mbid": "4e2aeca4-5a6d-47ae-9a85-cd2e2ced9cc5"
+      },
+      {
+        "title": "nimrod.",
+        "year": 1997,
+        "mbid": "4f1d08f2-d4bd-3ef2-ba72-eb348ae4c332"
+      },
+      {
+        "title": "The Studio Albums 1990-2009",
+        "year": 2012,
+        "mbid": "51a8e59f-2325-4773-81f9-bd7af33ad189"
+      },
+      {
+        "title": "Greatest Hits",
+        "year": 2005,
+        "mbid": "5459bc25-1b7a-4264-ae34-cf6c2509793b"
+      },
+      {
+        "title": "Covered In Green",
+        "year": 2020,
+        "mbid": "54bd35e2-7ea1-4802-92ca-b63ce239d2ad"
+      },
+      {
+        "title": "Live on Air",
+        "year": 2010,
+        "mbid": "57a5c57d-b6af-399d-9533-65a6295ab5f8"
+      },
+      {
+        "title": "Burnout: Green Day featuring Special Guests",
+        "year": 2024,
+        "mbid": "5ec115d8-e8a4-437b-982c-df5885e38301"
+      },
+      {
+        "title": "Attack of Insomnia",
+        "year": 1995,
+        "mbid": "6025d25a-2ca2-3761-8181-e682e18eaad7"
+      },
+      {
+        "title": "A Fistfull Of Dookies",
+        "year": 1996,
+        "mbid": "66761c94-5131-4859-a4ab-893ef4f7e514"
+      },
+      {
+        "title": "Revolution Radio",
+        "year": 2016,
+        "mbid": "6721d62d-8d2d-4747-8548-308ecc4b914b"
+      },
+      {
+        "title": "Egocentric Plastic Men",
+        "year": 1994,
+        "mbid": "6767243f-3df0-3ebf-959a-bf14f17f976b"
+      },
+      {
+        "title": "¡Uno!",
+        "year": 2012,
+        "mbid": "6a0f0991-7af2-4dec-b623-6672051be668"
+      },
+      {
+        "title": "...oooh what a green day!",
+        "year": 1994,
+        "mbid": "6b79c778-03c0-438a-93e2-3f2c6a405b34"
+      },
+      {
+        "title": "Nice Guys Finish Last: House of Blues 1998",
+        "year": 1998,
+        "mbid": "721b79ae-8cf8-4eb6-aa66-8c1aac8683dc"
+      },
+      {
+        "title": "Shenanigans",
+        "year": 2002,
+        "mbid": "74a05fd3-bf48-3caa-a584-d5d5eb525fb3"
+      },
+      {
+        "title": "Anyway",
+        "year": 1994,
+        "mbid": "77c6b9c7-a6b5-44f6-acf1-b77e34d10b08"
+      },
+      {
+        "title": "School Daze",
+        "year": 2000,
+        "mbid": "787c3ac6-6647-3aaa-8e50-d4b26f9ce45b"
+      },
+      {
+        "title": "Green Day Recordings - Words I Might Have Ate",
+        "year": 2022,
+        "mbid": "7a547410-3bbd-45c8-9718-298eaf090e3b"
+      },
+      {
+        "title": "Green Power",
+        "year": 1995,
+        "mbid": "7cb4b62b-0579-4501-8b0a-d4df4ca4be30"
+      },
+      {
+        "title": "Snotheads",
+        "year": 1995,
+        "mbid": "847ecf2f-aef6-4652-b048-2b18159a3bdf"
+      },
+      {
+        "title": "Greatest Songs",
+        "year": 2018,
+        "mbid": "8789555b-ab7c-4102-a19e-4c883e705e3d"
+      },
+      {
+        "title": "Some of the Best (so far)",
+        "year": 2013,
+        "mbid": "9156959f-5828-45ec-8753-961159932482"
+      },
+      {
+        "title": "Silence Is the Enemy",
+        "year": 2009,
+        "mbid": "95326d45-6e5a-4338-bd42-3ae650a81506"
+      },
+      {
+        "title": "Bullet in a Bible",
+        "year": 2005,
+        "mbid": "96636bc5-2799-32a8-a273-1e93771e811b"
+      },
+      {
+        "title": "Teenage Rampage",
+        "year": 1995,
+        "mbid": "9745eb2e-9f14-4e9a-bf9c-2d4e8472356e"
+      },
+      {
+        "title": "Green Day",
+        "year": 1996,
+        "mbid": "9b408b1e-18cf-45c8-b351-a79e74f0aa31"
+      },
+      {
+        "title": "1994-08-14: Woodstock '94, Saugerties, NY, USA",
+        "year": null,
+        "mbid": "9e3199b5-324e-3a8c-93a0-9f75ac5dc4a6"
+      },
+      {
+        "title": "On the Radio",
+        "year": 2012,
+        "mbid": "9fa5c679-0082-4eca-8751-de3503498584"
+      },
+      {
+        "title": "The Green Day Collection",
+        "year": 2009,
+        "mbid": "a006535d-95ed-4ba2-b709-f7bdb65ceade"
+      },
+      {
+        "title": "Kerplunk!",
+        "year": 1991,
+        "mbid": "a0603694-2422-3a40-b946-d0bcea5e8254"
+      },
+      {
+        "title": "American Idiot: The Original Broadway Cast Recording",
+        "year": 2010,
+        "mbid": "a73dad3a-401b-4aac-aded-9a1fde315a5f"
+      },
+      {
+        "title": "International Superhits!",
+        "year": 2001,
+        "mbid": "a867a345-f904-3cd1-939d-f7c24b14719f"
+      },
+      {
+        "title": "Green Day",
+        "year": 2012,
+        "mbid": "a893ecb7-2d29-42be-a221-bfaa0f51e726"
+      },
+      {
+        "title": "1995-09-03: It's a Green Day in Gothenburg 1995: Lisebergshallen, Gothenburg, Sweden",
+        "year": 1995,
+        "mbid": "aa9e3b27-fe66-3b38-a7f4-d05d70d1bda7"
+      },
+      {
+        "title": "2004-10-02: Potsdam, Germany",
+        "year": 2004,
+        "mbid": "adc58807-1e5f-3018-bfc0-dfae5307fb64"
+      },
+      {
+        "title": "1994-11-04: Kiss My Green Ass: Olympic Velodrome, Los Angeles, CA, USA",
+        "year": null,
+        "mbid": "ae0bfb96-50b5-317c-ab0f-94bee74743db"
+      },
+      {
+        "title": "Move It!",
+        "year": 2002,
+        "mbid": "b44a6e61-025f-4d9e-af02-def834547145"
+      },
+      {
+        "title": "Live at Heineken Music Hall in Amsterdam",
+        "year": 2005,
+        "mbid": "b780b7e4-ee85-40b2-9c35-f51d7c9d8af9"
+      },
+      {
+        "title": "Green Day",
+        "year": 1996,
+        "mbid": "babc3592-a34b-47f1-880e-f90e5b077f21"
+      },
+      {
+        "title": "The Broadcast Collection 1992-1998",
+        "year": 2025,
+        "mbid": "baca00be-9cd8-473e-84fe-f6d810dcc793"
+      },
+      {
+        "title": "1990-10-19 Womans Building, Berkeley, CA",
+        "year": 1990,
+        "mbid": "bb847924-f769-42bd-a7de-885f0de808e0"
+      },
+      {
+        "title": "Live At The Wireless",
+        "year": 2005,
+        "mbid": "be2373ae-e064-4f53-8777-f6fb74f5114d"
+      },
+      {
+        "title": "Saviors",
+        "year": 2024,
+        "mbid": "c1417e42-7eac-4817-bb1e-dba7a7ba044e"
+      },
+      {
+        "title": "Warning:",
+        "year": 2000,
+        "mbid": "c1604b20-37b8-3fc7-8726-73f41090b8e2"
+      },
+      {
+        "title": "1994-03-15: Washington, DC, USA",
+        "year": null,
+        "mbid": "c2eabab5-de7d-3dfb-91c0-f5f50fb3767b"
+      },
+      {
+        "title": "39/Smooth",
+        "year": 1990,
+        "mbid": "c58228d1-05e9-3ce0-83f6-b0d33ffcaa90"
+      },
+      {
+        "title": "Cigarettes and Valentines",
+        "year": 2011,
+        "mbid": "c6addd7f-0591-4833-b980-4ecac938ddca"
+      },
+      {
+        "title": "Noize Boyz",
+        "year": 1996,
+        "mbid": "c7a59fba-6076-31b0-98ff-0a60d2b3e4c8"
+      },
+      {
+        "title": "1989-02-11: 924 Gilman Street, Berkeley, CA",
+        "year": null,
+        "mbid": "cb5283ee-3dc6-4ae6-b899-70538686fee4"
+      },
+      {
+        "title": "2000 Light Years Away (live)",
+        "year": 2019,
+        "mbid": "cd036e16-3be4-4a3b-a82e-e864d3d7d36f"
+      },
+      {
+        "title": "Nice Guys Finish Last",
+        "year": 1998,
+        "mbid": "cd5e84fc-e36f-3f23-90e4-68abb6c5c2b3"
+      },
+      {
+        "title": "Boring Days in Paradise",
+        "year": 1994,
+        "mbid": "cef74bb2-e63d-3efb-95b6-80f9cdf8c2db"
+      },
+      {
+        "title": "FM Broadcasts Pearl Jam & Green Day",
+        "year": 2020,
+        "mbid": "d1a47161-548e-4439-989b-07d7996abb90"
+      },
+      {
+        "title": "God Bless Manchester",
+        "year": 2000,
+        "mbid": "d7bf6cc5-d89b-4f4b-b87d-0c5a445c66b9"
+      },
+      {
+        "title": "1995: Limited Edition: Chicago, IL, USA",
+        "year": null,
+        "mbid": "d7f94463-8f4e-3e5b-81da-540ccf6e048b"
+      },
+      {
+        "title": "Tune In, Tokyo…",
+        "year": 2001,
+        "mbid": "d8a14325-2ab6-3c93-a688-3d763da1313b"
+      },
+      {
+        "title": "American Idiot",
+        "year": 2004,
+        "mbid": "de9bf827-a9b0-348b-a7c9-556c03c3fb07"
+      },
+      {
+        "title": "Radio Daze",
+        "year": 1995,
+        "mbid": "df368d4b-b574-41d8-a506-5444d5db503a"
+      },
+      {
+        "title": "Green Day Box",
+        "year": null,
+        "mbid": "e197f99b-09fc-47d2-a3d7-f3bf66ec4bf7"
+      },
+      {
+        "title": "21st Century Breakdown / American Idiot",
+        "year": 2012,
+        "mbid": "e3130e53-fbfc-4e76-9dc4-c554225ec887"
+      },
+      {
+        "title": "Unplugged",
+        "year": 2001,
+        "mbid": "e5049782-af00-4d06-866c-82b9f4deabee"
+      },
+      {
+        "title": "BBC Sessions",
+        "year": 2021,
+        "mbid": "e82eea2a-efd4-4070-bdf9-ff0cff253a06"
+      },
+      {
+        "title": "1990-01-17: KZSU-FM 90.1 Studios, Stanford, CA",
+        "year": null,
+        "mbid": "ed2bf646-b08a-42f0-8903-5baf09e85770"
+      },
+      {
+        "title": "Welcome to Paradise: Live American Radio Broadcast",
+        "year": 2016,
+        "mbid": "f2b2b4bb-b19b-4a92-9e26-e6844f2dce6a"
+      },
+      {
+        "title": "1994-06-05: The Garatge, Barcelona, Spain",
+        "year": null,
+        "mbid": "f2cb9104-cb51-429a-ac22-2072475ef76b"
+      },
+      {
+        "title": "1,039/Smoothed Out Slappy Hours",
+        "year": 1991,
+        "mbid": "f379b19e-0a47-3d28-b5be-595e34cba7d3"
+      },
+      {
+        "title": "Dookie (30th Anniversary 4-track demo)",
+        "year": 2023,
+        "mbid": "f6939814-a43b-4a92-a1ff-76cd82f54203"
+      },
+      {
+        "title": "Studio B Sides and Rarities",
+        "year": 2020,
+        "mbid": "f7dc5132-1fc2-45b0-9843-5daff6b4ea6a"
+      },
+      {
+        "title": "Radio Waves 1991-1994",
+        "year": 2016,
+        "mbid": "f8fa9c9b-7abf-45fd-84c6-748067018a0e"
+      },
+      {
+        "title": "A Day Out in Paris",
+        "year": 1998,
+        "mbid": "fbf308f9-9818-39b7-b56c-33881af1af02"
+      },
+      {
+        "title": "FM Broadcasts",
+        "year": 2020,
+        "mbid": "fdc7af19-ec81-4ec6-b09c-5c01d2909679"
+      },
+      {
+        "title": "Four More Years: Odes to the All American Idiot",
+        "year": 2004,
+        "mbid": "fe33d0f9-8a28-4f9d-8504-5ea6b84ff85e"
+      },
+      {
+        "title": "Live in USA",
+        "year": 1994,
+        "mbid": "fee5f6ab-cbaa-446e-a0f1-f7009bd48731"
+      }
+    ]
+  },
+  "biffy clyro": {
+    "ts": 1775671186.995987,
+    "albums": [
+      {
+        "title": "Puzzle",
+        "year": 2007,
+        "mbid": "04b8a17a-016e-37b7-a8fa-d6c7da2021f9"
+      },
+      {
+        "title": "Balance, Not Symmetry: Original Motion Picture Soundtrack",
+        "year": 2019,
+        "mbid": "1038204e-9b05-44e3-bf75-68e3bfd90c08"
+      },
+      {
+        "title": "Lonely Revolutions",
+        "year": 2010,
+        "mbid": "13ee50d0-1cfb-430c-aa11-124240edc1ec"
+      },
+      {
+        "title": "The Myth of the Happily Ever After",
+        "year": 2021,
+        "mbid": "140dc99d-48ee-4954-82e9-8c9a153b9570"
+      },
+      {
+        "title": "The Vertigo of Bliss B-Sides",
+        "year": 2012,
+        "mbid": "1d6fd16c-35e3-4854-bc9f-3b1e2b288bfa"
+      },
+      {
+        "title": "Singles 2001–2005",
+        "year": 2008,
+        "mbid": "24b63967-c2f3-3eef-8741-b7e366172391"
+      },
+      {
+        "title": "Infinity Land B‐Sides",
+        "year": 2012,
+        "mbid": "2d537bb6-332d-46e9-954b-aa4f8cdfc856"
+      },
+      {
+        "title": "The Vertigo of Bliss",
+        "year": 2003,
+        "mbid": "36d8920f-217c-3222-a34d-a8a8303306e1"
+      },
+      {
+        "title": "A Celebration of Endings",
+        "year": 2020,
+        "mbid": "38a4c60e-a3c8-4589-9d69-fe8ee2cab8ee"
+      },
+      {
+        "title": "Opposites",
+        "year": 2013,
+        "mbid": "3e9d40d5-190e-4558-b01b-e5af1a56c288"
+      },
+      {
+        "title": "Similarities",
+        "year": 2014,
+        "mbid": "6eaddc53-394c-4177-bdd7-90f39dbcde0a"
+      },
+      {
+        "title": "MTV Unplugged: Live at Roundhouse London",
+        "year": 2018,
+        "mbid": "6fd1e56c-d421-4ed1-9dd1-df8b048ed15d"
+      },
+      {
+        "title": "Only Revolutions",
+        "year": 2009,
+        "mbid": "7d3c6e15-3758-4f90-af46-96d835ab0f9a"
+      },
+      {
+        "title": "Revolutions // Live at Wembley",
+        "year": 2011,
+        "mbid": "b612dd00-65a4-4f19-8d2c-58d917c9214a"
+      },
+      {
+        "title": "A Celebration of Endings (Live from the Barrowland Ballroom, Glasgow)",
+        "year": 2020,
+        "mbid": "ca89dbf0-3ede-4916-931c-b2063febe84b"
+      },
+      {
+        "title": "Missing Pieces",
+        "year": 2009,
+        "mbid": "cadb1529-2a82-41cc-823f-98c8fc7a8d34"
+      },
+      {
+        "title": "Infinity Land",
+        "year": 2004,
+        "mbid": "cbd11d7f-794b-3d5d-8f55-8775be26b61d"
+      },
+      {
+        "title": "Blackened Sky",
+        "year": 2002,
+        "mbid": "d899e863-8fcb-387c-8f2c-9d3df37c39b2"
+      },
+      {
+        "title": "Opposites: Live From Glasgow",
+        "year": 2013,
+        "mbid": "da60fec2-4eb3-4438-af1b-3881ff86cb5e"
+      },
+      {
+        "title": "Futique",
+        "year": 2025,
+        "mbid": "dc8c9ca6-7297-4236-a28f-ea6959d48c1b"
+      },
+      {
+        "title": "Ellipsis",
+        "year": 2016,
+        "mbid": "de2bda99-8d1c-4ad6-977c-cf1f2075af04"
+      },
+      {
+        "title": "Blackened Sky B‐Sides",
+        "year": 2012,
+        "mbid": "e5fc77fd-fb3c-422a-9eb1-c90835c49793"
+      }
+    ]
+  },
+  "crackout": {
+    "ts": 1775671189.7649071,
+    "albums": [
+      {
+        "title": "Oh No!",
+        "year": 2004,
+        "mbid": "04cd8b14-ead8-36a4-b689-a75a342d2f32"
+      },
+      {
+        "title": "This Is Really Neat",
+        "year": 2001,
+        "mbid": "9e512217-5e7f-3c0c-acf7-2c1fb7bf48d8"
+      }
+    ]
+  },
+  "prefuse 73": {
+    "ts": 1775671192.631544,
+    "albums": [
+      {
+        "title": "The Failing Institute of Drums & Other Percussion",
+        "year": 2021,
+        "mbid": "08245af7-b5fb-4885-945c-d075a46c302f"
+      },
+      {
+        "title": "Security Screenings",
+        "year": 2006,
+        "mbid": "199c44fc-d95b-329f-a8ed-c33ea8fbbfc6"
+      },
+      {
+        "title": "New Strategies for Modern Crime Vol.1 & Vol.2",
+        "year": 2024,
+        "mbid": "1ba99e03-1f2a-4033-85bb-1e9a2802d0cd"
+      },
+      {
+        "title": "Sacrifices",
+        "year": 2018,
+        "mbid": "249a6320-5cc6-4375-a278-d6635b9a454b"
+      },
+      {
+        "title": "New Strategies for Modern Crime Vol.1",
+        "year": 2024,
+        "mbid": "24dd9ae2-186f-47eb-8858-cc7a796fc440"
+      },
+      {
+        "title": "Preparations",
+        "year": 2007,
+        "mbid": "25b12902-1795-3eda-bf15-efbf10e18f2a"
+      },
+      {
+        "title": "The Failing Institute of the Human Voice",
+        "year": 2021,
+        "mbid": "29550158-fde8-445e-97fb-66a0b099a64f"
+      },
+      {
+        "title": "Vocal Studies + Uprock Narratives",
+        "year": 2001,
+        "mbid": "456dc72e-9f94-3974-bd83-9afd5629bcbc"
+      },
+      {
+        "title": "Leftover Textures",
+        "year": 2025,
+        "mbid": "4bb1bc69-0f08-45d4-b56b-eac1558ee54a"
+      },
+      {
+        "title": "Zola Jesus & Prefuse73 Supports Finders Keepers",
+        "year": 2011,
+        "mbid": "4e51fb28-edad-416a-826a-672f27468d15"
+      },
+      {
+        "title": "Meditation Upon Meditations: The Japanese Diaries",
+        "year": 2009,
+        "mbid": "5bfa1e1d-d6bf-46a4-b82b-f8acb0254268"
+      },
+      {
+        "title": "The Failing Institute of Tapes Upon Tapes (sample pack)",
+        "year": 2020,
+        "mbid": "74d928aa-18d9-458c-9ba1-bcd37d54c3e4"
+      },
+      {
+        "title": "The Only She Chapters",
+        "year": 2011,
+        "mbid": "75306393-2861-4d8b-9a59-e75f3524bee9"
+      },
+      {
+        "title": "Surrounded by Silence",
+        "year": 2005,
+        "mbid": "819a7d0f-bb17-3420-9999-d37af41ef57b"
+      },
+      {
+        "title": "New Strategies for Modern Crime Vol.2",
+        "year": 2024,
+        "mbid": "88458595-2ae9-4048-8dfd-ea429e6671e2"
+      },
+      {
+        "title": "The Misanthrope Meditation Mix",
+        "year": 2011,
+        "mbid": "8dd31807-dc8f-4cd0-aaee-e1b1362cb886"
+      },
+      {
+        "title": "Everything She Touched Turned Ampexian",
+        "year": 2009,
+        "mbid": "90aae241-8cb0-3672-a909-c7ac8b5c99b2"
+      },
+      {
+        "title": "Fudge Beats",
+        "year": 2019,
+        "mbid": "9be67171-dd07-4f1a-9fb9-cd3fb0442647"
+      },
+      {
+        "title": "The Failing Institute of Season No.2",
+        "year": 2021,
+        "mbid": "ad1ac14c-6b9e-4d22-9fbc-127eb3d8d25d"
+      },
+      {
+        "title": "T5 Soul Sessions, Volume 1: Prefuse 73",
+        "year": 2004,
+        "mbid": "af05ca01-a335-3fe5-ab55-1be65910670e"
+      },
+      {
+        "title": "The Failing Institute of the Sampled Source",
+        "year": 2020,
+        "mbid": "b6a6f0e0-8886-4330-833d-5677cb09792b"
+      },
+      {
+        "title": "Rivington Não Rio",
+        "year": 2015,
+        "mbid": "c5a8568c-6624-42c5-873c-b6e6ecabfd1e"
+      },
+      {
+        "title": "Prefuse 73 / Jaytram / Epstein",
+        "year": 2011,
+        "mbid": "c89b2263-c4bd-4c30-a253-8bd07c7816ee"
+      },
+      {
+        "title": "One Word Extinguisher",
+        "year": 2003,
+        "mbid": "cbe78742-3f6f-3f68-8ec9-847b6c19f8cc"
+      },
+      {
+        "title": "The Failing Institute of the Contras",
+        "year": 2020,
+        "mbid": "d94ee6e1-704d-4ce1-81b2-749778d5c053"
+      },
+      {
+        "title": "Idle Air Mixtape",
+        "year": 2025,
+        "mbid": "f0d4414c-e5d6-46a4-945b-9cd96986d564"
+      },
+      {
+        "title": "Every Color of Darkness",
+        "year": 2015,
+        "mbid": "f6853c5c-e710-432d-a72f-db6357e9afb9"
+      }
+    ]
+  },
+  "feeder": {
+    "ts": 1775671195.397559,
+    "albums": [
+      {
+        "title": "Renegades",
+        "year": 2010,
+        "mbid": "0720cc15-e003-4b57-ac19-a92ac454e12e"
+      },
+      {
+        "title": "Comfort in Sound Live",
+        "year": 2026,
+        "mbid": "0cb6958b-01f3-47d5-903c-822cb7e6e7fc"
+      },
+      {
+        "title": "Yesterday Went Too Soon",
+        "year": 1999,
+        "mbid": "0e94de28-0595-3536-bfd5-185194f2866c"
+      },
+      {
+        "title": "Another Yesterday",
+        "year": 2000,
+        "mbid": "10ccb99a-070d-3ba1-b781-fcec10641747"
+      },
+      {
+        "title": "All Bright Electric",
+        "year": 2016,
+        "mbid": "2a14c37d-9042-4649-838a-e6cf5db989ab"
+      },
+      {
+        "title": "Pushing the Senses",
+        "year": 2005,
+        "mbid": "31687b3a-5db5-33fd-900a-b62ace11e5d0"
+      },
+      {
+        "title": "2003-08-31: Lowlands Festival, Biddinghuizen, The Netherlands",
+        "year": null,
+        "mbid": "3dffb10b-25de-37e1-a44f-00323576f17e"
+      },
+      {
+        "title": "Live in Leeds 2000",
+        "year": null,
+        "mbid": "4afb9ba4-e800-32c8-a014-2cf2ef9bcd69"
+      },
+      {
+        "title": "Tallulah",
+        "year": 2019,
+        "mbid": "5226f738-9973-4842-8870-892be1e385dd"
+      },
+      {
+        "title": "Torpedo",
+        "year": 2022,
+        "mbid": "54be6187-65bb-460e-b113-252c1c93fa2f"
+      },
+      {
+        "title": "The Singles",
+        "year": 2006,
+        "mbid": "58316c68-b47d-34d4-a8b9-665b0c5c5d56"
+      },
+      {
+        "title": "Generation Freakshow",
+        "year": 2012,
+        "mbid": "5ca19acd-01dd-43da-9745-59c3a5e55824"
+      },
+      {
+        "title": "Echo Park",
+        "year": 2001,
+        "mbid": "8388e7c7-00a4-3bbe-9830-443774f74542"
+      },
+      {
+        "title": "Black/Red",
+        "year": 2024,
+        "mbid": "bcbbf66c-b2a8-4ccd-80f0-66130f423fc4"
+      },
+      {
+        "title": "Comfort in Sound",
+        "year": 2002,
+        "mbid": "bfa7710b-ef14-38fa-abb0-f95326737acb"
+      },
+      {
+        "title": "Picture of Perfect Youth",
+        "year": 2007,
+        "mbid": "e242460d-cfef-3770-a5bf-8c6591fdaa2b"
+      },
+      {
+        "title": "Polythene",
+        "year": 1997,
+        "mbid": "ecd302a2-4496-3b7c-a451-4167062d3b91"
+      },
+      {
+        "title": "The Best Of",
+        "year": 2017,
+        "mbid": "f9915b0f-9922-4990-affa-c5d2b04137ea"
+      },
+      {
+        "title": "Silent Cry",
+        "year": 2008,
+        "mbid": "fc0564b2-73f6-3633-bd21-3873618aa37f"
+      }
+    ]
+  },
+  "smashing pumpkins": {
+    "ts": 1775671198.24655,
+    "albums": [
+      {
+        "title": "Mashed Potatoes",
+        "year": 1994,
+        "mbid": "02420aa4-9980-30f3-ba9d-10ca9fbdbf57"
+      },
+      {
+        "title": "Billy Corgan Interview (February 2000): Machina / The Machines of God",
+        "year": 2000,
+        "mbid": "06d0aae6-a053-42d7-b19e-1d18ee06abce"
+      },
+      {
+        "title": "1998-05-26: Tovoli Gardens, Copenhagen, Denmark",
+        "year": null,
+        "mbid": "080069d5-ca56-4f63-bcdf-02d171dc177e"
+      },
+      {
+        "title": "2018-08-30: The Forum, Inglewood, CA, USA",
+        "year": null,
+        "mbid": "085f763a-276d-4af1-a142-174d84bc2e80"
+      },
+      {
+        "title": "Reel Time Sessions",
+        "year": null,
+        "mbid": "0d72dadc-10e0-4dac-88a4-cc8980865a2f"
+      },
+      {
+        "title": "2008‐11‐19: Chicago Theatre, Chicago, IL, USA",
+        "year": 2008,
+        "mbid": "146c917f-04f9-41b4-828a-81e16f3529f8"
+      },
+      {
+        "title": "Ultra Rare Trax",
+        "year": 1994,
+        "mbid": "159bf274-c968-3243-8b71-7b7a66ef6ca1"
+      },
+      {
+        "title": "CYR 7″ Singles Box Set",
+        "year": 2021,
+        "mbid": "1888e19b-71ff-4fc7-9bcf-1c3b303bcd0b"
+      },
+      {
+        "title": "Mellon Collie and the Infinite Sadness",
+        "year": 1995,
+        "mbid": "1af599c9-0b44-3a5a-a06b-39e8db6b2b4e"
+      },
+      {
+        "title": "Greatest Hits",
+        "year": 1997,
+        "mbid": "1cf52a65-108a-4959-aba4-f8483ea328ce"
+      },
+      {
+        "title": "The “SP” & “Moon” Demo Tapes",
+        "year": 1995,
+        "mbid": "1d509351-3dcb-4320-ae4d-6fea9ab319b3"
+      },
+      {
+        "title": "Live at the Viper Room 1.15.98",
+        "year": 2021,
+        "mbid": "20c7064b-16c1-4fdc-b002-2f2b298a6a9a"
+      },
+      {
+        "title": "Greatest Hits 2000",
+        "year": null,
+        "mbid": "20d41677-7572-336f-bf0d-84a55c8cc072"
+      },
+      {
+        "title": "A la Mode, Volume 1",
+        "year": 1994,
+        "mbid": "256e3f27-b19d-4fc9-b21d-54129a2ede5d"
+      },
+      {
+        "title": "Pisces Iscariot",
+        "year": 1994,
+        "mbid": "261a764e-3ecf-3904-b420-99c1c2944e9f"
+      },
+      {
+        "title": "1988-10-05: Live at Cabaret Metro",
+        "year": 2000,
+        "mbid": "27fb45c8-f9bd-32b0-b71b-660d3034f166"
+      },
+      {
+        "title": "2008‐11‐29: The Pearl, Las Vegas, NV, USA",
+        "year": 2008,
+        "mbid": "2c91601f-9768-4220-9137-fed6d5ff9c0c"
+      },
+      {
+        "title": "Millennium Hits",
+        "year": null,
+        "mbid": "2e9a7d0a-a979-3703-af45-277755c2d459"
+      },
+      {
+        "title": "Arcane Night Music",
+        "year": null,
+        "mbid": "30a389f8-503c-4504-bee8-0f8ccc097e59"
+      },
+      {
+        "title": "The Rubano Tapes, Vol. 2",
+        "year": 2022,
+        "mbid": "350afbb5-d86b-4a6e-8796-aa0669fec9d2"
+      },
+      {
+        "title": "Adore",
+        "year": 1998,
+        "mbid": "359699b3-8118-369e-9591-c96dcd07a853"
+      },
+      {
+        "title": "SPRC Downloads",
+        "year": 2011,
+        "mbid": "35b42892-b116-4e7f-a80a-c62ea8e8d680"
+      },
+      {
+        "title": "B‐Sides Collection",
+        "year": null,
+        "mbid": "39d048e7-d987-36a1-a86b-5c58691cb420"
+      },
+      {
+        "title": "Moon & Smashing Pumpkins Demo Upgrades, DAT Tape #2",
+        "year": null,
+        "mbid": "3d1def2a-169d-42d6-bdc1-9b9477d55a93"
+      },
+      {
+        "title": "Cessations of Grandeur",
+        "year": null,
+        "mbid": "3da54fd5-4e3e-3fc0-b125-721149207ea3"
+      },
+      {
+        "title": "Non Album Tracks",
+        "year": null,
+        "mbid": "40d895ac-514a-3d1d-ba34-0c44362499dd"
+      },
+      {
+        "title": "Celebrating *20* Years of Sadness",
+        "year": 2009,
+        "mbid": "431d90f5-6c12-4ea6-8c4d-1cd9540ef767"
+      },
+      {
+        "title": "From the Vault",
+        "year": null,
+        "mbid": "443a7076-0b76-4be8-bb30-808baa4992b3"
+      },
+      {
+        "title": "1996-04-24: Palatrussardi, Milan, Italy",
+        "year": null,
+        "mbid": "448d8c4f-50b9-4c41-905e-ea81a8f4aa2e"
+      },
+      {
+        "title": "Monuments to an Elegy",
+        "year": 2014,
+        "mbid": "454a5c90-e339-4553-b419-1c536db13ac0"
+      },
+      {
+        "title": "Judas Ø",
+        "year": 2001,
+        "mbid": "47ff5aa8-0214-41f6-8165-b4167df7d0f4"
+      },
+      {
+        "title": "Gish",
+        "year": 1991,
+        "mbid": "4ac82f0b-1532-3734-80d7-5c02265197aa"
+      },
+      {
+        "title": "SHINY AND OH SO BRIGHT, VOL. 1 / LP: NO PAST. NO FUTURE. NO SUN.",
+        "year": 2018,
+        "mbid": "503b2e20-dd4f-4ed2-905f-e774493c1e4f"
+      },
+      {
+        "title": "Earphoria",
+        "year": 1994,
+        "mbid": "503d32cd-a1eb-387d-9a39-f91f4541ee5e"
+      },
+      {
+        "title": "2008-11-08: Borgata Resort Spa and Casino, Atlantic City, NJ, USA",
+        "year": 2008,
+        "mbid": "505db64f-ca7f-4cfa-9cb7-35d8b025711f"
+      },
+      {
+        "title": "1994‐04‐12: Memorial Gymnasium, Nashville, TN, USA",
+        "year": 2023,
+        "mbid": "57b2a4f9-2533-4edb-b73a-4ce4375d2d92"
+      },
+      {
+        "title": "Live Infinite Sadness Tour",
+        "year": 2025,
+        "mbid": "5845e361-d983-48ec-b49c-e9ea4218b572"
+      },
+      {
+        "title": "CYR",
+        "year": 2020,
+        "mbid": "58f7d043-4599-47ef-9392-fa61770625e1"
+      },
+      {
+        "title": "Adoration",
+        "year": 1998,
+        "mbid": "59125e9d-bc80-40ea-bc24-8917935378f2"
+      },
+      {
+        "title": "2008‐11‐01: Palace Theater, Cleveland, OH, USA",
+        "year": 2008,
+        "mbid": "59a71bbd-1f77-47f9-b85b-5a251828e958"
+      },
+      {
+        "title": "2008‐11‐11: DAR Constitution Hall, Washington, DC, USA",
+        "year": null,
+        "mbid": "5a777a6b-7a54-479f-89b2-c4236a1e023c"
+      },
+      {
+        "title": "ATUM: A Rock Opera in Three Acts",
+        "year": 2022,
+        "mbid": "5a81e54a-2a4b-4cc7-b7b8-6f88fa4b4e21"
+      },
+      {
+        "title": "MCIS Rough Mix",
+        "year": 1995,
+        "mbid": "5b28d0ff-5454-41b3-9422-4a10dc43a342"
+      },
+      {
+        "title": "1994‐05‐23: Pinkpop Festival, Landgraaf, Netherlands",
+        "year": null,
+        "mbid": "5c0ff7ea-24b8-48da-8fa6-05f62253bd3d"
+      },
+      {
+        "title": "Zodeon at Crystal Hall",
+        "year": 2023,
+        "mbid": "5e42e29d-baf8-4045-8612-373ca2e687ce"
+      },
+      {
+        "title": "Greatest Hits: Rotten Apples",
+        "year": 2001,
+        "mbid": "629f866b-c8d1-3985-9da7-a648e8a3aaab"
+      },
+      {
+        "title": "Vieuphoria",
+        "year": 2002,
+        "mbid": "65e1b70c-575a-4869-bb77-1507bf784027"
+      },
+      {
+        "title": "Live In Europe 1992 Volumes 1-13",
+        "year": 2025,
+        "mbid": "670d1f76-aa84-4806-9aea-ad1e73d83d03"
+      },
+      {
+        "title": "Machina Acoustic Demos",
+        "year": 1998,
+        "mbid": "6832d3d9-0c4f-3ec5-b9e4-b06defb87f6f"
+      },
+      {
+        "title": "Zeitgeist",
+        "year": 2007,
+        "mbid": "69887178-3af9-3ecb-83e8-4dbcaaea739e"
+      },
+      {
+        "title": "2008‐11‐04: Massey Hall, Toronto, ON, Canada",
+        "year": 2008,
+        "mbid": "6ce5bde3-d263-43e4-94dc-4f52fafd9830"
+      },
+      {
+        "title": "SP on the Radio 1988–89 / Starchildren Live 8.18.90",
+        "year": 2024,
+        "mbid": "6d414695-8601-4734-bb17-b5f4566afe13"
+      },
+      {
+        "title": "Aghori Mhori Mei",
+        "year": 2024,
+        "mbid": "6dbb6eb0-63ba-4e25-9857-352f2b806983"
+      },
+      {
+        "title": "2000‐11‐29: United Center, Chicago, IL, USA",
+        "year": 2000,
+        "mbid": "74e48545-52e6-337e-b335-818a08c023d8"
+      },
+      {
+        "title": "Bruised Angel Wings",
+        "year": 2014,
+        "mbid": "7504991c-3c08-4827-8d9a-7c242142390a"
+      },
+      {
+        "title": "Oceania",
+        "year": 2012,
+        "mbid": "75d81819-5735-4a84-9dba-9b94d9c0797e"
+      },
+      {
+        "title": "The Smashing Pumpkins 1991–1998",
+        "year": 1999,
+        "mbid": "7b75e3b2-da40-3496-a54f-6cc67a7d2383"
+      },
+      {
+        "title": "The Mother of All Unplugged Collections",
+        "year": 2006,
+        "mbid": "7d512484-d970-3a82-bbf3-a026d6b7b933"
+      },
+      {
+        "title": "The Aeroplane Flies High",
+        "year": 1996,
+        "mbid": "82de7b56-24c2-3dca-b3f9-ec7da9d0e3d2"
+      },
+      {
+        "title": "The Friends and Enemies of Modern Music",
+        "year": 2000,
+        "mbid": "853940e1-8d94-34ef-8925-bc1af6da4599"
+      },
+      {
+        "title": "The Original F.E.M.M Tape",
+        "year": 2002,
+        "mbid": "90ad50dd-3c99-474d-98b1-cb86c66b6ed5"
+      },
+      {
+        "title": "Day for Night 2014 Demos",
+        "year": null,
+        "mbid": "931bcc32-0bc1-42c2-85a2-9c815fa5af29"
+      },
+      {
+        "title": "2008‐09‐03: Massey Hall, Toronto, ON, Canada",
+        "year": 2008,
+        "mbid": "93663809-219c-423f-97d2-e5ceeb00ae97"
+      },
+      {
+        "title": "MACHINA/the machines of God",
+        "year": 1999,
+        "mbid": "98cbc7a6-7229-3b64-b974-fc4cb2ff0505"
+      },
+      {
+        "title": "Machina: Aranea Alba Editio",
+        "year": 2025,
+        "mbid": "9a3c7aac-0fc0-4ddb-9acb-10e344d57820"
+      },
+      {
+        "title": "The Smashing Pumpkins Radio",
+        "year": 2000,
+        "mbid": "9b1cfe3a-5afa-4641-9ac8-df6913cf4fc2"
+      },
+      {
+        "title": "Off Their Rawkers",
+        "year": null,
+        "mbid": "9baf3d0f-0411-4045-92bf-54b18f97e6f0"
+      },
+      {
+        "title": "Retrospective",
+        "year": 1994,
+        "mbid": "9ea3b11b-ae3f-433d-bad1-60951a6f2fb3"
+      },
+      {
+        "title": "Siamese Dream",
+        "year": 1993,
+        "mbid": "a159e102-18bb-42ca-a59e-5f96a7eff241"
+      },
+      {
+        "title": "Pumpkin Seeds",
+        "year": 1994,
+        "mbid": "a53cda43-385e-33eb-b8eb-069b6a27b0a1"
+      },
+      {
+        "title": "2008‐10‐31: Newport Music Hall, Columbus, OH, USA",
+        "year": 2008,
+        "mbid": "b0e00fea-0bdf-4752-bbac-072e954f2522"
+      },
+      {
+        "title": "Oceania: Live in NYC",
+        "year": 2013,
+        "mbid": "b36243df-0bd4-427c-b5c3-07967f82e418"
+      },
+      {
+        "title": "David Mead Compilation",
+        "year": 1996,
+        "mbid": "b37b608a-573d-4b17-bce7-73fa39196014"
+      },
+      {
+        "title": "1993‐10‐26: Del Mar Fairgrounds, Del Mar, CA, USA",
+        "year": 2018,
+        "mbid": "b6d1b4ea-606c-4910-b61d-791818a6ff3c"
+      },
+      {
+        "title": "Live at Kawasaki 2.24.92",
+        "year": 2022,
+        "mbid": "b7be2f8b-d688-440c-879d-77b5bc2eae25"
+      },
+      {
+        "title": "Knock on Wood",
+        "year": null,
+        "mbid": "c7fa1ef9-b5d8-3e18-a5ca-1986c8678d40"
+      },
+      {
+        "title": "B‐Sides From Siamese Dream",
+        "year": 1993,
+        "mbid": "cb94282e-44f3-48ec-b46d-cde8f9c15b6d"
+      },
+      {
+        "title": "May We Have a Record Contract, Please",
+        "year": 1997,
+        "mbid": "d0a61ad3-5b9f-438a-8884-5775fc7f695f"
+      },
+      {
+        "title": "The Smashing Pumpkins",
+        "year": 2000,
+        "mbid": "d5715743-6d0e-325d-873a-ad1c8f2ea00b"
+      },
+      {
+        "title": "2008‐11‐18: Chicago Theatre, Chicago, IL, USA",
+        "year": 2008,
+        "mbid": "d63a9f43-e4d9-4ce1-88f5-cb5b18e0bb37"
+      },
+      {
+        "title": "Early 1989 Demos",
+        "year": 1995,
+        "mbid": "d94817a1-f8bd-3a9f-af05-94593cc6151f"
+      },
+      {
+        "title": "Forgotten Songs",
+        "year": null,
+        "mbid": "daccdc78-bef5-3f78-858f-8c477b58d647"
+      },
+      {
+        "title": "Drown",
+        "year": 1993,
+        "mbid": "de06c202-1e64-38ff-820b-13ff74fe9dc0"
+      },
+      {
+        "title": "2008-12-07: Aragon Ballroom, Chicago, IL, USA",
+        "year": 2009,
+        "mbid": "def29e64-5cc8-4097-a9fe-a80e3b16b441"
+      },
+      {
+        "title": "Gish Rough Mix",
+        "year": 1991,
+        "mbid": "df461b5a-e517-42b8-956e-d3ceb9b3978d"
+      },
+      {
+        "title": "London by Day",
+        "year": 2023,
+        "mbid": "e03f21f4-91bc-43d3-80a1-9362fd53c876"
+      },
+      {
+        "title": "Machina II: The Final Album / Friends and Enemies of Modern Music",
+        "year": 2000,
+        "mbid": "e2025f2f-c64f-49f4-afd7-31a757931a71"
+      },
+      {
+        "title": "1991–2000: Greatest Hits Video Collection",
+        "year": 2001,
+        "mbid": "e9d61b0f-8f7c-3f1d-8310-980439b56d3f"
+      },
+      {
+        "title": "Rarities & Live Sessions",
+        "year": null,
+        "mbid": "eab82c1e-df42-4a93-8243-f71288d46cf8"
+      },
+      {
+        "title": "B-Sides Tape",
+        "year": null,
+        "mbid": "ecf3e238-1582-4f5d-9f56-6ee5fdb6b941"
+      },
+      {
+        "title": "Inside the Dream Machine",
+        "year": 2015,
+        "mbid": "f0133b65-b879-4783-ae92-d537f5ee939d"
+      },
+      {
+        "title": "Mellon Collie Disc Three",
+        "year": 1996,
+        "mbid": "f0701494-34e1-4003-ab24-1b217613f409"
+      },
+      {
+        "title": "Rarities and B‐Sides",
+        "year": 2005,
+        "mbid": "f2be6219-a35d-3a8a-99ff-70fabb2359d3"
+      },
+      {
+        "title": "Under the Covers",
+        "year": 2001,
+        "mbid": "f3aa5820-43c3-489e-bf4d-7da676a90543"
+      },
+      {
+        "title": "Machina II/the friends and enemies of modern music",
+        "year": 2000,
+        "mbid": "f6675c5f-549d-34d8-bf24-9e9a3c86b418"
+      },
+      {
+        "title": "The Rubano Tapes, Vol. 1",
+        "year": 2022,
+        "mbid": "f70e7346-26b7-4ac8-a261-b414c6821e91"
+      },
+      {
+        "title": "If All Goes Wrong",
+        "year": 2008,
+        "mbid": "f71c6d0c-3641-459d-8e64-dabd0e50141f"
+      },
+      {
+        "title": "Ultra Rare Trax Vol. 2",
+        "year": 1998,
+        "mbid": "f7330a09-e65b-49e8-9cf4-a22f8012a785"
+      },
+      {
+        "title": "FM Broadcasts",
+        "year": 2020,
+        "mbid": "fdc7af19-ec81-4ec6-b09c-5c01d2909679"
+      },
+      {
+        "title": "Rafaelselection",
+        "year": null,
+        "mbid": "fdeaf7ac-03d6-3c5d-a4b7-3d4787645e17"
+      }
+    ]
+  },
+  "animal collective": {
+    "ts": 1775671201.1854432,
+    "albums": [
+      {
+        "title": "Isn't It Now?",
+        "year": 2023,
+        "mbid": "15a71c62-eb99-47c4-a90a-4358b80b896f"
+      },
+      {
+        "title": "Not a Suite",
+        "year": 2019,
+        "mbid": "16a34c5f-439e-4d93-86ef-4854c3ee5313"
+      },
+      {
+        "title": "Jetty",
+        "year": 2025,
+        "mbid": "16d0ac60-1dfd-4c6a-a13f-79e115584706"
+      },
+      {
+        "title": "The Inspection: Original Motion Picture Soundtrack",
+        "year": 2022,
+        "mbid": "18344175-2ead-417c-b83b-2b290b288025"
+      },
+      {
+        "title": "Painting With",
+        "year": 2016,
+        "mbid": "1988499c-4dda-4e63-b952-0afd4e502842"
+      },
+      {
+        "title": "2009-01-20: Manhattan Center Grand Ballroom, New York City, NY, USA",
+        "year": null,
+        "mbid": "19a8bf22-cf0e-41d3-ae2c-34a473f71f89"
+      },
+      {
+        "title": "Ballet Slippers",
+        "year": 2019,
+        "mbid": "22aaec9e-e82b-4109-8f33-53c9979a0c27"
+      },
+      {
+        "title": "Sung Tongs",
+        "year": 2004,
+        "mbid": "264f585d-9a28-37b7-88b3-d8e090b4d2e7"
+      },
+      {
+        "title": "2009-06-27: Henry Miller Library, Big Sur, CA, USA",
+        "year": null,
+        "mbid": "2cb4977d-f2be-48e4-af90-10135dfe151c"
+      },
+      {
+        "title": "Live at Fonda Theatre March 9, 2016",
+        "year": 2016,
+        "mbid": "2d6a100a-f2f2-416a-aa73-b3546b593049"
+      },
+      {
+        "title": "Sung Tongs (Live at the Theatre at Ace Hotel)",
+        "year": 2024,
+        "mbid": "3cc37068-97db-4361-bb83-5dcaf6335c05"
+      },
+      {
+        "title": "2004-08-16: Other Music",
+        "year": 2004,
+        "mbid": "3d62b936-817b-40ec-9eef-fe7895f4138f"
+      },
+      {
+        "title": "Live at Music Box Village",
+        "year": 2021,
+        "mbid": "3db3d776-d14f-4492-b39f-9626bf77643e"
+      },
+      {
+        "title": "Live at Hove Festival",
+        "year": 2008,
+        "mbid": "3f92649a-be8a-47a6-bbc1-28690d6d8d17"
+      },
+      {
+        "title": "ODDSAC",
+        "year": 2010,
+        "mbid": "43775623-b23f-4259-a471-124ec195590d"
+      },
+      {
+        "title": "2006-07-03: Tavastia, Helsinki, Finland",
+        "year": null,
+        "mbid": "50bfca52-4a73-3787-b5e5-cb9df6ee3b0f"
+      },
+      {
+        "title": "2008-10-14: Archa Theatre, Prague, Czech Republic",
+        "year": null,
+        "mbid": "5416ccbb-06ea-4700-9d7a-3c65b2e7df7a"
+      },
+      {
+        "title": "Cat's Cradle in Chapel Hill, NC - 11/18/2004 - Full Performance",
+        "year": 2015,
+        "mbid": "543672a3-e465-4bd8-9a9d-477c05f0d11e"
+      },
+      {
+        "title": "Feels",
+        "year": 2005,
+        "mbid": "5438d2fd-1499-3daa-9f85-091a497d270b"
+      },
+      {
+        "title": "2006-03-19: Variety Playhouse, Atlanta, GA, USA",
+        "year": null,
+        "mbid": "5824e935-f1d8-3600-b9fd-0622aba4079c"
+      },
+      {
+        "title": "2009-01-12: KoKo, London, UK",
+        "year": null,
+        "mbid": "5cc7b9a1-6579-4139-a548-fdc8e91ad77f"
+      },
+      {
+        "title": "2006-07-12: Manchester Academy, Manchester, UK",
+        "year": null,
+        "mbid": "5ed4a3c8-7bc8-3589-9bd7-3ba121f3052e"
+      },
+      {
+        "title": "Live at Music Box Village",
+        "year": 2021,
+        "mbid": "605a0991-9318-47d2-b875-9dd80d87b754"
+      },
+      {
+        "title": "2009-03-20: L'Olympic, Nantes, France",
+        "year": null,
+        "mbid": "63df83fa-5ff2-4e04-a1cc-f7a3ab763756"
+      },
+      {
+        "title": "FEELSLive 04/05",
+        "year": 2025,
+        "mbid": "64c8d3c5-f501-44a3-a023-21a7b7845be1"
+      },
+      {
+        "title": "Here Comes the Indian",
+        "year": 2003,
+        "mbid": "6503c3f9-5725-3e3f-9587-c74dbe0c6bee"
+      },
+      {
+        "title": "Live at the Ritz April 13, 2016",
+        "year": 2016,
+        "mbid": "6d9d4933-5435-477b-9523-ff2a5bd1f38a"
+      },
+      {
+        "title": "Merriweather Post Pavilion / Strawberry Jam",
+        "year": 2010,
+        "mbid": "708c32f9-6838-4319-a203-863378d1b136"
+      },
+      {
+        "title": "Session Planet Claire 31-08-05",
+        "year": 2005,
+        "mbid": "76aa4235-3864-44c6-bd35-c21b2380a4ab"
+      },
+      {
+        "title": "2007-09-30: Webster Hall, New York City, NY, USA",
+        "year": null,
+        "mbid": "85414688-674c-43a3-8f40-0f567313b38d"
+      },
+      {
+        "title": "Rough Trade Mix",
+        "year": 2009,
+        "mbid": "85d4fbb5-f86f-4dd3-a941-3f4b67c35bd9"
+      },
+      {
+        "title": "2005-08-12: La Route du Rock Festival 2005: Palais du Grand Large (Auditorium), St Malo, France",
+        "year": 2005,
+        "mbid": "86009dca-559d-49f4-bc13-37a3c53b845f"
+      },
+      {
+        "title": "Strawberry Jam",
+        "year": 2007,
+        "mbid": "89e4f726-2b6f-3f15-992e-b52105f53899"
+      },
+      {
+        "title": "2004-06-05: Electric Showroom, Shoreditch, London, UK",
+        "year": null,
+        "mbid": "8c7a3e0d-4ec9-3232-8aeb-c6175541ee9c"
+      },
+      {
+        "title": "Crestone: Original Motion Picture Score",
+        "year": 2021,
+        "mbid": "8cd2ace5-073b-4ac8-8ceb-279c4094346d"
+      },
+      {
+        "title": "2005-04-27: The Empty Bottle, Chicago, IL, USA",
+        "year": null,
+        "mbid": "8d7a5882-5ef5-32bc-82c5-02a3837d8bff"
+      },
+      {
+        "title": "Centipede Hz",
+        "year": 2012,
+        "mbid": "90e00c26-8d55-4378-8576-f1bd1199ce91"
+      },
+      {
+        "title": "2009-01-21: Bowery Ballroom, New York City, NY, USA",
+        "year": null,
+        "mbid": "9b17a9c4-3ef4-43db-acdc-b559961dc4fa"
+      },
+      {
+        "title": "2009-05-18: Royal Oak Music Theatre, Royal Oak, MI, USA",
+        "year": null,
+        "mbid": "a07a5566-954d-4808-80ee-a3b356f6f359"
+      },
+      {
+        "title": "2007-07-11: The Coronet Theatre, London, England, UK",
+        "year": null,
+        "mbid": "a746050e-7e1d-3590-ad90-984e9915a7f6"
+      },
+      {
+        "title": "Live at College Street Music Hall May 26, 2017",
+        "year": 2017,
+        "mbid": "ae5d4a37-2deb-4dc1-ae14-0458da9261c4"
+      },
+      {
+        "title": "2004-08-17: The Wexner, Columbus, OH, USA",
+        "year": null,
+        "mbid": "b02592ca-aa34-43d4-80fb-aab8f7b8fba3"
+      },
+      {
+        "title": "Merriweather Post Pavilion",
+        "year": 2009,
+        "mbid": "b059890c-d415-3e65-aaed-52c810565922"
+      },
+      {
+        "title": "Animal Collective Live at Neumo's - August 22, 2004",
+        "year": 2018,
+        "mbid": "b4a5012c-b211-4055-8644-eab99b03373e"
+      },
+      {
+        "title": "Spirit They’re Gone Spirit They’ve Vanished / Danse Manatee",
+        "year": 2003,
+        "mbid": "bb5426ab-6924-321a-8504-dc6f3cdf852b"
+      },
+      {
+        "title": "2007-05-30: Satellite Ballroom, Charlottesville, VA, USA",
+        "year": null,
+        "mbid": "bc4e6325-25fc-32a3-8354-df2ea42aac16"
+      },
+      {
+        "title": "2008-05-28: Lux Frágil, Lisbon, Portugal",
+        "year": null,
+        "mbid": "c4001a22-b1a3-3400-95f7-2cba2bcfe7f8"
+      },
+      {
+        "title": "2005-02-25: Bowery Ballroom, New York City, NY, USA",
+        "year": null,
+        "mbid": "c806826d-3dc7-3dd2-a925-719b72a8ddaf"
+      },
+      {
+        "title": "Tangerine Reef Live",
+        "year": 2018,
+        "mbid": "ca4ad8b9-8919-4327-80a3-6166644dcc1d"
+      },
+      {
+        "title": "2004-11-11: Lee's Palace, Toronto, ON, Canada",
+        "year": null,
+        "mbid": "cdb3443a-ec0b-3c39-b0b8-a02ba8bfaa0b"
+      },
+      {
+        "title": "2 Nights",
+        "year": 2020,
+        "mbid": "cf19886d-014c-4c1e-9835-a55115df1fc7"
+      },
+      {
+        "title": "Hollinndagain",
+        "year": 2002,
+        "mbid": "d65b5cb7-6ea6-3eb8-abc6-b7bdd42f0e69"
+      },
+      {
+        "title": "Animal Crack Box",
+        "year": 2009,
+        "mbid": "da8a426c-a478-3762-a84d-5457cbbfbb1f"
+      },
+      {
+        "title": "Live at 9:30",
+        "year": 2015,
+        "mbid": "dbe4d206-ec2d-4568-b839-1174701f74b3"
+      },
+      {
+        "title": "2007-10-01: Webster Hall, New York City, NY, USA",
+        "year": null,
+        "mbid": "de0ffbfd-425b-4208-b817-b59c0c7139aa"
+      },
+      {
+        "title": "Tangerine Reef",
+        "year": 2018,
+        "mbid": "de86e034-bdd5-4cc3-8dc4-0f716c1deae3"
+      },
+      {
+        "title": "Time Skiffs",
+        "year": 2022,
+        "mbid": "ee936249-9671-44c3-a446-1776150d781e"
+      }
+    ]
+  },
+  "lemonheads": {
+    "ts": 1775671204.171829,
+    "albums": [
+      {
+        "title": "Varshons",
+        "year": 2009,
+        "mbid": "0105b5a8-6b0f-38c9-b0a9-64e4a86414e6"
+      },
+      {
+        "title": "Creator",
+        "year": 1988,
+        "mbid": "022d34b2-1011-3529-8a82-0c7bab258716"
+      },
+      {
+        "title": "The Lemonheads",
+        "year": 2006,
+        "mbid": "02720ebe-71c2-3d47-8261-3b60c14c31a4"
+      },
+      {
+        "title": "Lick",
+        "year": 1989,
+        "mbid": "061ee1ae-f365-31e7-86ff-573bfef7d89a"
+      },
+      {
+        "title": "Varshons 2",
+        "year": 2019,
+        "mbid": "10a9a8df-be96-4f54-bcca-af3645cc7e81"
+      },
+      {
+        "title": "Evan's Treasures",
+        "year": 1993,
+        "mbid": "31016a4e-a76e-4431-a8c0-55e2fb86a110"
+      },
+      {
+        "title": "Squeeze Me Please Me",
+        "year": 1994,
+        "mbid": "3a3dead8-98ed-495a-9b72-49c3fc579962"
+      },
+      {
+        "title": "Lemonheads",
+        "year": 1997,
+        "mbid": "3ded5b22-fe79-39e0-8f8a-649552b8c91d"
+      },
+      {
+        "title": "Down on Me: Los Angeles ’93",
+        "year": 2022,
+        "mbid": "45b0ef9b-25db-4ddc-840c-da93827b2e61"
+      },
+      {
+        "title": "Laughing All the Way to the Cleaners / The Best Of",
+        "year": 2012,
+        "mbid": "4695e561-87ee-47d4-a969-32c79ab09109"
+      },
+      {
+        "title": "Lemonheads in Dreamland",
+        "year": 2025,
+        "mbid": "46d0b3d8-453e-4933-91dd-05806a0f027a"
+      },
+      {
+        "title": "Come On Feel The Lemonheads",
+        "year": 1993,
+        "mbid": "57620a06-01d7-360b-867b-c4ac758de1e0"
+      },
+      {
+        "title": "The Best of the Lemonheads: The Atlantic Years",
+        "year": 1998,
+        "mbid": "59878637-4673-3caa-8361-c74681c1f289"
+      },
+      {
+        "title": "If Only You Were Dead",
+        "year": 2014,
+        "mbid": "62ea5e3c-52d0-4788-941c-78b9fc5adb31"
+      },
+      {
+        "title": "The Secret Life of Evan Dando",
+        "year": 1993,
+        "mbid": "6b66f145-3aec-3137-ae09-d47177cf3123"
+      },
+      {
+        "title": "Hotel Sessions",
+        "year": 2011,
+        "mbid": "81554765-2bd2-4712-9741-5e2ee9acea12"
+      },
+      {
+        "title": "Lovey",
+        "year": 1990,
+        "mbid": "823aba51-39ba-3026-8024-b2f3df0dea22"
+      },
+      {
+        "title": "Love Chant",
+        "year": 2025,
+        "mbid": "8f98a33e-55d0-4939-a799-38d932cfd09a"
+      },
+      {
+        "title": "Car Button Cloth",
+        "year": 1996,
+        "mbid": "97b4c536-0bb1-3f98-ac0e-f2f19f6ccd7f"
+      },
+      {
+        "title": "Hate Your Friends",
+        "year": 1987,
+        "mbid": "9ffb6fd6-d40c-334a-9c26-d7de9bf2d665"
+      },
+      {
+        "title": "Create Your Friends",
+        "year": 1989,
+        "mbid": "cc5ea9de-6962-48c0-8403-631e40a1cb60"
+      },
+      {
+        "title": "The Eye of Evan Dando",
+        "year": 1994,
+        "mbid": "cca453f5-de98-43c6-bcc4-e2ddf2d99c16"
+      },
+      {
+        "title": "Live & Alive",
+        "year": 1995,
+        "mbid": "ce134f87-37d2-45f8-a384-b6066da6ebed"
+      },
+      {
+        "title": "Lemonology",
+        "year": 1996,
+        "mbid": "ceef5638-67e0-4b4e-b0e3-92530bd590d6"
+      },
+      {
+        "title": "It’s a Shame About Ray",
+        "year": 1992,
+        "mbid": "d8cf6f02-a68b-4b73-be3e-746fb5a5adf6"
+      },
+      {
+        "title": "New York New York",
+        "year": 1993,
+        "mbid": "e1387ce0-23d7-3f2a-97ee-e1ae6c9f1ba7"
+      }
+    ]
+  },
+  "paper chase": {
+    "ts": 1775671208.6220338,
+    "albums": [
+      {
+        "title": "Hide the Kitchen Knives",
+        "year": 2002,
+        "mbid": "653275b9-0115-3d41-8749-aad74423cd3b"
+      },
+      {
+        "title": "Now You Are One of Us",
+        "year": 2006,
+        "mbid": "8a0b0705-59fc-3fc1-903d-74ab56c9ca00"
+      },
+      {
+        "title": "God Bless Your Black Heart",
+        "year": 2004,
+        "mbid": "d4f0d330-d821-390b-9bc6-b270624e011c"
+      },
+      {
+        "title": "Young Bodies Heal Quickly, You Know",
+        "year": 2000,
+        "mbid": "e0e23d3f-9d72-3d9c-a29e-b9c1429fb5a1"
+      },
+      {
+        "title": "Someday This Could All Be Yours, Vol. 1",
+        "year": 2009,
+        "mbid": "f0f02a43-d0a0-4151-82d8-c9841caa95a2"
+      }
+    ]
+  },
+  "mr oizo": {
+    "ts": 1775671211.552414,
+    "albums": [
+      {
+        "title": "Steak: Music From the Motion Picture",
+        "year": 2007,
+        "mbid": "0b23153e-621b-3f82-8517-29b0865eb808"
+      },
+      {
+        "title": "Lambs Anger",
+        "year": 2008,
+        "mbid": "3d503f0f-f7df-3225-aefe-583305a46f89"
+      },
+      {
+        "title": "Stade 2",
+        "year": 2011,
+        "mbid": "4cd51b1d-8b0f-4637-8393-0a44b8f61a8d"
+      },
+      {
+        "title": "Wrong",
+        "year": 2012,
+        "mbid": "552d9125-5ef3-4e9b-90df-1ec186dcbcb9"
+      },
+      {
+        "title": "Analog Worms Attack",
+        "year": 1999,
+        "mbid": "582cb922-de5e-3367-9205-bdd44bf7c507"
+      },
+      {
+        "title": "Wrong Cops (Best Of)",
+        "year": 2013,
+        "mbid": "5906ee50-07ef-4318-b20d-4195420f8ff7"
+      },
+      {
+        "title": "Moustache (Half a Scissor)",
+        "year": 2005,
+        "mbid": "65e994a0-f13e-387b-bef9-1fc2c8a73bba"
+      },
+      {
+        "title": "All Wet",
+        "year": 2016,
+        "mbid": "a2dddcf4-1caf-4000-8b54-9885d54e7329"
+      },
+      {
+        "title": "The Church",
+        "year": 2014,
+        "mbid": "c438964d-0099-4007-b9ec-5068f4537a66"
+      },
+      {
+        "title": "VOILÀ",
+        "year": 2022,
+        "mbid": "d7dfcff5-f72d-4433-a84d-1308c822d2ff"
+      },
+      {
+        "title": "Rubber",
+        "year": 2010,
+        "mbid": "e1d85408-1b10-4815-9156-b914333e735b"
+      },
+      {
+        "title": "L'Accident de piano",
+        "year": 2025,
+        "mbid": "e341552d-0afc-455f-9fad-15057d7d3d94"
+      }
+    ]
+  },
+  "future of the left": {
+    "ts": 1775671215.46108,
+    "albums": [
+      {
+        "title": "Travels With Myself and Another",
+        "year": 2009,
+        "mbid": "2cbdd61f-8d61-357e-a4ef-c4396d90347b"
+      },
+      {
+        "title": "Last Night I Saved Her From Vampires",
+        "year": 2009,
+        "mbid": "442825e3-2a41-3342-a6e9-e60d8d98ef1b"
+      },
+      {
+        "title": "Live at the Garage 01.12.16",
+        "year": 2017,
+        "mbid": "530ca6d3-9f85-47a2-bddb-b2ce62839ac7"
+      },
+      {
+        "title": "The Plot Against Common Sense",
+        "year": 2012,
+        "mbid": "9f85cc40-0dca-4206-a07d-c8ddce47f8e3"
+      },
+      {
+        "title": "2012‐12‐13: Studio Paradiso, San Francisco, CA, USA",
+        "year": 2012,
+        "mbid": "bc374533-f8f2-4f85-9ce4-2830be2a9172"
+      },
+      {
+        "title": "Curses!",
+        "year": 2007,
+        "mbid": "be2cfab6-49d7-392c-8fe5-d02bbe5c7884"
+      },
+      {
+        "title": "2007‐06‐06: Barfly, London, England, UK",
+        "year": null,
+        "mbid": "c142585d-dae4-389d-847f-2e0d25bda18c"
+      },
+      {
+        "title": "The Peace & Truce of Future of the Left",
+        "year": 2016,
+        "mbid": "e4d7d16b-029c-49b2-9565-8cec0cadacbf"
+      },
+      {
+        "title": "How to Stop Your Brain in an Accident",
+        "year": 2013,
+        "mbid": "f2406dc1-4736-455f-92d2-1e94fae1af19"
+      }
+    ]
+  },
+  "talking heads": {
+    "ts": 1775671218.3176289,
+    "albums": [
+      {
+        "title": "True Creature (1984 demos)",
+        "year": null,
+        "mbid": "049d8848-6ff9-48e9-a248-ea6b6b6406c9"
+      },
+      {
+        "title": "Tentative Decisions: Demos & Live",
+        "year": 2025,
+        "mbid": "0d957454-5bbc-4ad0-b998-71b42776ccd4"
+      },
+      {
+        "title": "Naked",
+        "year": 1988,
+        "mbid": "0dcd717b-d652-3da5-99bd-f32c5fd42a7d"
+      },
+      {
+        "title": "Gimme Heads!",
+        "year": 1988,
+        "mbid": "1f1c54d6-c9df-439d-ac0c-4f56bf9e75ce"
+      },
+      {
+        "title": "1977-12-03: Old Waldorf, San Francisco, CA, USA",
+        "year": null,
+        "mbid": "2339753b-90a6-3a1e-8e99-af256900de26"
+      },
+      {
+        "title": "1977‐01‐26: Jaberwocky, University Campus, Syracuse, NY, USA",
+        "year": null,
+        "mbid": "25097829-a7f8-43e6-9abe-e577ab13e913"
+      },
+      {
+        "title": "1982‐07‐12: Wembley Stadium, London, UK",
+        "year": 1982,
+        "mbid": "2ac123a4-cc3e-4473-a940-3c62e2f68224"
+      },
+      {
+        "title": "1981-02-27: Nakano Sunplaza Hall, Nakano, Tokyo, Japan",
+        "year": null,
+        "mbid": "2ae310a7-27d5-3469-898e-c63462fffc7c"
+      },
+      {
+        "title": "Stop Making Sense",
+        "year": 1984,
+        "mbid": "2b85ba4e-53bf-4473-87f5-59d0b53020ad"
+      },
+      {
+        "title": "1978‐09‐13: Park West, Chicago, IL, USA",
+        "year": null,
+        "mbid": "2cbe3897-122f-3e2d-9c57-5edee20d8f77"
+      },
+      {
+        "title": "More Songs About Buildings and Food",
+        "year": 1978,
+        "mbid": "2cecb2c0-cac3-3c55-8083-577308746230"
+      },
+      {
+        "title": "Once in a Lifetime: The Best Of",
+        "year": 1992,
+        "mbid": "3420cded-8441-325a-9b3f-34b131b2807a"
+      },
+      {
+        "title": "True Stories Soundtrack",
+        "year": 1986,
+        "mbid": "3ad521ae-ceb2-4420-8b05-7b5e9f45993b"
+      },
+      {
+        "title": "Boarding House San Francisco Ca. September 16, 1978",
+        "year": 2015,
+        "mbid": "3bc7933c-53ec-44f3-8d2e-8cd513dd463b"
+      },
+      {
+        "title": "1979‐08‐24: Berklee Performance Center, Boston, MA, USA",
+        "year": null,
+        "mbid": "406c81d0-d4e6-3725-bfaa-c52461849f6f"
+      },
+      {
+        "title": "Once in a Lifetime",
+        "year": 2003,
+        "mbid": "4115ff42-4d79-3a95-a745-a07e66ff3c42"
+      },
+      {
+        "title": "The Warning Signs",
+        "year": 2007,
+        "mbid": "432b28ae-9370-4c02-8369-b8335485221c"
+      },
+      {
+        "title": "1978‐09‐08: Live in Seattle: Seattle, WA, USA",
+        "year": 1978,
+        "mbid": "45ae5ef7-38f9-464a-8a76-dc24038c3f71"
+      },
+      {
+        "title": "Essential",
+        "year": 2011,
+        "mbid": "460e3b37-9088-4696-be24-7880ee5ca04e"
+      },
+      {
+        "title": "Memories Can’t Wait",
+        "year": 1990,
+        "mbid": "468fc70d-076c-344e-9ff0-ac9231c6a220"
+      },
+      {
+        "title": "1983‐08‐20: Cape Cod Coliseum, South Yarmouth, MA, USA",
+        "year": null,
+        "mbid": "48561228-d0bf-37df-b99b-988595487e90"
+      },
+      {
+        "title": "1977‐01‐21: The Rat, Kenmore Square, Boston, MA, USA",
+        "year": null,
+        "mbid": "48619ee0-feb8-4834-9e57-7b23ff1951ab"
+      },
+      {
+        "title": "Greek Theatre",
+        "year": 1991,
+        "mbid": "49fb1a99-4638-42a1-ab02-7132bb19cd1e"
+      },
+      {
+        "title": "Live on Tour",
+        "year": 1979,
+        "mbid": "4cc20dfd-88ef-3ce2-a259-9dbf65dde822"
+      },
+      {
+        "title": "Live in Roma",
+        "year": 2000,
+        "mbid": "50c05c45-0bce-4787-857c-498813f54149"
+      },
+      {
+        "title": "1983‐08‐05: Performing Arts Center, Saratoga Springs, NY, USA",
+        "year": null,
+        "mbid": "52a4c460-06ea-4b80-9cd4-bafea520a11e"
+      },
+      {
+        "title": "1976‐10‐09 Max’s Kansas City, New York, NY",
+        "year": 1976,
+        "mbid": "56638ee9-ff32-417a-a075-b4f688c3e512"
+      },
+      {
+        "title": "The Name of This Band Is Talking Heads",
+        "year": 1982,
+        "mbid": "57a420f1-2b62-3b43-a1a8-cf7874d4b40d"
+      },
+      {
+        "title": "True Stories",
+        "year": 1986,
+        "mbid": "57e52e6a-548c-4255-89a1-806c49e14432"
+      },
+      {
+        "title": "The Originals",
+        "year": 1997,
+        "mbid": "5982e21d-126d-458b-aca8-e6317561befe"
+      },
+      {
+        "title": "The Good Thing",
+        "year": 2022,
+        "mbid": "5a8fe2da-c57b-4192-85cb-7bd103701a22"
+      },
+      {
+        "title": "Stay Hungry: Talking Heads Recordings",
+        "year": 2022,
+        "mbid": "5c89bb03-33d6-464a-adf9-a721df396662"
+      },
+      {
+        "title": "Natures Way",
+        "year": 1991,
+        "mbid": "5fc527af-7bcf-3991-ad85-7e74a474afb2"
+      },
+      {
+        "title": "12x12 Original Remixes",
+        "year": 1999,
+        "mbid": "61492eb6-4294-3f7f-b282-bc4fae37c0a2"
+      },
+      {
+        "title": "Same as It Ever Was",
+        "year": 2009,
+        "mbid": "6bb720cd-2585-37e5-93e7-fe6c0e09b861"
+      },
+      {
+        "title": "The Best of Talking Heads",
+        "year": 2004,
+        "mbid": "6c54c0f4-8e2c-3ae5-b30b-509ab83ee092"
+      },
+      {
+        "title": "1978‐12‐15: Park West, Chicago, IL, USA",
+        "year": null,
+        "mbid": "6cf9d6e3-58dd-431c-ab6d-75804cedeabd"
+      },
+      {
+        "title": "The Archives: Classic Broadcast Recordings",
+        "year": 2017,
+        "mbid": "720d659f-aa7a-40e9-95d0-6971aa93d3f9"
+      },
+      {
+        "title": "Live USA",
+        "year": 1990,
+        "mbid": "74d567cf-284d-49da-a2dc-566e0d133e22"
+      },
+      {
+        "title": "1979‐09‐28: Stardust Ballroom, Los Angeles, CA, USA",
+        "year": 1979,
+        "mbid": "7efc9548-4fa9-4458-b365-597bf74c8ba9"
+      },
+      {
+        "title": "1977‐01‐22: The Rat, Kenmore Square, Boston, MA, USA",
+        "year": null,
+        "mbid": "86cb2d39-10df-4433-bd0f-1e8fcbaddc1a"
+      },
+      {
+        "title": "Speaking in Tongues",
+        "year": 1983,
+        "mbid": "8a7a9db3-f87b-37d5-96a6-67485a8792e6"
+      },
+      {
+        "title": "Little Creatures",
+        "year": 1985,
+        "mbid": "8d8aadcd-fcd6-3e0f-b17e-3ec2d88e65d3"
+      },
+      {
+        "title": "Live USA",
+        "year": null,
+        "mbid": "8f1c8297-41ff-4c65-99bb-3c89607b1dab"
+      },
+      {
+        "title": "Houston, Texas, Opry House 12 Dec 1978 Fm (Remastered, Live On Broadcasting)",
+        "year": 2025,
+        "mbid": "970eb11a-5eac-4581-8ad5-5be8f1ce7790"
+      },
+      {
+        "title": "Falling Upwards (live 1979)",
+        "year": 2020,
+        "mbid": "98c1f245-28f0-44ec-b451-b420cfeb1f7f"
+      },
+      {
+        "title": "Rare 12″ Mixes",
+        "year": 2005,
+        "mbid": "99b72d40-8457-4a2b-ac79-37707e4d5d50"
+      },
+      {
+        "title": "1983‐08‐03: Saratoga Performing Arts Center, Saratoga Springs, NY, USA",
+        "year": null,
+        "mbid": "9ee4b055-3340-36f2-ade2-022f54688646"
+      },
+      {
+        "title": "Psycho Killers Live: 1977-1979",
+        "year": 2025,
+        "mbid": "a2219059-ae61-4eed-9733-f349c29e34c1"
+      },
+      {
+        "title": "Transmission Impossible",
+        "year": 2015,
+        "mbid": "a255ae1a-f3a5-4f83-822b-ac1135f37015"
+      },
+      {
+        "title": "CBS Demos 1975",
+        "year": 2010,
+        "mbid": "a880c07e-de3d-4d0b-b454-100091a2b9e6"
+      },
+      {
+        "title": "Rome Concert 1980",
+        "year": 2009,
+        "mbid": "b1da1e2c-b0a5-4a7e-a729-446468294acf"
+      },
+      {
+        "title": "Selections From Talking Heads: Once in a Lifetime (Box Set)",
+        "year": null,
+        "mbid": "b5400786-56b3-39c3-ba75-7d3e3ef01194"
+      },
+      {
+        "title": "Heads in Dallas",
+        "year": 1995,
+        "mbid": "b5de5ced-248d-4ec8-af66-476de9ccf1e8"
+      },
+      {
+        "title": "Live at WCOZ 77",
+        "year": 2024,
+        "mbid": "bbde5b7d-f249-4d82-a296-816bb8a28230"
+      },
+      {
+        "title": "Expansion",
+        "year": 2021,
+        "mbid": "bcb791fa-7e74-4d5f-be35-49e91a97a339"
+      },
+      {
+        "title": "Boston Tea Party (live)",
+        "year": 2014,
+        "mbid": "bdc7d9c8-0419-4f17-bdb1-63d49f796a23"
+      },
+      {
+        "title": "Emitting Diode",
+        "year": 1980,
+        "mbid": "be793d5a-ae2f-3ab4-bb80-4cd0b5f32c28"
+      },
+      {
+        "title": "Someone Controls Electric Guitar",
+        "year": 2013,
+        "mbid": "bf4ea666-9902-4d95-a1e9-3c9451003c54"
+      },
+      {
+        "title": "Once in a Livetime (live at Montreux Jazz Festival 1982)",
+        "year": 2008,
+        "mbid": "c2d2154e-0f20-4041-b47b-73591992a519"
+      },
+      {
+        "title": "Live Chicago 1978",
+        "year": 2014,
+        "mbid": "c42bd048-25fd-4c02-91ca-6ccd7a6d4f36"
+      },
+      {
+        "title": "Live on Tour",
+        "year": 1979,
+        "mbid": "c5cbc648-e00e-4a62-a292-9fb457de749a"
+      },
+      {
+        "title": "Talking Heads",
+        "year": 2005,
+        "mbid": "c79351b0-1d0a-4edb-8757-8fb8565ec5d6"
+      },
+      {
+        "title": "The Collection",
+        "year": 2007,
+        "mbid": "ca301907-ac82-37ba-b099-df0256bd1ec9"
+      },
+      {
+        "title": "Outtakes, Demos & Alternates",
+        "year": null,
+        "mbid": "cdb0eb41-6f09-44c6-9d1a-d9f5df751431"
+      },
+      {
+        "title": "Talking Heads: 77",
+        "year": 1977,
+        "mbid": "d99084ee-de04-3ba1-8203-5f1a7e5355ee"
+      },
+      {
+        "title": "1980‐08‐23: Heatwave Festival, Mosport Park, Bowmanville, ON, Canada",
+        "year": 2015,
+        "mbid": "dbfbd85c-ce57-431c-b948-0083d04c3232"
+      },
+      {
+        "title": "It’s Not Yesterday (live Hempstead ’78 WLIR broadcast)",
+        "year": 2022,
+        "mbid": "e4c12185-3427-4772-b6c3-243485ee8767"
+      },
+      {
+        "title": "1983-08-05: Saratoga Performing Arts Center, Saratoga Springs, NY, USA",
+        "year": null,
+        "mbid": "e8059626-d59e-390b-9259-979abcf4fd8b"
+      },
+      {
+        "title": "1978‐08‐28: Park West, Chicago, IL, USA",
+        "year": 2013,
+        "mbid": "eae6f9c8-c0a3-4feb-a915-fc5cecb93638"
+      },
+      {
+        "title": "Popular Favorites: Sand in the Vaseline",
+        "year": 1992,
+        "mbid": "f13f6021-ef5a-3720-bcea-3e91035e4ceb"
+      },
+      {
+        "title": "1979 & 1980-8: Byrned to a Crisp: Boston, MA, USA and Toronto, ON, Canada",
+        "year": 1999,
+        "mbid": "f1f6f23c-f836-326e-9b69-1c7fa36a3cf7"
+      },
+      {
+        "title": "Fear of Music",
+        "year": 1979,
+        "mbid": "f378dcb1-841b-3be1-9d96-779036562de1"
+      },
+      {
+        "title": "Bonus Rarities and Outtakes",
+        "year": 2006,
+        "mbid": "f56b9d0b-826a-4f25-856e-ae11161a1435"
+      },
+      {
+        "title": "Remain in Light",
+        "year": 1980,
+        "mbid": "f6b1b900-6108-32f0-abbd-2855af9151eb"
+      },
+      {
+        "title": "Saratoga Psycho",
+        "year": 2015,
+        "mbid": "f8fbf237-3992-41b8-a2bd-1d146e05f144"
+      },
+      {
+        "title": "Performance",
+        "year": 2014,
+        "mbid": "fe9db24c-d899-4f3b-8421-92bd18a19449"
+      },
+      {
+        "title": "1977‐11‐17: Northern Studios, Maynard, MA, USA",
+        "year": 1977,
+        "mbid": "ffc1bede-bc6e-473a-b238-61877ff3f4c0"
+      }
+    ]
+  },
+  "u2": {
+    "ts": 1775671221.3006442,
+    "albums": [
+      {
+        "title": "The Very Best",
+        "year": 1995,
+        "mbid": "027d2820-5afc-3c20-afb8-9101775cffe8"
+      },
+      {
+        "title": "Artificial Horizon",
+        "year": 2010,
+        "mbid": "02f2feaa-aba1-4e31-9a7f-c0fe889fc988"
+      },
+      {
+        "title": "Four Wild Irish Roses",
+        "year": 1995,
+        "mbid": "04323ab0-24b3-4b68-bc7d-ff5c18f08cd2"
+      },
+      {
+        "title": "Hasta la Vista Baby! Live From Mexico City",
+        "year": 2000,
+        "mbid": "0e599b81-6015-3b3d-8b1a-8e56f45a5c21"
+      },
+      {
+        "title": "Previous Day",
+        "year": 2000,
+        "mbid": "0f129789-7c7a-4fd3-8af1-492dcb3907b0"
+      },
+      {
+        "title": "Rare Collection Singles B‐Sides",
+        "year": 1998,
+        "mbid": "1097ce8e-322d-427c-8509-df9f3864b99b"
+      },
+      {
+        "title": "Children of the Revolution",
+        "year": 2002,
+        "mbid": "19b0ac91-f0eb-3ac9-8187-f602039e4090"
+      },
+      {
+        "title": "Best Ballads",
+        "year": null,
+        "mbid": "1fd2ad9b-f2bc-3fa5-9590-758d10f315dd"
+      },
+      {
+        "title": "Classic In Concert: Live at the Hammersmith Palais 1982",
+        "year": 1994,
+        "mbid": "20e273b6-255a-406f-97ef-1deb08196fc7"
+      },
+      {
+        "title": "Greatest Hits",
+        "year": 2017,
+        "mbid": "24985ba0-1083-4185-9d3e-c3d5e8e8b6cf"
+      },
+      {
+        "title": "Elevation 2001 / U2 Live From Boston",
+        "year": 2001,
+        "mbid": "2879b2e6-5bd1-383d-a17e-dbae8ea5d5ea"
+      },
+      {
+        "title": "U2: Medium, Rare & Remastered",
+        "year": 2009,
+        "mbid": "2d025430-2178-3aaa-a4f7-cc1e8651dce4"
+      },
+      {
+        "title": "That Hits 2014",
+        "year": 2014,
+        "mbid": "3436d416-ca74-4fd0-883e-3fa2c61da8b9"
+      },
+      {
+        "title": "Before the Legend Started",
+        "year": null,
+        "mbid": "37bfdfaa-06fc-3b3e-8c5d-e990906a341b"
+      },
+      {
+        "title": "How to Dismantle an Atomic Bomb",
+        "year": 2004,
+        "mbid": "3ab33753-c16f-3e44-ae67-2fba4fd0e823"
+      },
+      {
+        "title": "Achtung Baby: Collection",
+        "year": 1991,
+        "mbid": "3d7da38a-46dc-4a86-8549-e146d48eae0f"
+      },
+      {
+        "title": "Playing the Daltons: The Definitive Acoustic Collection",
+        "year": 2007,
+        "mbid": "3e4c8c3c-eba4-3276-b67b-143cc2385dda"
+      },
+      {
+        "title": "Greatest Hits",
+        "year": 2002,
+        "mbid": "3fdc6279-9895-421c-aac9-71141bbdb9ed"
+      },
+      {
+        "title": "The Complete U2",
+        "year": 2004,
+        "mbid": "48c2a8b1-63b9-46ab-90a8-9088c4df83f8"
+      },
+      {
+        "title": "Four Wild Irish Roses, Part 2",
+        "year": 1996,
+        "mbid": "4b099009-0327-4d20-a58a-bdbeabbe74e6"
+      },
+      {
+        "title": "Boy",
+        "year": 1980,
+        "mbid": "53b0d89e-f856-3015-a3a6-a70e1e935fd6"
+      },
+      {
+        "title": "Rattle and Hum: The Collection",
+        "year": 2009,
+        "mbid": "573e657d-6a66-40fa-b3ea-5730f5cfc9d1"
+      },
+      {
+        "title": "Unreleased & Rare",
+        "year": 2004,
+        "mbid": "58e4581f-2448-3e54-b06b-e932a848e340"
+      },
+      {
+        "title": "Beautiful Day",
+        "year": null,
+        "mbid": "58fa1ee0-19ba-40a1-b744-43ae89f7763e"
+      },
+      {
+        "title": "Pop",
+        "year": 1997,
+        "mbid": "5eca5ea6-841b-3835-b368-94fb71d8f932"
+      },
+      {
+        "title": "U2000+",
+        "year": 2000,
+        "mbid": "627e18a6-847e-484b-8691-f8036ce44340"
+      },
+      {
+        "title": "Greatest Hits",
+        "year": 1997,
+        "mbid": "638f44fe-6d44-41ac-b492-6608f4b2a7c8"
+      },
+      {
+        "title": "iNNOCENCE + eXPERIENCE: Live in Paris",
+        "year": 2016,
+        "mbid": "63d313a6-ba12-4ade-be51-c0161aebb3bd"
+      },
+      {
+        "title": "Live From Boston 1981",
+        "year": 2004,
+        "mbid": "65b2eed6-67a3-3334-a808-54ff1ceb3b7f"
+      },
+      {
+        "title": "SURRENDER 40 SONGS, ONE PLAYLIST",
+        "year": 2022,
+        "mbid": "68cd706f-d107-469a-9acb-8eea661b0947"
+      },
+      {
+        "title": "eXPERIENCE + iNNOCENCE: Live in Berlin",
+        "year": 2020,
+        "mbid": "69b0c956-f8e0-4a3a-969b-418400e4e2db"
+      },
+      {
+        "title": "Best of the Songs",
+        "year": null,
+        "mbid": "6a1a7bc0-ae77-37bf-b67c-b021f63624a5"
+      },
+      {
+        "title": "Duals",
+        "year": 2011,
+        "mbid": "6a48ab02-a10e-428e-9e26-7f6ce8a85c80"
+      },
+      {
+        "title": "The Best of 1980–1990",
+        "year": 1998,
+        "mbid": "6c301dbd-6ccb-3403-a6c4-6a22240a0297"
+      },
+      {
+        "title": "The Joshua Tree",
+        "year": 1987,
+        "mbid": "6f3e9fa6-be7a-3de8-a2b2-2072ece8a54d"
+      },
+      {
+        "title": "Coffee: Duets: U2 Duets for Spicelegs (Not for Propaganda)",
+        "year": null,
+        "mbid": "6fc658ff-22c8-4f81-9281-8ab880d48777"
+      },
+      {
+        "title": "All That You Can’t Leave Behind: Collection",
+        "year": 2009,
+        "mbid": "720e47e2-4100-4b12-b655-68b1fc5f7776"
+      },
+      {
+        "title": "Achtung Baby",
+        "year": 1991,
+        "mbid": "744c7a1b-ac79-35c4-bd92-7e2c6a24c8d8"
+      },
+      {
+        "title": "Live, Vol. 3",
+        "year": 1993,
+        "mbid": "754b9a38-8b6a-4cb7-8998-1c7f569c53ea"
+      },
+      {
+        "title": "More Discotheque",
+        "year": 1998,
+        "mbid": "793b5e9a-d89e-3ece-9ac3-e241b2b9b366"
+      },
+      {
+        "title": "Zooropa",
+        "year": 1993,
+        "mbid": "7c705df7-46e7-3c27-9693-72b3ea559c48"
+      },
+      {
+        "title": "Two Hearts and Other Strange Things",
+        "year": 1994,
+        "mbid": "7e6699fd-924f-419a-baa9-39fabfd85a79"
+      },
+      {
+        "title": "Red Light",
+        "year": 1990,
+        "mbid": "835734f5-5e42-415c-97c6-f1901c1f9671"
+      },
+      {
+        "title": "Special Collection 1980–1987",
+        "year": 1987,
+        "mbid": "8363be01-61df-4f87-855f-493019305841"
+      },
+      {
+        "title": "U2 Go Home: Live From Slane Castle, Ireland",
+        "year": 2003,
+        "mbid": "85bf9f6e-7dd6-35e1-ba7e-dbdfcf53a770"
+      },
+      {
+        "title": "Vertigo 2005//U2 Live from Chicago",
+        "year": 2005,
+        "mbid": "85ed8857-83da-3a0c-871e-6c2f227ec161"
+      },
+      {
+        "title": "Rubber Ball And Liquor",
+        "year": 1992,
+        "mbid": "87a400df-29a5-43e0-b333-80abd62d1479"
+      },
+      {
+        "title": "October",
+        "year": 1981,
+        "mbid": "87febb2c-e117-3a0d-a7f6-8fd9a6421af1"
+      },
+      {
+        "title": "Under a Blood Red Sky",
+        "year": 1983,
+        "mbid": "880334fc-8365-36b9-b212-6cafa92879e5"
+      },
+      {
+        "title": "All That You Can’t Leave Behind",
+        "year": 2000,
+        "mbid": "88c59b55-200d-3ac1-beff-8eb99830807e"
+      },
+      {
+        "title": "18 Videos",
+        "year": 2006,
+        "mbid": "8ca9218a-fb2c-4a55-842d-9799d1736385"
+      },
+      {
+        "title": "Zooropa: Collection",
+        "year": 2009,
+        "mbid": "8dffc50e-60da-46b0-9d30-666610bc1799"
+      },
+      {
+        "title": "Love: Live From the Point Depot",
+        "year": 1989,
+        "mbid": "95dbc9e3-7c2d-37d7-a5b1-8bb72bd39dc1"
+      },
+      {
+        "title": "World Ballads Collection",
+        "year": 1999,
+        "mbid": "9a3a9e6b-1133-4919-9754-79dfd1b013ee"
+      },
+      {
+        "title": "U2360° at the Rose Bowl",
+        "year": 2010,
+        "mbid": "9bc96f38-7f7f-4717-ad5f-628fd5a9183e"
+      },
+      {
+        "title": "From the Ground Up: Edge’s Picks From U2360°",
+        "year": 2012,
+        "mbid": "a1888c4a-316a-4b2d-9bfa-4e93c9b86783"
+      },
+      {
+        "title": "All the Best",
+        "year": null,
+        "mbid": "a4673048-d80b-3b1f-abda-1a977652d0c8"
+      },
+      {
+        "title": "Tear Down the Walls",
+        "year": 1987,
+        "mbid": "a49470bc-4157-41dc-bcc6-4d1acde4bd96"
+      },
+      {
+        "title": "Greatest Songs",
+        "year": 2018,
+        "mbid": "a4979ea6-24c1-47e9-a28c-27d29fd1bf4c"
+      },
+      {
+        "title": "1977–1984: Collector’s Box Set",
+        "year": 2008,
+        "mbid": "a599391a-c620-4c96-aa3b-ad6ce648302d"
+      },
+      {
+        "title": "Who Is the Devil?",
+        "year": null,
+        "mbid": "a68d3052-7759-4a1d-8c46-75a9d0c23f24"
+      },
+      {
+        "title": "U218 Singles",
+        "year": 2006,
+        "mbid": "a9981376-d6f7-3fa5-ac76-766e8ba814bd"
+      },
+      {
+        "title": "Rattle and Hum (digitally remastered outtakes)",
+        "year": 1995,
+        "mbid": "ac0125c5-b71c-4c4d-98fc-aed3ded88d10"
+      },
+      {
+        "title": "No Line on the Horizon",
+        "year": 2009,
+        "mbid": "acaa5e04-685c-3e47-af62-1cd3012008b6"
+      },
+      {
+        "title": "Street Mission",
+        "year": 1995,
+        "mbid": "b1ba0fc0-7b6a-425b-8738-21010b8773df"
+      },
+      {
+        "title": "Pride",
+        "year": 1990,
+        "mbid": "b49c78b9-1b98-4785-9dc7-f454d2a1e2d9"
+      },
+      {
+        "title": "The Best of 1990–2000",
+        "year": 2002,
+        "mbid": "b61193ac-8f31-3b07-847a-fc8b4d495218"
+      },
+      {
+        "title": "Coverin’, Vol II",
+        "year": 1994,
+        "mbid": "b9e8b93f-8397-477f-b4fe-49b67f26b33a"
+      },
+      {
+        "title": "Achtung Baby / Zooropa",
+        "year": 1999,
+        "mbid": "ba8f0302-4189-4791-a064-3892b03eda31"
+      },
+      {
+        "title": "Live Songs of Innocence + Experience",
+        "year": 2019,
+        "mbid": "bc3c640d-8c2b-4000-8b16-bf32c0d3f635"
+      },
+      {
+        "title": "Another Time, Another Place: Live at the Marquee London 1980",
+        "year": 2015,
+        "mbid": "bcbbc2f0-1e84-4843-9df1-5ff2f15604f2"
+      },
+      {
+        "title": "Rattle and Hum",
+        "year": 1988,
+        "mbid": "bf965ead-7c91-3a9b-93c8-cf941242ee65"
+      },
+      {
+        "title": "Unreleased & Rare 2004",
+        "year": 2004,
+        "mbid": "c538e5aa-37fb-4fca-a1f6-9a96ce0744f7"
+      },
+      {
+        "title": "War",
+        "year": 1983,
+        "mbid": "c6b36664-7e60-3b3e-a24d-d096c67a11e9"
+      },
+      {
+        "title": "Popmart: Live From Mexico City",
+        "year": 1998,
+        "mbid": "c7cc7da9-e0f9-30b8-a2b4-2a0acd53ee0f"
+      },
+      {
+        "title": "The Unforgettable Fire",
+        "year": 1984,
+        "mbid": "c84d00f4-afd3-3184-be62-6ae5f135aa38"
+      },
+      {
+        "title": "Live at the Apollo for One Night Only",
+        "year": 2021,
+        "mbid": "cb073c3e-0d82-4481-967a-4e4d3649fc5e"
+      },
+      {
+        "title": "The Saints Are Coming: Greatest Hits",
+        "year": 2007,
+        "mbid": "d5cb0ccc-44be-4712-bf6f-31cc956115a7"
+      },
+      {
+        "title": "Heart Beat",
+        "year": 1996,
+        "mbid": "d6d58f86-c2e2-3c76-99a1-5f6c47a5f509"
+      },
+      {
+        "title": "Elevation 32: Toronto",
+        "year": 2001,
+        "mbid": "da0d0158-e4f8-43bf-ac95-2e59a7731c79"
+      },
+      {
+        "title": "The Best of 1980–2000",
+        "year": 2009,
+        "mbid": "da873a85-8c09-4eda-84b8-508f596bf864"
+      },
+      {
+        "title": "The Other Side of Elevation",
+        "year": 2006,
+        "mbid": "dcb01e10-9ade-339b-b79f-8ee5cc16ab5a"
+      },
+      {
+        "title": "Electric Warriors: The Real Ultra Rare Tracks, Vol. II",
+        "year": 2005,
+        "mbid": "dd22c03f-17c0-41d3-a1b5-d2e98ec6c371"
+      },
+      {
+        "title": "Live From Paris",
+        "year": 2008,
+        "mbid": "deb26b57-62bf-3952-a5b0-e5a3c927c573"
+      },
+      {
+        "title": "Songs of Innocence",
+        "year": 2014,
+        "mbid": "e3f3f2c0-6fa8-4098-8aad-d82209c34973"
+      },
+      {
+        "title": "Songs of Experience",
+        "year": 2017,
+        "mbid": "e60cff6f-8ff9-44d1-a031-c5bd3cbb2dbe"
+      },
+      {
+        "title": "Duets",
+        "year": 2004,
+        "mbid": "e95032d2-04e3-33db-b385-5ac43b822178"
+      },
+      {
+        "title": "Zooropa '93",
+        "year": 1993,
+        "mbid": "ebb32b4f-afa1-42d5-a628-1e730600e94a"
+      },
+      {
+        "title": "Boysenberry: U2 Fruitleg Remixes Not for Propaganda",
+        "year": null,
+        "mbid": "f02ca493-6289-4ce6-a1a1-14b2a3eb9a57"
+      },
+      {
+        "title": "Ultra Rare Trax, Volume 3",
+        "year": 1996,
+        "mbid": "f042b3f6-3d9d-3edb-a258-afdf9f01470a"
+      },
+      {
+        "title": "How to Dismantle an Atom Bomb: Collection",
+        "year": 2009,
+        "mbid": "f06d3e13-f3b0-4dcc-b0a7-d46d3832109f"
+      },
+      {
+        "title": "Greatest Hits",
+        "year": 2010,
+        "mbid": "f0b3a60b-7166-43a2-9346-6303c9b5a2f5"
+      },
+      {
+        "title": "Pop: Collection",
+        "year": 2009,
+        "mbid": "f4265b6a-077d-4425-9ecf-729efdc35765"
+      },
+      {
+        "title": "Achtung Baby 30 Live",
+        "year": 2022,
+        "mbid": "f4831392-174d-486c-be1d-11044a4f4251"
+      },
+      {
+        "title": "All of This Can Be Yours",
+        "year": 2004,
+        "mbid": "f637b33b-18d1-441c-9cab-775991ed8c95"
+      },
+      {
+        "title": "The Ultimate Collection",
+        "year": 1994,
+        "mbid": "f7bc8454-30ea-4d25-a84e-f0b01d6b417b"
+      },
+      {
+        "title": "Songs of Surrender",
+        "year": 2023,
+        "mbid": "f8d10640-6e3a-49df-9786-1f741d672ce0"
+      },
+      {
+        "title": "Rattle and Hum",
+        "year": 1997,
+        "mbid": "fa236320-8ab3-3d4c-8c63-c4a35f76f4b2"
+      },
+      {
+        "title": "U2.COMmunication",
+        "year": 2005,
+        "mbid": "fb1bb3c0-f572-35a5-be0e-80a942b8413d"
+      },
+      {
+        "title": "Zoo TV: Live From Sydney",
+        "year": 2006,
+        "mbid": "fd5178e0-0f54-35fc-9d06-80e1366db058"
+      }
+    ]
+  },
+  "we are the physics": {
+    "ts": 1775671225.9339561,
+    "albums": [
+      {
+        "title": "We Are the Physics Are OK At Music",
+        "year": 2008,
+        "mbid": "6f9faea0-203d-4a76-bf95-9bb9943db7bd"
+      },
+      {
+        "title": "We Are the Physics Are OK at Music",
+        "year": 2008,
+        "mbid": "bc0815a6-c620-3399-addd-bbe045117b93"
+      },
+      {
+        "title": "Your Friend, the Atom",
+        "year": 2012,
+        "mbid": "d2d250b9-2282-4daa-b2d3-ca4fb1963d37"
+      }
+    ]
+  },
+  "jesus lizard": {
+    "ts": 1775671228.776917,
+    "albums": [
+      {
+        "title": "Liar",
+        "year": 1992,
+        "mbid": "054180e4-35f2-34a4-b007-db90f07c90e8"
+      },
+      {
+        "title": "Rack",
+        "year": 2024,
+        "mbid": "06614b4d-40b2-4b5d-a17e-dad3b50cde79"
+      },
+      {
+        "title": "2009-11-16: Fillmore East at Irving Plaza, New York, NY, USA",
+        "year": null,
+        "mbid": "259a1267-d776-49e7-84be-4eeba8b10595"
+      },
+      {
+        "title": "Head",
+        "year": 1990,
+        "mbid": "5a9fead6-55b1-4a24-8786-288ced3845a1"
+      },
+      {
+        "title": "Goat",
+        "year": 1991,
+        "mbid": "5c057a6c-1841-37b3-a94d-a43f476bef1f"
+      },
+      {
+        "title": "Blue",
+        "year": 1998,
+        "mbid": "5c989e1a-c502-35bc-bebc-c97dd22338a4"
+      },
+      {
+        "title": "Head / Pure",
+        "year": 1992,
+        "mbid": "6052a29c-b8d2-3bda-9197-d92ce6774e11"
+      },
+      {
+        "title": "Show",
+        "year": 1994,
+        "mbid": "68419fb8-4c26-38ff-9e1d-45dbd92d3404"
+      },
+      {
+        "title": "1997-11-02: Tuxedo Junction, Danbury, CT, USA",
+        "year": null,
+        "mbid": "69333d4f-1d54-3478-9975-0af931590a4c"
+      },
+      {
+        "title": "1990-05-20: Uptown Bar + Grill, Minneapolis, MN, USA",
+        "year": null,
+        "mbid": "76939e0a-8901-3df1-86e2-ff161189deda"
+      },
+      {
+        "title": "Bang",
+        "year": 2000,
+        "mbid": "7dfa3c77-f9bc-3528-ad10-d093b58e7de8"
+      },
+      {
+        "title": "Down",
+        "year": 1994,
+        "mbid": "9e5eff51-4633-3a43-b835-6dcd6c7a89dd"
+      },
+      {
+        "title": "Shot",
+        "year": 1996,
+        "mbid": "ce33e1c1-8ae6-35c8-8289-fb374808e793"
+      },
+      {
+        "title": "Club",
+        "year": 2011,
+        "mbid": "d30157ec-3830-4a36-be47-afd3e625268c"
+      }
+    ]
+  }
+}
