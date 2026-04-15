@@ -2290,12 +2290,21 @@
             }
 
             // Filter by search (artist, title, genre, year)
-            const search = document.getElementById('searchInput').value.toLowerCase();
+            // Normalize so "mu-ziq" matches "μ-Ziq", "bjork" matches "Björk", etc.
+            const normalizeSearch = (s) => {
+                if (!s) return '';
+                return s.toLowerCase()
+                    .replace(/μ/g, 'mu').replace(/ø/g, 'o').replace(/æ/g, 'ae')
+                    .replace(/ß/g, 'ss').replace(/ð/g, 'd').replace(/þ/g, 'th')
+                    .replace(/ł/g, 'l').replace(/œ/g, 'oe')
+                    .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+            };
+            const search = normalizeSearch(document.getElementById('searchInput').value);
             if (search) {
                 result = result.filter(a =>
-                    a.artist.toLowerCase().includes(search) ||
-                    a.title.toLowerCase().includes(search) ||
-                    (a.genres && a.genres.some(g => g.toLowerCase().includes(search))) ||
+                    normalizeSearch(a.artist).includes(search) ||
+                    normalizeSearch(a.title).includes(search) ||
+                    (a.genres && a.genres.some(g => normalizeSearch(g).includes(search))) ||
                     (a.year && String(a.year).includes(search))
                 );
             }
