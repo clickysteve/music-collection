@@ -1206,6 +1206,12 @@ def git_push():
     print("Pushing to GitHub")
     print(f"{'='*60}\n")
     try:
+        # Pull any remote changes first to avoid push rejection
+        print("  Pulling latest changes...")
+        subprocess.run(["git", "stash"], cwd=SITE_DIR, check=True)
+        subprocess.run(["git", "pull", "--rebase"], cwd=SITE_DIR, check=True)
+        subprocess.run(["git", "stash", "pop"], cwd=SITE_DIR, capture_output=True)
+
         subprocess.run(["git", "add", "index.html"], cwd=SITE_DIR, check=True)
         result = subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=SITE_DIR, capture_output=True)
         if result.returncode == 0:
