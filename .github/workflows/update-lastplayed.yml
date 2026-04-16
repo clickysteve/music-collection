@@ -2,8 +2,8 @@ name: Update Last Played
 
 on:
   schedule:
-    # Runs daily at 6am UTC (7am BST / 6am GMT)
-    - cron: '0 6 * * *'
+    # Runs every 15 minutes
+    - cron: '*/15 * * * *'
   workflow_dispatch:  # Allow manual trigger from GitHub UI
 
 permissions:
