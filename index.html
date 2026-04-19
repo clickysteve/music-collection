@@ -2294,7 +2294,7 @@
             const normalizeSearch = (s) => {
                 if (!s) return '';
                 return s.toLowerCase()
-                    .replace(/μ/g, 'mu').replace(/ø/g, 'o').replace(/æ/g, 'ae')
+                    .replace(/μ/g, 'mu').replace(/µ/g, 'mu').replace(/ø/g, 'o').replace(/æ/g, 'ae')
                     .replace(/ß/g, 'ss').replace(/ð/g, 'd').replace(/þ/g, 'th')
                     .replace(/ł/g, 'l').replace(/œ/g, 'oe')
                     .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
