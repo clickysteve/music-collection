@@ -2297,16 +2297,25 @@
                     .replace(/μ/g, 'mu').replace(/µ/g, 'mu').replace(/ø/g, 'o').replace(/æ/g, 'ae')
                     .replace(/ß/g, 'ss').replace(/ð/g, 'd').replace(/þ/g, 'th')
                     .replace(/ł/g, 'l').replace(/œ/g, 'oe')
-                    .normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+                    .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                    .replace(/[\s\-]+/g, '');  // strip spaces and hyphens for fuzzy matching
             };
             const search = normalizeSearch(document.getElementById('searchInput').value);
             if (search) {
-                result = result.filter(a =>
-                    normalizeSearch(a.artist).includes(search) ||
-                    normalizeSearch(a.title).includes(search) ||
-                    (a.genres && a.genres.some(g => normalizeSearch(g).includes(search))) ||
-                    (a.year && String(a.year).includes(search))
-                );
+                result = result.filter(a => {
+                    const artist = normalizeSearch(a.artist);
+                    const title = normalizeSearch(a.title);
+                    // Also try expanding leading "m" to "mu" for μ-Ziq style matches
+                    const searches = [search];
+                    if (/^m[^u]/.test(search) || search === 'm') searches.push('mu' + search.slice(1));
+                    if (/^u/.test(search)) searches.push('mu' + search);
+                    return searches.some(q =>
+                        artist.includes(q) ||
+                        title.includes(q) ||
+                        (a.genres && a.genres.some(g => normalizeSearch(g).includes(q))) ||
+                        (a.year && String(a.year).includes(q))
+                    );
+                });
             }
 
             // Apply sort
