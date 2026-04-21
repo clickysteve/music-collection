@@ -155,6 +155,7 @@ def page_to_album(page):
         "scrobble": get_select(props, "Scrobble") or get_rich_text(props, "Scrobble"),
         "played": played, "last_played": get_date(props, "Last Played"),
         "direct_scrobble_url": get_url(props, "Direct Scrobble"),
+        "rpm": get_select(props, "RPM") or "",
     }
 
 
