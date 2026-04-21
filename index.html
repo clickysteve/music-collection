@@ -3304,6 +3304,15 @@
                 badge.innerHTML = `<span>${album.scrobble}</span>`;
                 modalBadges.appendChild(badge);
             }
+            if (album.rpm) {
+                const badge = document.createElement('div');
+                badge.className = 'badge';
+                const is45 = album.rpm === '45';
+                const rpmColor = is45 ? '#e8d44d' : 'var(--vinyl-color)';
+                badge.style.cssText = `border-color:${rpmColor};color:${rpmColor};`;
+                badge.innerHTML = `<span>${album.rpm} RPM</span>`;
+                modalBadges.appendChild(badge);
+            }
 
             // Links
             modalLinks.innerHTML = '';
