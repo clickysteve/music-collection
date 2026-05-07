@@ -1203,26 +1203,112 @@ def export_to_site():
 # Step 3: Git push
 # ---------------------------------------------------------------------------
 
+def _run(cmd, **kwargs):
+    """Run a git command and return the CompletedProcess."""
+    kwargs.setdefault("cwd", SITE_DIR)
+    kwargs.setdefault("capture_output", True)
+    kwargs.setdefault("text", True)
+    return subprocess.run(cmd, **kwargs)
+
+
+def _resolve_conflicts():
+    """Auto-resolve any merge conflicts: keep ours for index.html, theirs for caches."""
+    conflict_check = _run(["git", "diff", "--name-only", "--diff-filter=U"])
+    if conflict_check.returncode != 0 or not conflict_check.stdout.strip():
+        return False
+
+    conflicted = conflict_check.stdout.strip().split("\n")
+    print(f"  Resolving {len(conflicted)} conflicted file(s): {', '.join(conflicted)}")
+
+    for f in conflicted:
+        if f == "index.html":
+            # Keep our version (the freshly exported one)
+            _run(["git", "checkout", "--theirs", f])
+        else:
+            # For cache files, take remote (cron's version is fine)
+            _run(["git", "checkout", "--theirs", f])
+        _run(["git", "add", f])
+
+    # Verify no conflict markers leaked into index.html
+    with open(SITE_DIR / "index.html") as fh:
+        content = fh.read()
+    if "<<<<<<<" in content:
+        print("  WARNING: conflict markers detected in index.html, cleaning up...")
+        lines = content.split("\n")
+        clean = []
+        in_conflict = False
+        section = None
+        for line in lines:
+            if line.startswith("<<<<<<< "):
+                in_conflict = True
+                section = "upstream"
+                continue
+            elif line == "=======" and in_conflict:
+                section = "stashed"
+                continue
+            elif line.startswith(">>>>>>> "):
+                in_conflict = False
+                section = None
+                continue
+            if in_conflict and section == "upstream":
+                continue
+            clean.append(line)
+        with open(SITE_DIR / "index.html", "w") as fh:
+            fh.write("\n".join(clean))
+        _run(["git", "add", "index.html"])
+        print("  Cleaned conflict markers from index.html")
+
+    return True
+
+
 def git_push():
     print(f"\n{'='*60}")
     print("Pushing to GitHub")
     print(f"{'='*60}\n")
-    try:
-        # Pull any remote changes first to avoid push rejection
-        print("  Pulling latest changes...")
-        subprocess.run(["git", "stash"], cwd=SITE_DIR, check=True)
-        subprocess.run(["git", "pull", "--rebase"], cwd=SITE_DIR, check=True)
-        subprocess.run(["git", "stash", "pop"], cwd=SITE_DIR, capture_output=True)
 
-        subprocess.run(["git", "add", "index.html"], cwd=SITE_DIR, check=True)
-        result = subprocess.run(["git", "diff", "--cached", "--quiet"], cwd=SITE_DIR, capture_output=True)
-        if result.returncode == 0:
-            print("  No changes to push."); return
-        subprocess.run(["git", "commit", "-m", "Update album data from Notion"], cwd=SITE_DIR, check=True)
-        subprocess.run(["git", "push"], cwd=SITE_DIR, check=True)
-        print("  Pushed to GitHub!")
-    except subprocess.CalledProcessError as e:
-        print(f"  Git failed: {e}\n  You may need to push manually.")
+    MAX_RETRIES = 3
+
+    # Stage everything we care about
+    _run(["git", "add", "index.html", "update_all.py", "update_rpm.py",
+          "description_cache.json", "artist_bio_cache.json", "cover_cache.json",
+          "color_cache.json", "rpm_cache.json", "genre_cache.json",
+          "trackcount_cache.json", "suggestions_cache.json", "heatmap_data.json"],
+         check=False)
+
+    # Check if there's anything to commit
+    result = _run(["git", "diff", "--cached", "--quiet"])
+    if result.returncode == 0:
+        print("  No changes to push.")
+        return
+
+    _run(["git", "commit", "-m", "Update album data from Notion"], check=False)
+
+    for attempt in range(1, MAX_RETRIES + 1):
+        print(f"  Push attempt {attempt}/{MAX_RETRIES}...")
+        push = _run(["git", "push"])
+        if push.returncode == 0:
+            print("  Pushed to GitHub!")
+            return
+
+        # Push rejected — pull and retry
+        print("  Push rejected, pulling remote changes...")
+
+        # Try rebase
+        pull = _run(["git", "pull", "--rebase"])
+        if pull.returncode != 0:
+            # Rebase hit conflicts
+            _resolve_conflicts()
+            cont = _run(["git", "rebase", "--continue", "--no-edit"],
+                        env={**os.environ, "GIT_EDITOR": "true"})
+            if cont.returncode != 0:
+                print("  Rebase continue failed, aborting and retrying with merge...")
+                _run(["git", "rebase", "--abort"])
+                # Fall back to merge strategy
+                _run(["git", "pull", "--no-rebase"], check=False)
+                _resolve_conflicts()
+                _run(["git", "commit", "-m", "Merge remote changes"], check=False)
+
+    print("  Failed to push after retries. Run manually: git pull --rebase && git push")
 
 
 # ---------------------------------------------------------------------------
