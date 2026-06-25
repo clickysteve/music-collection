@@ -1,6 +1,6 @@
 {
   "green day": {
-    "ts": 1775671184.211514,
+    "ts": 1782390841.001809,
     "albums": [
       {
         "title": "Uno...Dos...Tré!",
@@ -213,6 +213,11 @@
         "mbid": "74a05fd3-bf48-3caa-a584-d5d5eb525fb3"
       },
       {
+        "title": "2005-01-15: Böblingen, Germany",
+        "year": 2005,
+        "mbid": "76e5eadb-fe94-309a-a91d-6a91d1481f6c"
+      },
+      {
         "title": "Anyway",
         "year": 1994,
         "mbid": "77c6b9c7-a6b5-44f6-acf1-b77e34d10b08"
@@ -408,11 +413,6 @@
         "mbid": "d7bf6cc5-d89b-4f4b-b87d-0c5a445c66b9"
       },
       {
-        "title": "1995: Limited Edition: Chicago, IL, USA",
-        "year": null,
-        "mbid": "d7f94463-8f4e-3e5b-81da-540ccf6e048b"
-      },
-      {
         "title": "Tune In, Tokyo…",
         "year": 2001,
         "mbid": "d8a14325-2ab6-3c93-a688-3d763da1313b"
@@ -505,7 +505,7 @@
     ]
   },
   "biffy clyro": {
-    "ts": 1775671186.995987,
+    "ts": 1782390843.770588,
     "albums": [
       {
         "title": "Puzzle",
@@ -620,7 +620,7 @@
     ]
   },
   "crackout": {
-    "ts": 1775671189.7649071,
+    "ts": 1782390846.6711948,
     "albums": [
       {
         "title": "Oh No!",
@@ -635,7 +635,7 @@
     ]
   },
   "prefuse 73": {
-    "ts": 1775671192.631544,
+    "ts": 1782390849.468717,
     "albums": [
       {
         "title": "The Failing Institute of Drums & Other Percussion",
@@ -775,7 +775,7 @@
     ]
   },
   "feeder": {
-    "ts": 1775671195.397559,
+    "ts": 1782390852.257796,
     "albums": [
       {
         "title": "Renegades",
@@ -875,7 +875,7 @@
     ]
   },
   "smashing pumpkins": {
-    "ts": 1775671198.24655,
+    "ts": 1782390855.138436,
     "albums": [
       {
         "title": "Mashed Potatoes",
@@ -888,19 +888,9 @@
         "mbid": "06d0aae6-a053-42d7-b19e-1d18ee06abce"
       },
       {
-        "title": "1998-05-26: Tovoli Gardens, Copenhagen, Denmark",
-        "year": null,
-        "mbid": "080069d5-ca56-4f63-bcdf-02d171dc177e"
-      },
-      {
         "title": "2018-08-30: The Forum, Inglewood, CA, USA",
         "year": null,
         "mbid": "085f763a-276d-4af1-a142-174d84bc2e80"
-      },
-      {
-        "title": "Reel Time Sessions",
-        "year": null,
-        "mbid": "0d72dadc-10e0-4dac-88a4-cc8980865a2f"
       },
       {
         "title": "2008‐11‐19: Chicago Theatre, Chicago, IL, USA",
@@ -938,9 +928,9 @@
         "mbid": "20c7064b-16c1-4fdc-b002-2f2b298a6a9a"
       },
       {
-        "title": "Greatest Hits 2000",
-        "year": null,
-        "mbid": "20d41677-7572-336f-bf0d-84a55c8cc072"
+        "title": "Live Radio Broadcast",
+        "year": 2021,
+        "mbid": "2327dc1c-7fa6-45ec-9fab-7581a51ebd84"
       },
       {
         "title": "A la Mode, Volume 1",
@@ -963,13 +953,8 @@
         "mbid": "2c91601f-9768-4220-9137-fed6d5ff9c0c"
       },
       {
-        "title": "Millennium Hits",
-        "year": null,
-        "mbid": "2e9a7d0a-a979-3703-af45-277755c2d459"
-      },
-      {
         "title": "Arcane Night Music",
-        "year": null,
+        "year": 2014,
         "mbid": "30a389f8-503c-4504-bee8-0f8ccc097e59"
       },
       {
@@ -988,24 +973,19 @@
         "mbid": "35b42892-b116-4e7f-a80a-c62ea8e8d680"
       },
       {
+        "title": "1995-10-23: Riviera Theatre, Chicago, IL, USA",
+        "year": 1995,
+        "mbid": "37a5ce03-0f74-3d70-8485-d90892e8d371"
+      },
+      {
         "title": "B‐Sides Collection",
         "year": null,
         "mbid": "39d048e7-d987-36a1-a86b-5c58691cb420"
       },
       {
-        "title": "Moon & Smashing Pumpkins Demo Upgrades, DAT Tape #2",
-        "year": null,
-        "mbid": "3d1def2a-169d-42d6-bdc1-9b9477d55a93"
-      },
-      {
-        "title": "Cessations of Grandeur",
-        "year": null,
-        "mbid": "3da54fd5-4e3e-3fc0-b125-721149207ea3"
-      },
-      {
-        "title": "Non Album Tracks",
-        "year": null,
-        "mbid": "40d895ac-514a-3d1d-ba34-0c44362499dd"
+        "title": "2008‐11‐30: Live at Rimac Arena, San Diego, CA, USA",
+        "year": 2008,
+        "mbid": "3c5415c6-e7ee-401e-9271-1922fe8a5d0f"
       },
       {
         "title": "Celebrating *20* Years of Sadness",
@@ -1013,14 +993,19 @@
         "mbid": "431d90f5-6c12-4ea6-8c4d-1cd9540ef767"
       },
       {
-        "title": "From the Vault",
-        "year": null,
-        "mbid": "443a7076-0b76-4be8-bb30-808baa4992b3"
-      },
-      {
         "title": "1996-04-24: Palatrussardi, Milan, Italy",
         "year": null,
         "mbid": "448d8c4f-50b9-4c41-905e-ea81a8f4aa2e"
+      },
+      {
+        "title": "1991‐07‐21: Live at Moon, New Haven, CT, USA",
+        "year": null,
+        "mbid": "44e71a0a-ba12-4b38-bb87-883db19c844b"
+      },
+      {
+        "title": "The Ignoffo Tape",
+        "year": 1989,
+        "mbid": "44e7a56b-c3e4-420a-b687-661b4531ce3c"
       },
       {
         "title": "Monuments to an Elegy",
@@ -1031,6 +1016,11 @@
         "title": "Judas Ø",
         "year": 2001,
         "mbid": "47ff5aa8-0214-41f6-8165-b4167df7d0f4"
+      },
+      {
+        "title": "Daydream Sessions 1989",
+        "year": 2023,
+        "mbid": "4a38d7b4-1c94-4cb8-82a9-58ccb029c1b1"
       },
       {
         "title": "Gish",
@@ -1051,6 +1041,11 @@
         "title": "2008-11-08: Borgata Resort Spa and Casino, Atlantic City, NJ, USA",
         "year": 2008,
         "mbid": "505db64f-ca7f-4cfa-9cb7-35d8b025711f"
+      },
+      {
+        "title": "Hikari Express",
+        "year": 1993,
+        "mbid": "548b5c1f-1a50-41b5-a475-7784f8926f17"
       },
       {
         "title": "1994‐04‐12: Memorial Gymnasium, Nashville, TN, USA",
@@ -1079,7 +1074,7 @@
       },
       {
         "title": "2008‐11‐11: DAR Constitution Hall, Washington, DC, USA",
-        "year": null,
+        "year": 2008,
         "mbid": "5a777a6b-7a54-479f-89b2-c4236a1e023c"
       },
       {
@@ -1103,7 +1098,7 @@
         "mbid": "5e42e29d-baf8-4045-8612-373ca2e687ce"
       },
       {
-        "title": "Greatest Hits: Rotten Apples",
+        "title": "Greatest Hits",
         "year": 2001,
         "mbid": "629f866b-c8d1-3985-9da7-a648e8a3aaab"
       },
@@ -1118,9 +1113,9 @@
         "mbid": "670d1f76-aa84-4806-9aea-ad1e73d83d03"
       },
       {
-        "title": "Machina Acoustic Demos",
-        "year": 1998,
-        "mbid": "6832d3d9-0c4f-3ec5-b9e4-b06defb87f6f"
+        "title": "Thru the Eyes of Ruby (live)",
+        "year": 2020,
+        "mbid": "67bc65ca-8551-485b-bb32-2ea0921c36aa"
       },
       {
         "title": "Zeitgeist",
@@ -1143,9 +1138,9 @@
         "mbid": "6dbb6eb0-63ba-4e25-9857-352f2b806983"
       },
       {
-        "title": "2000‐11‐29: United Center, Chicago, IL, USA",
-        "year": 2000,
-        "mbid": "74e48545-52e6-337e-b335-818a08c023d8"
+        "title": "2008‐11‐12: DAR Constitution Hall, Washington, DC, USA",
+        "year": 2008,
+        "mbid": "73b501f6-c037-4f24-81c3-65b3ef23418f"
       },
       {
         "title": "Bruised Angel Wings",
@@ -1156,6 +1151,11 @@
         "title": "Oceania",
         "year": 2012,
         "mbid": "75d81819-5735-4a84-9dba-9b94d9c0797e"
+      },
+      {
+        "title": "1998-05-19: Aula Magna, Lisbon, Portugal",
+        "year": null,
+        "mbid": "7b573431-2be1-40f9-9612-626cdd20666e"
       },
       {
         "title": "The Smashing Pumpkins 1991–1998",
@@ -1178,14 +1178,14 @@
         "mbid": "853940e1-8d94-34ef-8925-bc1af6da4599"
       },
       {
+        "title": "Buried Alive (live)",
+        "year": 2021,
+        "mbid": "8a0abb3f-460e-4006-8106-ba79861a68d8"
+      },
+      {
         "title": "The Original F.E.M.M Tape",
         "year": 2002,
         "mbid": "90ad50dd-3c99-474d-98b1-cb86c66b6ed5"
-      },
-      {
-        "title": "Day for Night 2014 Demos",
-        "year": null,
-        "mbid": "931bcc32-0bc1-42c2-85a2-9c815fa5af29"
       },
       {
         "title": "2008‐09‐03: Massey Hall, Toronto, ON, Canada",
@@ -1206,11 +1206,6 @@
         "title": "The Smashing Pumpkins Radio",
         "year": 2000,
         "mbid": "9b1cfe3a-5afa-4641-9ac8-df6913cf4fc2"
-      },
-      {
-        "title": "Off Their Rawkers",
-        "year": null,
-        "mbid": "9baf3d0f-0411-4045-92bf-54b18f97e6f0"
       },
       {
         "title": "Retrospective",
@@ -1243,19 +1238,24 @@
         "mbid": "b37b608a-573d-4b17-bce7-73fa39196014"
       },
       {
+        "title": "Cherub Rock (live)",
+        "year": 2021,
+        "mbid": "b3b0be76-7e54-4c77-89c3-a903b0e86872"
+      },
+      {
         "title": "1993‐10‐26: Del Mar Fairgrounds, Del Mar, CA, USA",
         "year": 2018,
         "mbid": "b6d1b4ea-606c-4910-b61d-791818a6ff3c"
       },
       {
+        "title": "Plume",
+        "year": 2015,
+        "mbid": "b75cd1e8-9cfd-4adc-89b1-98dd5b105ae6"
+      },
+      {
         "title": "Live at Kawasaki 2.24.92",
         "year": 2022,
         "mbid": "b7be2f8b-d688-440c-879d-77b5bc2eae25"
-      },
-      {
-        "title": "Knock on Wood",
-        "year": null,
-        "mbid": "c7fa1ef9-b5d8-3e18-a5ca-1986c8678d40"
       },
       {
         "title": "B‐Sides From Siamese Dream",
@@ -1268,6 +1268,11 @@
         "mbid": "d0a61ad3-5b9f-438a-8884-5775fc7f695f"
       },
       {
+        "title": "Adoration",
+        "year": 2017,
+        "mbid": "d0fad602-23b0-4be5-a7a5-a4de56261f4e"
+      },
+      {
         "title": "The Smashing Pumpkins",
         "year": 2000,
         "mbid": "d5715743-6d0e-325d-873a-ad1c8f2ea00b"
@@ -1278,14 +1283,14 @@
         "mbid": "d63a9f43-e4d9-4ce1-88f5-cb5b18e0bb37"
       },
       {
+        "title": "Sounds of Turnips",
+        "year": 1994,
+        "mbid": "d8060879-ccc0-4d7c-b38f-49f4c2996c37"
+      },
+      {
         "title": "Early 1989 Demos",
         "year": 1995,
         "mbid": "d94817a1-f8bd-3a9f-af05-94593cc6151f"
-      },
-      {
-        "title": "Forgotten Songs",
-        "year": null,
-        "mbid": "daccdc78-bef5-3f78-858f-8c477b58d647"
       },
       {
         "title": "Drown",
@@ -1313,18 +1318,18 @@
         "mbid": "e2025f2f-c64f-49f4-afd7-31a757931a71"
       },
       {
+        "title": "Unplugged: 100% Pure Acoustic Performances",
+        "year": 1994,
+        "mbid": "e2e90d66-2257-36f0-bf54-8d98cfe303ef"
+      },
+      {
         "title": "1991–2000: Greatest Hits Video Collection",
         "year": 2001,
         "mbid": "e9d61b0f-8f7c-3f1d-8310-980439b56d3f"
       },
       {
-        "title": "Rarities & Live Sessions",
-        "year": null,
-        "mbid": "eab82c1e-df42-4a93-8243-f71288d46cf8"
-      },
-      {
         "title": "B-Sides Tape",
-        "year": null,
+        "year": 1993,
         "mbid": "ecf3e238-1582-4f5d-9f56-6ee5fdb6b941"
       },
       {
@@ -1371,16 +1376,11 @@
         "title": "FM Broadcasts",
         "year": 2020,
         "mbid": "fdc7af19-ec81-4ec6-b09c-5c01d2909679"
-      },
-      {
-        "title": "Rafaelselection",
-        "year": null,
-        "mbid": "fdeaf7ac-03d6-3c5d-a4b7-3d4787645e17"
       }
     ]
   },
   "animal collective": {
-    "ts": 1775671201.1854432,
+    "ts": 1782390858.060054,
     "albums": [
       {
         "title": "Isn't It Now?",
@@ -1670,7 +1670,7 @@
     ]
   },
   "lemonheads": {
-    "ts": 1775671204.171829,
+    "ts": 1782390860.908242,
     "albums": [
       {
         "title": "Varshons",
@@ -1805,7 +1805,7 @@
     ]
   },
   "paper chase": {
-    "ts": 1775671208.6220338,
+    "ts": 1782390863.684566,
     "albums": [
       {
         "title": "Hide the Kitchen Knives",
@@ -1835,7 +1835,7 @@
     ]
   },
   "mr oizo": {
-    "ts": 1775671211.552414,
+    "ts": 1782390866.595813,
     "albums": [
       {
         "title": "Steak: Music From the Motion Picture",
@@ -1900,7 +1900,7 @@
     ]
   },
   "future of the left": {
-    "ts": 1775671215.46108,
+    "ts": 1782390869.559563,
     "albums": [
       {
         "title": "Travels With Myself and Another",
@@ -1950,7 +1950,7 @@
     ]
   },
   "talking heads": {
-    "ts": 1775671218.3176289,
+    "ts": 1782390872.453484,
     "albums": [
       {
         "title": "True Creature (1984 demos)",
@@ -1981,6 +1981,11 @@
         "title": "1977‐01‐26: Jaberwocky, University Campus, Syracuse, NY, USA",
         "year": null,
         "mbid": "25097829-a7f8-43e6-9abe-e577ab13e913"
+      },
+      {
+        "title": "FM Broadcasts",
+        "year": 2020,
+        "mbid": "25a045da-a67c-4e2d-96a7-0e02f9d5f281"
       },
       {
         "title": "1982‐07‐12: Wembley Stadium, London, UK",
@@ -2214,7 +2219,7 @@
       },
       {
         "title": "Selections From Talking Heads: Once in a Lifetime (Box Set)",
-        "year": null,
+        "year": 2003,
         "mbid": "b5400786-56b3-39c3-ba75-7d3e3ef01194"
       },
       {
@@ -2256,11 +2261,6 @@
         "title": "Live Chicago 1978",
         "year": 2014,
         "mbid": "c42bd048-25fd-4c02-91ca-6ccd7a6d4f36"
-      },
-      {
-        "title": "Live on Tour",
-        "year": 1979,
-        "mbid": "c5cbc648-e00e-4a62-a292-9fb457de749a"
       },
       {
         "title": "Talking Heads",
@@ -2345,7 +2345,7 @@
     ]
   },
   "u2": {
-    "ts": 1775671221.3006442,
+    "ts": 1782390875.2476978,
     "albums": [
       {
         "title": "The Very Best",
@@ -2361,6 +2361,11 @@
         "title": "Four Wild Irish Roses",
         "year": 1995,
         "mbid": "04323ab0-24b3-4b68-bc7d-ff5c18f08cd2"
+      },
+      {
+        "title": "More Than Love",
+        "year": 1991,
+        "mbid": "0db4bbf4-5104-3c4d-9d68-8e44e661d097"
       },
       {
         "title": "Hasta la Vista Baby! Live From Mexico City",
@@ -2523,11 +2528,6 @@
         "mbid": "6f3e9fa6-be7a-3de8-a2b2-2072ece8a54d"
       },
       {
-        "title": "Coffee: Duets: U2 Duets for Spicelegs (Not for Propaganda)",
-        "year": null,
-        "mbid": "6fc658ff-22c8-4f81-9281-8ab880d48777"
-      },
-      {
         "title": "All That You Can’t Leave Behind: Collection",
         "year": 2009,
         "mbid": "720e47e2-4100-4b12-b655-68b1fc5f7776"
@@ -2673,6 +2673,11 @@
         "mbid": "b1ba0fc0-7b6a-425b-8738-21010b8773df"
       },
       {
+        "title": "Wanted",
+        "year": 1993,
+        "mbid": "b30e7d56-5410-415a-a4d4-5aa5e53869c4"
+      },
+      {
         "title": "Pride",
         "year": 1990,
         "mbid": "b49c78b9-1b98-4785-9dc7-f454d2a1e2d9"
@@ -2788,11 +2793,6 @@
         "mbid": "ebb32b4f-afa1-42d5-a628-1e730600e94a"
       },
       {
-        "title": "Boysenberry: U2 Fruitleg Remixes Not for Propaganda",
-        "year": null,
-        "mbid": "f02ca493-6289-4ce6-a1a1-14b2a3eb9a57"
-      },
-      {
         "title": "Ultra Rare Trax, Volume 3",
         "year": 1996,
         "mbid": "f042b3f6-3d9d-3edb-a258-afdf9f01470a"
@@ -2850,7 +2850,7 @@
     ]
   },
   "we are the physics": {
-    "ts": 1775671225.9339561,
+    "ts": 1782390878.2613912,
     "albums": [
       {
         "title": "We Are the Physics Are OK At Music",
@@ -2870,7 +2870,7 @@
     ]
   },
   "jesus lizard": {
-    "ts": 1775671228.776917,
+    "ts": 1782390881.093277,
     "albums": [
       {
         "title": "Liar",
