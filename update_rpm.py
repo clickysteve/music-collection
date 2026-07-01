@@ -230,9 +230,9 @@ def main():
 
     cache = load_cache()
 
-    print("Fetching vinyl albums from Notion...")
+    print("Setting RPM badges from Discogs (this pass only touches the RPM column)...")
     pages = query_all_vinyl_pages()
-    print(f"  Found {len(pages)} vinyl albums")
+    print(f"  Scanning {len(pages)} vinyl albums for RPM")
 
     updated = 0
     skipped = 0
@@ -295,7 +295,11 @@ def main():
         save_cache(cache)
 
     print(f"\n{'='*60}")
-    print(f"Done! Updated: {updated}, Skipped: {skipped}, No Discogs: {no_discogs}, Unknown: {failed}")
+    print("RPM pass done (badges only; albums are added/updated in the sections below).")
+    print(f"  RPM set: {updated}  |  Already had RPM: {skipped}  |  "
+          f"No Discogs URL, RPM left as-is: {no_discogs}  |  Discogs had no RPM: {failed}")
+    print("  Note: 'No Discogs URL' just means no RPM badge could be auto-fetched. "
+          "It does NOT mean the album is missing.")
     print(f"{'='*60}")
 
 
