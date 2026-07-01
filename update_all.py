@@ -42,6 +42,58 @@ NOTION_API_VERSION = "2022-06-28"
 
 
 # ---------------------------------------------------------------------------
+# Shared helpers: crash-safe saves + run-wide failure tracking
+# ---------------------------------------------------------------------------
+
+def _save_json_atomic(path, data, indent=None):
+    """Write JSON to a temp file then atomically replace the target.
+
+    A crash (or Ctrl-C) mid-write can never leave a half-written, corrupt
+    cache file behind: the original stays intact until os.replace swaps it.
+    """
+    import os as _os
+    tmp = f"{path}.tmp"
+    try:
+        with open(tmp, "w", encoding="utf-8") as fh:
+            json.dump(data, fh, ensure_ascii=False, indent=indent)
+        _os.replace(tmp, path)
+    except Exception as e:
+        print(f"  Warning: could not save {getattr(path, 'name', path)}: {e}")
+        try:
+            _os.path.exists(tmp) and _os.remove(tmp)
+        except Exception:
+            pass
+
+
+# Collects "this lookup didn't work and here's why" across the whole run so a
+# concise summary can be printed at the end instead of scrolling the log.
+FAILURES = {}
+
+
+def record_failure(category, label, reason):
+    """Note a non-fatal lookup failure for the end-of-run summary."""
+    FAILURES.setdefault(category, []).append((label, reason))
+
+
+def print_failure_summary():
+    """Print a grouped summary of everything that didn't resolve this run."""
+    if not FAILURES:
+        print("\nNo lookup failures this run.")
+        return
+    total = sum(len(v) for v in FAILURES.values())
+    print(f"\n{'='*60}")
+    print(f"Lookup issues this run ({total} total, not fatal)")
+    print(f"{'='*60}")
+    for category in sorted(FAILURES):
+        items = FAILURES[category]
+        print(f"\n  {category} ({len(items)}):")
+        for label, reason in items[:25]:
+            print(f"    - {label}: {reason}")
+        if len(items) > 25:
+            print(f"    ... and {len(items) - 25} more")
+
+
+# ---------------------------------------------------------------------------
 # Step 1: Update Notion via notion_covers.py
 # ---------------------------------------------------------------------------
 
@@ -157,6 +209,7 @@ def page_to_album(page):
         "direct_scrobble_url": get_url(props, "Direct Scrobble"),
         "rpm": get_select(props, "RPM") or "",
         "date_added": page.get("created_time", ""),
+        "page_id": page.get("id", ""),  # internal only; stripped before HTML injection
     }
 
 
@@ -175,11 +228,18 @@ def export_database(db_id, label, headers):
     return albums
 
 
+# Fields used only internally (e.g. for Notion writes) that must never be
+# injected into the public HTML.
+_INTERNAL_ALBUM_KEYS = {"page_id"}
+
+
 def clean_album_data(albums):
     cleaned = []
     for album in albums:
         clean = {}
         for k, v in album.items():
+            if k in _INTERNAL_ALBUM_KEYS or k.startswith("_"):
+                continue
             if isinstance(v, str):
                 v = "".join(c for c in v if unicodedata.category(c)[0] != "C" or c in " \t").strip()
             clean[k] = v
@@ -200,7 +260,7 @@ def load_genre_cache():
 
 
 def save_genre_cache(cache):
-    GENRE_CACHE_FILE.write_text(json.dumps(cache, ensure_ascii=False), encoding="utf-8")
+    _save_json_atomic(GENRE_CACHE_FILE, cache)
 
 
 def fetch_genres(albums, label=""):
@@ -257,8 +317,13 @@ def fetch_genres(albums, label=""):
                     print(f"    ...{fetched}/{len(to_fetch)}")
             else:
                 albums[idx]["genres"] = []
-        except Exception:
+                record_failure("Genre lookup (MusicBrainz)",
+                               f"{album.get('artist','?')} — {album.get('title','?')}",
+                               f"HTTP {resp.status_code}")
+        except Exception as e:
             albums[idx]["genres"] = []
+            record_failure("Genre lookup (MusicBrainz)",
+                           f"{album.get('artist','?')} — {album.get('title','?')}", str(e))
 
     save_genre_cache(cache)
     print(f"  Fetched genres for {fetched}/{len(to_fetch)} {label} albums")
@@ -278,7 +343,7 @@ def load_suggestions_cache():
 
 
 def save_suggestions_cache(cache):
-    SUGGESTIONS_CACHE_FILE.write_text(json.dumps(cache, ensure_ascii=False, indent=2), encoding="utf-8")
+    _save_json_atomic(SUGGESTIONS_CACHE_FILE, cache, indent=2)
 
 
 def find_missing_albums(all_albums):
@@ -425,7 +490,7 @@ def load_color_cache():
 
 
 def save_color_cache(cache):
-    COLOR_CACHE_FILE.write_text(json.dumps(cache, ensure_ascii=False), encoding="utf-8")
+    _save_json_atomic(COLOR_CACHE_FILE, cache)
 
 
 def extract_dominant_colors(albums, label=""):
@@ -500,7 +565,7 @@ def load_cover_cache():
 
 
 def save_cover_cache(cache):
-    COVER_CACHE_FILE.write_text(json.dumps(cache, ensure_ascii=False), encoding="utf-8")
+    _save_json_atomic(COVER_CACHE_FILE, cache)
 
 
 def resolve_cover_urls(albums, label=""):
@@ -614,8 +679,12 @@ def itunes_cover_fallback(albums, label=""):
             # Mark as miss so we don't retry
             if mbid:
                 cache[f"_itunes_{mbid}"] = ""
-        except Exception:
-            pass
+            record_failure("Cover art (none found)",
+                           f"{album.get('artist','?')} — {album.get('title','?')}",
+                           "no match on Cover Art Archive or iTunes")
+        except Exception as e:
+            record_failure("Cover art (lookup error)",
+                           f"{album.get('artist','?')} — {album.get('title','?')}", str(e))
         time.sleep(0.3)
 
     save_cover_cache(cache)
@@ -638,7 +707,7 @@ def load_trackcount_cache():
 
 
 def save_trackcount_cache(cache):
-    TRACKCOUNT_CACHE_FILE.write_text(json.dumps(cache, ensure_ascii=False), encoding="utf-8")
+    _save_json_atomic(TRACKCOUNT_CACHE_FILE, cache)
 
 
 def fetch_track_counts(albums):
@@ -705,12 +774,92 @@ def fetch_track_counts(albums):
     return albums
 
 
-def fetch_lastfm_data(all_albums):
-    """Fetch listening data from Last.fm and match against collection.
+LASTFM_API = "https://ws.audioscrobbler.com/2.0/"
+# Do a full authoritative getTopAlbums pull at most this often; between full
+# pulls, play counts are kept current by tallying only new scrobbles.
+LASTFM_FULL_REFRESH_SECS = 3 * 86400
+# Skip Last.fm entirely if the cache was touched more recently than this
+# (avoids redundant work when update.sh is run several times in a row).
+LASTFM_FRESH_SECS = 15 * 60
 
-    Requires LASTFM_API_KEY and LASTFM_USER environment variables.
-    Uses user.getTopAlbums (paginated) to get play counts for all albums.
-    Caches for 24 hours.
+
+def _lastfm_full_pull(api_key, username):
+    """Authoritative all-time play counts via user.getTopAlbums (paginated).
+
+    Returns a dict of normalized "artist|||album" -> playcount.
+    """
+    import time
+    plays = {}
+    page, total_pages = 1, 1
+    while page <= total_pages:
+        try:
+            resp = requests.get(LASTFM_API, params={
+                "method": "user.getTopAlbums", "user": username,
+                "api_key": api_key, "format": "json", "limit": 200, "page": page,
+            }, timeout=15)
+            resp.raise_for_status()
+            top = resp.json().get("topalbums", {})
+            total_pages = int(top.get("@attr", {}).get("totalPages", 1))
+            for a in top.get("album", []):
+                artist = a.get("artist", {}).get("name", "")
+                name = a.get("name", "")
+                key = f"{_normalize_for_match(artist)}|||{_normalize_for_match(name)}"
+                plays[key] = max(plays.get(key, 0), int(a.get("playcount", 0)))
+            if page % 10 == 0 or page == total_pages:
+                print(f"    Page {page}/{total_pages}")
+            page += 1
+            time.sleep(0.3)
+        except Exception as e:
+            print(f"    Error on page {page}: {e}")
+            break
+    return plays
+
+
+def _lastfm_incremental(api_key, username, since_ts):
+    """Tally album-level scrobbles since `since_ts` via user.getRecentTracks.
+
+    Returns (increments dict of normalized key -> count, latest_ts seen).
+    Only new scrobbles are fetched, so this is normally 1-2 small pages.
+    """
+    import time
+    inc, latest = {}, int(since_ts)
+    page, total_pages, max_pages = 1, 1, 500
+    while page <= total_pages and page <= max_pages:
+        try:
+            resp = requests.get(LASTFM_API, params={
+                "method": "user.getRecentTracks", "user": username,
+                "api_key": api_key, "format": "json", "limit": 200,
+                "page": page, "from": int(since_ts),
+            }, timeout=15)
+            resp.raise_for_status()
+            rt = resp.json().get("recenttracks", {})
+            total_pages = int(rt.get("@attr", {}).get("totalPages", 1))
+            for t in rt.get("track", []):
+                if t.get("@attr", {}).get("nowplaying"):
+                    continue
+                artist = t.get("artist", {}).get("#text", "")
+                album = t.get("album", {}).get("#text", "")
+                uts = t.get("date", {}).get("uts", "")
+                if not (artist and album and uts):
+                    continue
+                latest = max(latest, int(uts))
+                key = f"{_normalize_for_match(artist)}|||{_normalize_for_match(album)}"
+                inc[key] = inc.get(key, 0) + 1
+            page += 1
+            time.sleep(0.25)
+        except Exception as e:
+            print(f"    Error on page {page}: {e}")
+            break
+    return inc, latest
+
+
+def fetch_lastfm_data(all_albums):
+    """Attach Last.fm play counts to albums, fetching incrementally.
+
+    Requires LASTFM_API_KEY and LASTFM_USER. A full getTopAlbums pull happens
+    at most every few days; between those, only new scrobbles are counted and
+    added to the cached totals. This turns the old ~55-page pull on every run
+    into a 1-2 page fetch most of the time.
     """
     import time
 
@@ -721,59 +870,56 @@ def fetch_lastfm_data(all_albums):
         print("  Skipping Last.fm: set LASTFM_API_KEY and LASTFM_USER")
         return all_albums
 
-    # Check cache
     cache = {}
     if LASTFM_CACHE_FILE.exists():
         try:
             cache = json.loads(LASTFM_CACHE_FILE.read_text(encoding="utf-8"))
-            if time.time() - cache.get("_ts", 0) < 24 * 3600:
-                print("  Using cached Last.fm data (< 24h old)")
-                return _apply_lastfm(all_albums, cache)
         except Exception:
-            pass
+            cache = {}
 
-    print(f"  Fetching Last.fm data for user '{username}'...")
+    # Migrate legacy cache (raw lowercased keys) to normalized keys once.
+    if cache.get("plays") and cache.get("_schema") != 2:
+        migrated = {}
+        for k, v in cache["plays"].items():
+            parts = k.split("|||")
+            if len(parts) == 2:
+                nk = f"{_normalize_for_match(parts[0])}|||{_normalize_for_match(parts[1])}"
+                migrated[nk] = max(migrated.get(nk, 0), int(v))
+        cache["plays"] = migrated
+        cache["_schema"] = 2
 
-    # Fetch all top albums (paginated)
-    lastfm_albums = {}
-    page = 1
-    total_pages = 1
+    now = time.time()
+    plays = cache.get("plays", {})
+    full_ts = cache.get("_ts", 0)
+    scan_ts = cache.get("_scan_ts", full_ts or now)
 
-    while page <= total_pages:
-        try:
-            resp = requests.get("https://ws.audioscrobbler.com/2.0/", params={
-                "method": "user.getTopAlbums",
-                "user": username,
-                "api_key": api_key,
-                "format": "json",
-                "limit": 200,
-                "page": page,
-            }, timeout=15)
-            resp.raise_for_status()
-            data = resp.json()
+    if plays and now - cache.get("_last_touch", 0) < LASTFM_FRESH_SECS:
+        print("  Using cached Last.fm data (refreshed < 15 min ago)")
+        return _apply_lastfm(all_albums, cache)
 
-            top = data.get("topalbums", {})
-            total_pages = int(top.get("@attr", {}).get("totalPages", 1))
-            albums_page = top.get("album", [])
+    if not plays or now - full_ts >= LASTFM_FULL_REFRESH_SECS:
+        print(f"  Fetching full Last.fm play counts for '{username}'...")
+        plays = _lastfm_full_pull(api_key, username)
+        if plays:
+            cache["plays"] = plays
+            cache["_ts"] = now
+            cache["_scan_ts"] = now
+            print(f"  Last.fm: {len(plays)} albums with play counts (full refresh)")
+        else:
+            print("  Last.fm full pull returned nothing; keeping existing cache")
+    else:
+        print("  Updating Last.fm play counts incrementally (new scrobbles only)...")
+        inc, latest = _lastfm_incremental(api_key, username, scan_ts)
+        added = sum(inc.values())
+        for k, n in inc.items():
+            plays[k] = plays.get(k, 0) + n
+        cache["plays"] = plays
+        cache["_scan_ts"] = latest
+        print(f"  Last.fm: +{added} new scrobbles across {len(inc)} album(s) (incremental)")
 
-            for a in albums_page:
-                artist = a.get("artist", {}).get("name", "").lower()
-                name = a.get("name", "").lower()
-                plays = int(a.get("playcount", 0))
-                key = f"{artist}|||{name}"
-                lastfm_albums[key] = plays
-
-            print(f"    Page {page}/{total_pages} ({len(albums_page)} albums)")
-            page += 1
-            time.sleep(0.3)
-
-        except Exception as e:
-            print(f"    Error on page {page}: {e}")
-            break
-
-    cache = {"_ts": time.time(), "plays": lastfm_albums}
-    LASTFM_CACHE_FILE.write_text(json.dumps(cache, ensure_ascii=False), encoding="utf-8")
-    print(f"  Last.fm: {len(lastfm_albums)} albums with play counts")
+    cache["_schema"] = 2
+    cache["_last_touch"] = now
+    _save_json_atomic(LASTFM_CACHE_FILE, cache)
 
     return _apply_lastfm(all_albums, cache)
 
@@ -791,18 +937,9 @@ def _normalize_for_match(s):
 
 
 def _apply_lastfm(albums, cache):
-    """Apply cached Last.fm data to album list using fuzzy matching."""
-    plays_data = cache.get("plays", {})
+    """Apply cached Last.fm play counts (keyed by normalized artist|||album)."""
+    norm_plays = cache.get("plays", {})
     matched = 0
-
-    # Build normalized lookup from Last.fm data
-    norm_plays = {}
-    for key, val in plays_data.items():
-        parts = key.split("|||")
-        if len(parts) == 2:
-            norm_key = f"{_normalize_for_match(parts[0])}|||{_normalize_for_match(parts[1])}"
-            if norm_key not in norm_plays or val > norm_plays[norm_key]:
-                norm_plays[norm_key] = val
 
     for a in albums:
         norm_key = f"{_normalize_for_match(a['artist'])}|||{_normalize_for_match(a['title'])}"
@@ -985,7 +1122,7 @@ def calculate_last_played(all_albums):
 
     lp_cache["dates"] = existing_dates
     lp_cache["_last_scan_ts"] = time.time()
-    LASTPLAYED_CACHE_FILE.write_text(json.dumps(lp_cache, ensure_ascii=False), encoding="utf-8")
+    _save_json_atomic(LASTPLAYED_CACHE_FILE, lp_cache)
 
     _apply_last_played(all_albums, lp_cache)
     return all_albums
@@ -1162,6 +1299,88 @@ def generate_ai_descriptions(albums):
     return albums
 
 
+def update_rpm_from_albums(vinyl_albums, force=False):
+    """Set the RPM badge (33/45) on vinyl by looking up Discogs and writing it
+    back to Notion.
+
+    This reuses the vinyl rows already fetched for the export, so the whole run
+    queries Notion for vinyl exactly once. (Previously update_rpm.py ran as a
+    separate process and did its own full Notion pass first.) Any album whose
+    RPM we set is also updated in memory so the badge appears on this run's site.
+    """
+    import time
+
+    if not (os.environ.get("DISCOGS_KEY") and os.environ.get("DISCOGS_SECRET")):
+        print("  Skipping RPM badges: set DISCOGS_KEY and DISCOGS_SECRET")
+        return
+    if not os.environ.get("NOTION_TOKEN"):
+        print("  Skipping RPM badges: set NOTION_TOKEN")
+        return
+    try:
+        import update_rpm as rpm
+    except Exception as e:
+        print(f"  Skipping RPM badges: could not import update_rpm ({e})")
+        return
+
+    print(f"\n{'='*60}")
+    print("Setting RPM badges from Discogs (single Notion pass)")
+    print(f"{'='*60}\n")
+
+    try:
+        cache = rpm.load_cache()
+    except Exception:
+        cache = {}
+
+    set_count = had = no_discogs = no_rpm_found = 0
+    try:
+        for a in vinyl_albums:
+            m = re.search(r"/master/(\d+)", a.get("discogs_url") or "")
+            if not m:
+                no_discogs += 1
+                continue
+            if a.get("rpm") and not force:
+                had += 1
+                continue
+
+            master_id = m.group(1)
+            label = f"{a.get('artist', '?')} — {a.get('title', '?')}"
+
+            if not force and master_id in cache:
+                rpm_val = cache[master_id] or None
+            else:
+                try:
+                    rpm_val = rpm.fetch_rpm_from_discogs(master_id)
+                except Exception as e:
+                    record_failure("RPM lookup (Discogs)", label, str(e))
+                    continue
+                cache[master_id] = rpm_val or ""
+                time.sleep(rpm.DISCOGS_RATE_LIMIT)
+
+            if not rpm_val:
+                no_rpm_found += 1
+                continue
+
+            if not a.get("page_id"):
+                record_failure("RPM write (Notion)", label, "no page_id on record")
+                continue
+            try:
+                rpm.update_notion_rpm(a["page_id"], rpm_val)
+                a["rpm"] = rpm_val
+                set_count += 1
+                time.sleep(rpm.NOTION_WRITE_PAUSE)
+            except Exception as e:
+                record_failure("RPM write (Notion)", label, str(e))
+    finally:
+        try:
+            rpm.save_cache(cache)
+        except Exception as e:
+            print(f"  Warning: could not save rpm_cache.json: {e}")
+
+    print(f"  RPM set: {set_count}  |  already had RPM: {had}  |  "
+          f"no Discogs URL: {no_discogs}  |  Discogs had no RPM: {no_rpm_found}")
+    print("  (No Discogs URL just means no badge could be auto-fetched; the album is still present.)")
+
+
 def export_to_site():
     print(f"\n{'='*60}")
     print("Exporting to GitHub Pages site")
@@ -1171,6 +1390,7 @@ def export_to_site():
     headers = get_notion_headers()
     cd = export_database(CD_DATABASE_ID, "CD Collection", headers)
     vinyl = export_database(VINYL_DATABASE_ID, "Vinyl Collection", headers)
+    update_rpm_from_albums(vinyl)  # single Notion pass: set RPM badges in place
     cd = resolve_cover_urls(cd, "CDs")
     vinyl = resolve_cover_urls(vinyl, "Vinyl")
     cd = itunes_cover_fallback(cd, "CDs")
@@ -1211,56 +1431,6 @@ def _run(cmd, **kwargs):
     return subprocess.run(cmd, **kwargs)
 
 
-def _resolve_conflicts():
-    """Auto-resolve any merge conflicts: keep ours for index.html, theirs for caches."""
-    conflict_check = _run(["git", "diff", "--name-only", "--diff-filter=U"])
-    if conflict_check.returncode != 0 or not conflict_check.stdout.strip():
-        return False
-
-    conflicted = conflict_check.stdout.strip().split("\n")
-    print(f"  Resolving {len(conflicted)} conflicted file(s): {', '.join(conflicted)}")
-
-    for f in conflicted:
-        if f == "index.html":
-            # Keep our version (the freshly exported one)
-            _run(["git", "checkout", "--theirs", f])
-        else:
-            # For cache files, take remote (cron's version is fine)
-            _run(["git", "checkout", "--theirs", f])
-        _run(["git", "add", f])
-
-    # Verify no conflict markers leaked into index.html
-    with open(SITE_DIR / "index.html") as fh:
-        content = fh.read()
-    if "<<<<<<<" in content:
-        print("  WARNING: conflict markers detected in index.html, cleaning up...")
-        lines = content.split("\n")
-        clean = []
-        in_conflict = False
-        section = None
-        for line in lines:
-            if line.startswith("<<<<<<< "):
-                in_conflict = True
-                section = "upstream"
-                continue
-            elif line == "=======" and in_conflict:
-                section = "stashed"
-                continue
-            elif line.startswith(">>>>>>> "):
-                in_conflict = False
-                section = None
-                continue
-            if in_conflict and section == "upstream":
-                continue
-            clean.append(line)
-        with open(SITE_DIR / "index.html", "w") as fh:
-            fh.write("\n".join(clean))
-        _run(["git", "add", "index.html"])
-        print("  Cleaned conflict markers from index.html")
-
-    return True
-
-
 def git_push():
     print(f"\n{'='*60}")
     print("Pushing to GitHub")
@@ -1290,25 +1460,22 @@ def git_push():
             print("  Pushed to GitHub!")
             return
 
-        # Push rejected — pull and retry
-        print("  Push rejected, pulling remote changes...")
+        # Push rejected: the GitHub Action (update-lastplayed.yml) advanced origin
+        # while we were building. Our freshly-exported tree already has the latest
+        # Notion album data AND fresh Last.fm data, so it is authoritative. Keep it
+        # wholesale via an "ours" merge, which records origin/main as merged without
+        # ever producing a conflict, then push again (now a fast-forward). No rebase,
+        # no conflict markers, no manual intervention.
+        print("  Push rejected; remote advanced. Reconciling (keep local build)...")
+        _run(["git", "fetch", "origin"])
+        merge = _run(["git", "merge", "-s", "ours", "--no-edit",
+                      "-m", "Merge remote last-played updates (keep local rebuild)",
+                      "origin/main"])
+        if merge.returncode != 0:
+            print(f"  Merge failed:\n{merge.stderr.strip()}")
 
-        # Try rebase
-        pull = _run(["git", "pull", "--rebase"])
-        if pull.returncode != 0:
-            # Rebase hit conflicts
-            _resolve_conflicts()
-            cont = _run(["git", "rebase", "--continue", "--no-edit"],
-                        env={**os.environ, "GIT_EDITOR": "true"})
-            if cont.returncode != 0:
-                print("  Rebase continue failed, aborting and retrying with merge...")
-                _run(["git", "rebase", "--abort"])
-                # Fall back to merge strategy
-                _run(["git", "pull", "--no-rebase"], check=False)
-                _resolve_conflicts()
-                _run(["git", "commit", "-m", "Merge remote changes"], check=False)
-
-    print("  Failed to push after retries. Run manually: git pull --rebase && git push")
+    print("  Failed to push after retries. Run manually: "
+          "git fetch && git merge -s ours --no-edit origin/main && git push")
 
 
 # ---------------------------------------------------------------------------
@@ -1324,6 +1491,7 @@ def main():
         update_notion_databases()
     if not notion_only:
         export_to_site()
+        print_failure_summary()
         git_push()
 
     print(f"\n{'='*60}")
