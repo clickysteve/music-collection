@@ -2337,7 +2337,9 @@
             const result = [...arr];
             switch (sortType) {
                 case 'artist':
-                    result.sort((a, b) => a.artist.localeCompare(b.artist));
+                    result.sort((a, b) =>
+                        a.artist.localeCompare(b.artist) ||
+                        a.title.localeCompare(b.title));
                     break;
                 case 'title':
                     result.sort((a, b) => a.title.localeCompare(b.title));
