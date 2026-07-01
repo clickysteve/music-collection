@@ -776,7 +776,8 @@ def fetch_track_counts(albums):
 
 LASTFM_API = "https://ws.audioscrobbler.com/2.0/"
 # Do a full authoritative getTopAlbums pull at most this often; between full
-# pulls, play counts are kept current by tallying only new scrobbles.
+# pulls, play counts are kept current by tallying only new scrobbles. Any gap
+# longer than this simply triggers a full pull on the next run.
 LASTFM_FULL_REFRESH_SECS = 3 * 86400
 # Skip Last.fm entirely if the cache was touched more recently than this
 # (avoids redundant work when update.sh is run several times in a row).
@@ -1442,7 +1443,8 @@ def git_push():
     _run(["git", "add", "index.html", "update_all.py", "update_rpm.py",
           "description_cache.json", "artist_bio_cache.json", "cover_cache.json",
           "color_cache.json", "rpm_cache.json", "genre_cache.json",
-          "trackcount_cache.json", "suggestions_cache.json", "heatmap_data.json"],
+          "trackcount_cache.json", "suggestions_cache.json", "heatmap_data.json",
+          "mb_miss_cache.json"],
          check=False)
 
     # Check if there's anything to commit
