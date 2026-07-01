@@ -1289,12 +1289,12 @@ def generate_ai_descriptions(albums):
 
         if generated % 25 == 0 and generated > 0:
             print(f"    ...{generated}/{len(to_generate)}")
-            DESCRIPTION_CACHE_FILE.write_text(json.dumps(desc_cache, ensure_ascii=False), encoding="utf-8")
-            ARTIST_BIO_CACHE_FILE.write_text(json.dumps(bio_cache, ensure_ascii=False), encoding="utf-8")
+            _save_json_atomic(DESCRIPTION_CACHE_FILE, desc_cache)
+            _save_json_atomic(ARTIST_BIO_CACHE_FILE, bio_cache)
 
     # Save caches
-    DESCRIPTION_CACHE_FILE.write_text(json.dumps(desc_cache, ensure_ascii=False), encoding="utf-8")
-    ARTIST_BIO_CACHE_FILE.write_text(json.dumps(bio_cache, ensure_ascii=False), encoding="utf-8")
+    _save_json_atomic(DESCRIPTION_CACHE_FILE, desc_cache)
+    _save_json_atomic(ARTIST_BIO_CACHE_FILE, bio_cache)
     print(f"  Generated {generated}/{len(to_generate)} descriptions")
     return albums
 
