@@ -64,6 +64,16 @@ NOTION_PAGE_SIZE = 100
 MB_MIN_INTERVAL_SECONDS = 1.15   # MusicBrainz etiquette: be gentle (API calls only)
 NOTION_WRITE_PAUSE = 0.20        # pause between Notion updates (only after a PATCH)
 
+# Negative cache: rows MusicBrainz/CAA already couldn't fill are remembered so we
+# don't re-query them on every run. Re-checked after this many days (MB data does
+# improve over time), or immediately if the album's artist/title/MBID changes.
+# Set env MB_RECHECK=1 (or pass --recheck) to ignore the cache for one run.
+MB_MISS_CACHE_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "mb_miss_cache.json")
+MB_MISS_TTL_SECONDS = 30 * 86400
+
+# Canonical field names used by the negative cache, in flag order.
+FIELD_NAMES = ["cover", "year", "type", "mbid", "mburl", "discogs", "runtime"]
+
 TOP_CANDIDATES = 14
 MIN_SCORE_RELEASE = 0.56
 MIN_SCORE_RG = 0.54
@@ -413,6 +423,38 @@ def runtime_minutes_for_release(release_id: str) -> Optional[float]:
     return round(total_ms / 60000.0, RUNTIME_ROUND_DECIMALS)
 
 # ----------------------------
+# Negative cache (skip rows MB/CAA can't help with)
+# ----------------------------
+
+def load_miss_cache() -> Dict[str, Any]:
+    try:
+        with open(MB_MISS_CACHE_FILE, encoding="utf-8") as fh:
+            return json.load(fh)
+    except Exception:
+        return {}
+
+
+def save_miss_cache(cache: Dict[str, Any]) -> None:
+    """Atomic write so an interrupted run can't corrupt the cache."""
+    tmp = MB_MISS_CACHE_FILE + ".tmp"
+    try:
+        with open(tmp, "w", encoding="utf-8") as fh:
+            json.dump(cache, fh, ensure_ascii=False, indent=0)
+        os.replace(tmp, MB_MISS_CACHE_FILE)
+    except Exception as e:
+        print(f"  Warning: could not save mb_miss_cache.json: {e}")
+
+
+def row_signature(artist: str, title: str, mbid: str) -> str:
+    """Invalidates the cached miss if any of these change."""
+    return f"{normalise(artist)}|{normalise(title)}|{(mbid or '').strip()}"
+
+
+def needed_field_names(flags: List[bool]) -> set:
+    return {name for name, on in zip(FIELD_NAMES, flags) if on}
+
+
+# ----------------------------
 # Main
 # ----------------------------
 
@@ -453,9 +495,18 @@ def main() -> None:
 
     or_filter = {"or": or_conditions} if or_conditions else None
 
+    import sys as _sys
+    recheck = ("--recheck" in _sys.argv) or (os.environ.get("MB_RECHECK", "").strip() in ("1", "true", "yes"))
+    miss_cache = {} if recheck else load_miss_cache()
+    if recheck:
+        print("  (MB_RECHECK on: ignoring negative cache this run)")
+
     cursor = None
     updated = 0
     skipped = 0
+    skipped_cached = 0   # rows skipped instantly via the negative cache (no MB calls)
+    processed = 0
+    now_ts = time.time()
 
     while True:
         data = notion_query_database(or_filter=or_filter, start_cursor=cursor)
@@ -489,6 +540,25 @@ def main() -> None:
             existing_mbid = get_text(props.get(PROP_MBID)) if mbid_ok else ""
             rg_id = existing_mbid.strip() if existing_mbid else None
 
+            # Negative cache: if MusicBrainz/CAA already couldn't fill the fields
+            # this row still needs, skip it without any network calls until the
+            # album changes or the recheck window elapses.
+            needed = needed_field_names(
+                [need_cover, need_year, need_type, need_mbid, need_mburl, need_discogs, need_runtime])
+            sig = row_signature(artist, album_title, existing_mbid)
+            cached = miss_cache.get(page_id)
+            if cached and cached.get("sig") == sig and (now_ts - cached.get("ts", 0)) < MB_MISS_TTL_SECONDS:
+                if cached.get("no_match"):
+                    print(f"⚠️  Skipped (cached: no MB match): {label}")
+                    skipped += 1
+                    skipped_cached += 1
+                    continue
+                if not (needed - set(cached.get("unfillable", []))):
+                    print(f"⚠️  Skipped (cached: nothing MB can add): {label}")
+                    skipped += 1
+                    skipped_cached += 1
+                    continue
+
             # Only search MusicBrainz if we don't already have rg_id
             if not rg_id:
                 releases = mb_search_release(artist, album_title)
@@ -502,8 +572,11 @@ def main() -> None:
 
             if not rg_id:
                 print(f"⚠️  Skipped: no confident MB match :: {label}")
+                miss_cache[page_id] = {"sig": sig, "ts": now_ts, "no_match": True}
                 skipped += 1
                 continue
+
+            processed += 1
 
             # Only hit the release-group lookup if we need any fields derived from it.
             year = None
@@ -546,6 +619,20 @@ def main() -> None:
             if need_runtime and (runtime_minutes is not None):
                 updates[PROP_RUNTIME] = {"number": float(runtime_minutes)}
 
+            # Record which still-needed fields MB/CAA couldn't provide, so future
+            # runs skip this row's network calls. Clear the entry once satisfied.
+            filled = set()
+            for prop, name in ((PROP_COVER, "cover"), (PROP_YEAR, "year"), (PROP_TYPE, "type"),
+                               (PROP_MBID, "mbid"), (PROP_MB_URL, "mburl"),
+                               (PROP_DISCOGS_URL, "discogs"), (PROP_RUNTIME, "runtime")):
+                if prop in updates:
+                    filled.add(name)
+            unfilled = sorted(needed - filled)
+            if unfilled:
+                miss_cache[page_id] = {"sig": sig, "ts": now_ts, "unfillable": unfilled}
+            else:
+                miss_cache.pop(page_id, None)
+
             if not updates:
                 if need_runtime and runtime_minutes is None:
                     print(f"⚠️  Skipped (no track lengths): {label}")
@@ -571,11 +658,20 @@ def main() -> None:
 
             time.sleep(NOTION_WRITE_PAUSE)
 
+        # Persist the negative cache after each page so an interrupted run keeps
+        # whatever it learned.
+        if not recheck:
+            save_miss_cache(miss_cache)
+
         if not data.get("has_more"):
             break
         cursor = data.get("next_cursor")
 
-    print(f"\nDone. Updated {updated}. Skipped {skipped}.")
+    if not recheck:
+        save_miss_cache(miss_cache)
+
+    print(f"\nDone. Updated {updated}. Skipped {skipped} "
+          f"({skipped_cached} skipped instantly via cache, {processed} queried MusicBrainz).")
 
 
 if __name__ == "__main__":
