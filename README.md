@@ -117,7 +117,9 @@ In your repo settings, go to **Pages** and set the source to the `main` branch. 
 
 ## How it works
 
-All album data is baked directly into `index.html` as inline JavaScript arrays, injected between marker comments (`/* __CD_DATA__ */` etc). There's no server, no API calls at runtime, no database — just a static HTML file with everything embedded.
+Album data lives in `albums.json`, which `index.html` fetches on load — no server, no database, just two static files. Listening history (monthly play counts per album/artist) lives in `heatmap_data.json`, fetched lazily for the "This Month in History" and "Year in Review" features. Because the data is separate from the markup, the 15-minute last-played cron only ever rewrites the JSON files.
+
+Note: since data is fetched at runtime, preview locally over HTTP (`python3 -m http.server`) rather than opening `index.html` from `file://`.
 
 The export script maintains several cache files to keep subsequent runs fast:
 
@@ -134,12 +136,15 @@ After the first run, only newly added albums trigger network requests.
 
 | File | Purpose |
 |------|---------|
-| `index.html` | The entire gallery — HTML, CSS, JS, and data in one file |
+| `index.html` | The gallery — HTML, CSS, and JS in one file |
+| `albums.json` | All album + suggestions data, fetched by the site at runtime |
+| `heatmap_data.json` | Monthly listening history per album/artist (Last.fm) |
 | `sw.js` | Service Worker for caching cover art images |
 | `update_all.py` | Main script — updates Notion, exports, pushes |
+| `update_lastplayed.py` | Cron script — last played, play counts, listening history |
 | `notion_covers.py` | Updates Notion with MusicBrainz/Discogs metadata |
 | `export_notion.py` | Standalone export (used by update_all.py) |
-| `*_cache.json` | Various caches to speed up repeated runs |
+| `*_cache.json` | Local caches to speed up repeated runs (gitignored) |
 
 ## License
 

@@ -4,7 +4,8 @@ update_all.py — One script to update everything.
 
 1. Updates Notion databases (CD + Vinyl) with MusicBrainz/Discogs metadata
    by calling your existing notion_covers.py for each database.
-2. Exports both collections from Notion into index.html.
+2. Exports both collections from Notion into albums.json (loaded by
+   index.html at runtime).
 3. Commits and pushes to GitHub.
 
 Usage:
@@ -37,6 +38,7 @@ VINYL_DATABASE_ID = "43a34f8c6c6c46c780ddac4697e36b0b"
 NOTION_COVERS_SCRIPT = Path(__file__).parent / "notion_covers.py"
 SITE_DIR = Path(__file__).parent
 INDEX_HTML = SITE_DIR / "index.html"
+ALBUMS_JSON = SITE_DIR / "albums.json"
 
 NOTION_API_VERSION = "2022-06-28"
 
@@ -454,27 +456,22 @@ def find_missing_albums(all_albums):
     return suggestions
 
 
-def inject_into_html(cd_albums, vinyl_albums, html_path, suggestions=None):
-    html = html_path.read_text(encoding="utf-8")
-    for marker, data in [("CD", cd_albums), ("VINYL", vinyl_albums)]:
-        data = clean_album_data(data)
-        json_str = json.dumps(data, ensure_ascii=False)
-        pattern = rf'/\* __{marker}_DATA__ \*/.*?/\* __END_{marker}_DATA__ \*/'
-        html, count = re.subn(pattern, f'/* __{marker}_DATA__ */\n{json_str}\n/* __END_{marker}_DATA__ */', html, flags=re.DOTALL)
-        if count == 0: print(f"  Warning: __{marker}_DATA__ markers not found")
+def write_albums_json(cd_albums, vinyl_albums, suggestions=None):
+    """Write album + suggestions data to albums.json.
 
-    # Inject suggestions data
-    if suggestions is not None:
-        json_str = json.dumps(suggestions, ensure_ascii=False)
-        pattern = r'/\* __SUGGESTIONS_DATA__ \*/.*?/\* __END_SUGGESTIONS_DATA__ \*/'
-        html, count = re.subn(pattern, f'/* __SUGGESTIONS_DATA__ */\n{json_str}\n/* __END_SUGGESTIONS_DATA__ */', html, flags=re.DOTALL)
-        if count == 0:
-            print(f"  Warning: __SUGGESTIONS_DATA__ markers not found")
-        else:
-            print(f"  Injected {len(suggestions)} artist suggestions")
-
-    html_path.write_text(html, encoding="utf-8")
-    print(f"  Injected {len(cd_albums)} CDs + {len(vinyl_albums)} vinyl into {html_path.name}")
+    index.html fetches this file at runtime, so data updates (including the
+    15-minute last-played cron) never have to rewrite the HTML file.
+    """
+    from datetime import datetime, timezone
+    data = {
+        "generated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "cd": clean_album_data(cd_albums),
+        "vinyl": clean_album_data(vinyl_albums),
+        "suggestions": suggestions or [],
+    }
+    _save_json_atomic(ALBUMS_JSON, data)
+    print(f"  Wrote {len(data['cd'])} CDs + {len(data['vinyl'])} vinyl "
+          f"+ {len(data['suggestions'])} artist suggestions to {ALBUMS_JSON.name}")
 
 
 COLOR_CACHE_FILE = SITE_DIR / "color_cache.json"
@@ -1416,7 +1413,7 @@ def export_to_site():
     print("\n  Finding missing album suggestions...")
     suggestions = find_missing_albums(all_albums)
 
-    inject_into_html(cd, vinyl, INDEX_HTML, suggestions=suggestions)
+    write_albums_json(cd, vinyl, suggestions=suggestions)
     print(f"\n  Total: {len(cd)} CDs + {len(vinyl)} vinyl = {len(cd) + len(vinyl)} albums")
 
 
@@ -1440,11 +1437,8 @@ def git_push():
     MAX_RETRIES = 3
 
     # Stage everything we care about
-    _run(["git", "add", "index.html", "update_all.py", "update_rpm.py",
-          "description_cache.json", "artist_bio_cache.json", "cover_cache.json",
-          "color_cache.json", "rpm_cache.json", "genre_cache.json",
-          "trackcount_cache.json", "suggestions_cache.json", "heatmap_data.json",
-          "mb_miss_cache.json"],
+    _run(["git", "add", "index.html", "albums.json", "heatmap_data.json",
+          "update_all.py", "update_rpm.py"],
          check=False)
 
     # Check if there's anything to commit

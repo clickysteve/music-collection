@@ -2,15 +2,21 @@
 """
 update_lastplayed.py — Lightweight script for GitHub Action.
 
-Reads album data from index.html, fetches recent Last.fm scrobbles,
-calculates last-played dates using the 50% track threshold, and
-injects updated dates back into index.html.
+Reads album data from albums.json, fetches recent Last.fm scrobbles, and:
+  1. Updates play counts (lastfm_plays) and last-played dates (50% track
+     threshold) in albums.json.
+  2. Maintains heatmap_data.json — per-album and per-artist monthly listening
+     history for every album/artist in the collection (used by the site's
+     "This Month in History" and "Year in Review" features).
 
 Does NOT require Notion, MusicBrainz, or Anthropic API keys.
 Only needs: LASTFM_API_KEY and LASTFM_USER environment variables.
 
 Usage:
     LASTFM_API_KEY=xxx LASTFM_USER=xxx python update_lastplayed.py
+    LASTFM_API_KEY=xxx LASTFM_USER=xxx python update_lastplayed.py --backfill
+        (--backfill rescans the full scrobble history from 2005 and rebuilds
+         heatmap_data.json from scratch; takes several minutes)
 """
 
 import json
@@ -19,14 +25,14 @@ import re
 import sys
 import time
 from collections import defaultdict
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 SITE_DIR = Path(__file__).parent
-INDEX_HTML = SITE_DIR / "index.html"
-TRACKCOUNT_CACHE_FILE = SITE_DIR / "trackcount_cache.json"
-LASTPLAYED_CACHE_FILE = SITE_DIR / "lastplayed_cache.json"
-LASTFM_CACHE_FILE = SITE_DIR / "lastfm_cache.json"
+ALBUMS_JSON = SITE_DIR / "albums.json"
+HEATMAP_FILE = SITE_DIR / "heatmap_data.json"
+LASTPLAYED_CACHE_FILE = SITE_DIR / "lastplayed_cache.json"   # local-only accelerator
+LASTFM_CACHE_FILE = SITE_DIR / "lastfm_cache.json"           # local-only accelerator
 
 try:
     import requests
@@ -45,29 +51,42 @@ def _normalize_for_match(s):
     return s
 
 
-def extract_albums(html, marker):
-    pattern = rf'/\* __{marker}_DATA__ \*/\s*(.*?)\s*/\* __END_{marker}_DATA__ \*/'
-    m = re.search(pattern, html, re.DOTALL)
-    if not m:
-        return []
-    return json.loads(m.group(1))
+def _save_json_atomic(path, data):
+    tmp = f"{path}.tmp"
+    with open(tmp, "w", encoding="utf-8") as fh:
+        json.dump(data, fh, ensure_ascii=False)
+    os.replace(tmp, path)
 
 
-def inject_into_html(cd_albums, vinyl_albums, html_path):
-    html = html_path.read_text(encoding="utf-8")
-    for marker, data in [("CD", cd_albums), ("VINYL", vinyl_albums)]:
-        json_str = json.dumps(data, ensure_ascii=False)
-        pattern = rf'/\* __{marker}_DATA__ \*/.*?/\* __END_{marker}_DATA__ \*/'
-        html, count = re.subn(pattern, f'/* __{marker}_DATA__ */\n{json_str}\n/* __END_{marker}_DATA__ */', html, flags=re.DOTALL)
-        if count == 0:
-            print(f"  Warning: __{marker}_DATA__ markers not found")
-    html_path.write_text(html, encoding="utf-8")
+def _utc_now_ts():
+    return datetime.now(timezone.utc).timestamp()
 
+
+# ---------------------------------------------------------------------------
+# Data loading
+# ---------------------------------------------------------------------------
+
+def load_albums_data():
+    data = json.loads(ALBUMS_JSON.read_text(encoding="utf-8"))
+    return data
+
+
+def load_heatmap():
+    if HEATMAP_FILE.exists():
+        try:
+            return json.loads(HEATMAP_FILE.read_text(encoding="utf-8"))
+        except Exception:
+            pass
+    return {}
+
+
+# ---------------------------------------------------------------------------
+# Last.fm fetches
+# ---------------------------------------------------------------------------
 
 def fetch_top_albums(api_key, username):
     """Fetch play counts from Last.fm user.getTopAlbums."""
-    # Check cache (24h)
-    cache = {}
+    # Check cache (24h) — only present on local runs, not in the Action
     if LASTFM_CACHE_FILE.exists():
         try:
             cache = json.loads(LASTFM_CACHE_FILE.read_text(encoding="utf-8"))
@@ -107,92 +126,28 @@ def fetch_top_albums(api_key, username):
             print(f"    Error on page {page}: {e}")
             break
 
-    cache = {"_ts": time.time(), "plays": lastfm_albums}
-    LASTFM_CACHE_FILE.write_text(json.dumps(cache, ensure_ascii=False), encoding="utf-8")
+    try:
+        _save_json_atomic(LASTFM_CACHE_FILE, {"_ts": time.time(), "plays": lastfm_albums})
+    except Exception:
+        pass
     print(f"  Last.fm: {len(lastfm_albums)} albums with play counts")
     return lastfm_albums
 
 
-def fetch_track_counts_lastfm(api_key, all_albums):
-    """Fetch track counts from Last.fm album.getInfo, cache by MBID."""
-    tc_cache = {}
-    if TRACKCOUNT_CACHE_FILE.exists():
-        try:
-            tc_cache = json.loads(TRACKCOUNT_CACHE_FILE.read_text(encoding="utf-8"))
-        except Exception:
-            pass
+def fetch_scrobbles(api_key, username, scan_from=None, max_pages=600):
+    """Paginate through user.getRecentTracks.
 
-    to_fetch = [a for a in all_albums if a.get("mbid") and a["mbid"] not in tc_cache]
-    if not to_fetch:
-        has_tc = sum(1 for v in tc_cache.values() if v > 0)
-        print(f"  All track counts cached ({has_tc} albums with data)")
-        return tc_cache
-
-    print(f"  Fetching track counts from Last.fm for {len(to_fetch)} albums...")
-    fetched = 0
-    for a in to_fetch:
-        try:
-            resp = requests.get("https://ws.audioscrobbler.com/2.0/", params={
-                "method": "album.getInfo",
-                "artist": a["artist"],
-                "album": a["title"],
-                "api_key": api_key,
-                "format": "json",
-            }, timeout=10)
-            if resp.status_code == 200:
-                tracks = resp.json().get("album", {}).get("tracks", {}).get("track", [])
-                tc_cache[a["mbid"]] = len(tracks) if tracks else 0
-                if tracks:
-                    fetched += 1
-        except Exception:
-            pass
-        time.sleep(0.2)
-        if fetched % 50 == 0 and fetched > 0:
-            TRACKCOUNT_CACHE_FILE.write_text(json.dumps(tc_cache, ensure_ascii=False), encoding="utf-8")
-
-    TRACKCOUNT_CACHE_FILE.write_text(json.dumps(tc_cache, ensure_ascii=False), encoding="utf-8")
-    print(f"  Fetched track counts for {fetched}/{len(to_fetch)} albums")
-    return tc_cache
-
-
-def fetch_scrobbles_and_calculate(api_key, username, all_albums):
-    """Fetch recent scrobbles and calculate last-played dates using 50% threshold."""
-
-    # Fetch/load track counts from Last.fm
-    tc_cache = fetch_track_counts_lastfm(api_key, all_albums)
-
-    # Build lookups
-    album_track_counts = {}  # norm_key -> track count
-    album_keys = set()
-    for a in all_albums:
-        norm_key = f"{_normalize_for_match(a['artist'])}|||{_normalize_for_match(a['title'])}"
-        album_keys.add(norm_key)
-        mbid = a.get("mbid", "")
-        tc = tc_cache.get(mbid, 0) if mbid else 0
-        if tc:
-            album_track_counts[norm_key] = tc
-
-    # Load existing cache
-    lp_cache = {}
-    if LASTPLAYED_CACHE_FILE.exists():
-        try:
-            lp_cache = json.loads(LASTPLAYED_CACHE_FILE.read_text(encoding="utf-8"))
-        except Exception:
-            pass
-
-    # Determine scan range
-    last_scan_ts = lp_cache.get("_last_scan_ts", 0)
-    scan_from = int(last_scan_ts) - 86400 if last_scan_ts else None
-
-    print(f"  Fetching scrobbles for last-played calculation...")
+    Returns a list of (uts, artist, album, track) tuples (raw names).
+    """
+    print("  Fetching scrobbles...")
     if scan_from:
-        print(f"    Scanning from {datetime.utcfromtimestamp(scan_from).strftime('%Y-%m-%d')}")
+        print(f"    Scanning from {datetime.utcfromtimestamp(scan_from).strftime('%Y-%m-%d %H:%M')}")
+    else:
+        print("    Full history scan (this takes a while)")
 
-    # Paginate through getRecentTracks
-    all_scrobbles = []
+    scrobbles = []
     page = 1
     total_pages = 1
-    max_pages = 500
 
     while page <= total_pages and page <= max_pages:
         try:
@@ -221,14 +176,11 @@ def fetch_scrobbles_and_calculate(api_key, username, all_albums):
                 album_name = t.get("album", {}).get("#text", "")
                 track_name = t.get("name", "")
                 date_uts = t.get("date", {}).get("uts", "")
+                if artist and date_uts:
+                    scrobbles.append((int(date_uts), artist, album_name, track_name))
 
-                if artist and album_name and date_uts:
-                    norm_key = f"{_normalize_for_match(artist)}|||{_normalize_for_match(album_name)}"
-                    if norm_key in album_keys:
-                        all_scrobbles.append((int(date_uts), norm_key, _normalize_for_match(track_name)))
-
-            if page % 10 == 0:
-                print(f"    Page {page}/{total_pages} ({len(all_scrobbles)} relevant scrobbles)")
+            if page % 25 == 0:
+                print(f"    Page {page}/{min(total_pages, max_pages)} ({len(scrobbles)} scrobbles)")
             page += 1
             time.sleep(0.25)
 
@@ -236,33 +188,52 @@ def fetch_scrobbles_and_calculate(api_key, username, all_albums):
             print(f"    Error on page {page}: {e}")
             break
 
-    print(f"  Collected {len(all_scrobbles)} relevant scrobbles across {page-1} pages")
+    print(f"  Collected {len(scrobbles)} scrobbles across {page - 1} pages")
+    return scrobbles
 
-    # Group into sessions and apply 50% threshold
-    SESSION_GAP = 4 * 3600
+
+# ---------------------------------------------------------------------------
+# Last-played calculation (50% track threshold, session-based)
+# ---------------------------------------------------------------------------
+
+def calculate_last_played(scrobbles, all_albums):
+    """Group collection scrobbles into sessions and apply the 50% threshold."""
+    album_keys = set()
+    album_track_counts = {}
+    for a in all_albums:
+        norm_key = f"{_normalize_for_match(a['artist'])}|||{_normalize_for_match(a['title'])}"
+        album_keys.add(norm_key)
+        tc = a.get("track_count") or 0
+        if tc:
+            album_track_counts[norm_key] = tc
+
     scrobbles_by_album = defaultdict(list)
-    for ts, norm_key, track_name in all_scrobbles:
-        scrobbles_by_album[norm_key].append((ts, track_name))
+    for uts, artist, album_name, track_name in scrobbles:
+        if not album_name:
+            continue
+        norm_key = f"{_normalize_for_match(artist)}|||{_normalize_for_match(album_name)}"
+        if norm_key in album_keys:
+            scrobbles_by_album[norm_key].append((uts, _normalize_for_match(track_name)))
 
+    SESSION_GAP = 4 * 3600
     new_last_played = {}
-    for norm_key, scrobbles in scrobbles_by_album.items():
+    for norm_key, entries in scrobbles_by_album.items():
         track_count = album_track_counts.get(norm_key, 0)
         threshold = max(1, (track_count + 1) // 2) if track_count else 1
 
-        scrobbles.sort(key=lambda x: -x[0])
+        entries.sort(key=lambda x: -x[0])
         sessions = []
-        current_session = []
-
-        for ts, track_name in scrobbles:
-            if not current_session:
-                current_session = [(ts, track_name)]
-            elif current_session[-1][0] - ts <= SESSION_GAP:
-                current_session.append((ts, track_name))
+        current = []
+        for uts, track_name in entries:
+            if not current:
+                current = [(uts, track_name)]
+            elif current[-1][0] - uts <= SESSION_GAP:
+                current.append((uts, track_name))
             else:
-                sessions.append(current_session)
-                current_session = [(ts, track_name)]
-        if current_session:
-            sessions.append(current_session)
+                sessions.append(current)
+                current = [(uts, track_name)]
+        if current:
+            sessions.append(current)
 
         for session in sessions:
             unique_tracks = len(set(tn for _, tn in session))
@@ -273,42 +244,132 @@ def fetch_scrobbles_and_calculate(api_key, username, all_albums):
 
     print(f"  Found qualifying listens for {len(new_last_played)} albums (50%+ threshold)")
 
-    # Merge into cache
+    # Merge into local cache (accelerator for local runs; harmless if absent)
+    lp_cache = {}
+    if LASTPLAYED_CACHE_FILE.exists():
+        try:
+            lp_cache = json.loads(LASTPLAYED_CACHE_FILE.read_text(encoding="utf-8"))
+        except Exception:
+            pass
     existing_dates = lp_cache.get("dates", {})
     for norm_key, date_str in new_last_played.items():
         existing = existing_dates.get(norm_key, "")
         if not existing or date_str > existing:
             existing_dates[norm_key] = date_str
-
     lp_cache["dates"] = existing_dates
     lp_cache["_last_scan_ts"] = time.time()
-    LASTPLAYED_CACHE_FILE.write_text(json.dumps(lp_cache, ensure_ascii=False), encoding="utf-8")
+    try:
+        _save_json_atomic(LASTPLAYED_CACHE_FILE, lp_cache)
+    except Exception:
+        pass
 
-    return existing_dates
+    return new_last_played
 
+
+# ---------------------------------------------------------------------------
+# Listening history (heatmap_data.json)
+# ---------------------------------------------------------------------------
+
+def update_history(scrobbles, all_albums, hist, backfill=False):
+    """Update per-album and per-artist monthly play counts.
+
+    Album entries count scrobbles matching a collection album (artist+album).
+    Artist entries count ALL scrobbles by a collection artist, whatever the
+    album. Only scrobbles newer than _hist_last_ts are counted, so overlapping
+    scans never double-count.
+    """
+    hist_ts = 0 if backfill else hist.get("_hist_last_ts", 0)
+
+    # Display-name lookups from the collection
+    album_names = {}   # norm album key -> (artist, title)
+    artist_names = {}  # norm artist -> artist
+    for a in all_albums:
+        akey = f"{_normalize_for_match(a['artist'])}|||{_normalize_for_match(a['title'])}"
+        album_names.setdefault(akey, (a["artist"], a["title"]))
+        artist_names.setdefault(_normalize_for_match(a["artist"]), a["artist"])
+
+    # Index existing entries by normalised key
+    albums_idx = {}
+    artists_idx = {}
+    if not backfill:
+        for e in hist.get("albums", []):
+            albums_idx[f"{_normalize_for_match(e['artist'])}|||{_normalize_for_match(e['title'])}"] = e
+        for e in hist.get("artists", []):
+            artists_idx[_normalize_for_match(e["artist"])] = e
+
+    max_ts = hist_ts
+    counted = 0
+    for uts, artist, album_name, _track in scrobbles:
+        if uts <= hist_ts:
+            continue
+        max_ts = max(max_ts, uts)
+        month = datetime.utcfromtimestamp(uts).strftime("%Y-%m")
+        nart = _normalize_for_match(artist)
+
+        if nart in artist_names:
+            entry = artists_idx.get(nart)
+            if entry is None:
+                entry = {"artist": artist_names[nart], "total": 0, "months": {}}
+                artists_idx[nart] = entry
+            entry["months"][month] = entry["months"].get(month, 0) + 1
+            counted += 1
+
+        if album_name:
+            akey = f"{nart}|||{_normalize_for_match(album_name)}"
+            if akey in album_names:
+                entry = albums_idx.get(akey)
+                if entry is None:
+                    disp = album_names[akey]
+                    entry = {"artist": disp[0], "title": disp[1], "total": 0, "months": {}}
+                    albums_idx[akey] = entry
+                entry["months"][month] = entry["months"].get(month, 0) + 1
+
+    # Recompute totals and the master month list
+    all_months = set()
+    for entry in list(albums_idx.values()) + list(artists_idx.values()):
+        entry["total"] = sum(entry["months"].values())
+        all_months.update(entry["months"].keys())
+
+    result = {
+        "_hist_last_ts": max_ts,
+        "months": sorted(all_months),
+        "albums": sorted(albums_idx.values(), key=lambda e: -e["total"]),
+        "artists": sorted(artists_idx.values(), key=lambda e: -e["total"]),
+    }
+    print(f"  History: counted {counted} new artist scrobbles; "
+          f"{len(result['albums'])} albums, {len(result['artists'])} artists tracked")
+    return result
+
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
 
 def main():
     api_key = os.environ.get("LASTFM_API_KEY", "").strip()
     username = os.environ.get("LASTFM_USER", "").strip()
+    backfill = "--backfill" in sys.argv[1:]
 
     if not api_key or not username:
         print("Error: Set LASTFM_API_KEY and LASTFM_USER")
         sys.exit(1)
 
-    if not INDEX_HTML.exists():
-        print(f"Error: {INDEX_HTML} not found")
+    if not ALBUMS_JSON.exists():
+        print(f"Error: {ALBUMS_JSON} not found")
         sys.exit(1)
 
-    html = INDEX_HTML.read_text(encoding="utf-8")
-    cd_albums = extract_albums(html, "CD")
-    vinyl_albums = extract_albums(html, "VINYL")
+    data = load_albums_data()
+    cd_albums = data.get("cd", [])
+    vinyl_albums = data.get("vinyl", [])
     all_albums = cd_albums + vinyl_albums
     print(f"Loaded {len(all_albums)} albums ({len(cd_albums)} CD + {len(vinyl_albums)} vinyl)")
+
+    hist = load_heatmap()
+    hist_ts = 0 if backfill else hist.get("_hist_last_ts", 0)
 
     # Fetch play counts
     play_counts = fetch_top_albums(api_key, username)
 
-    # Apply play counts
     norm_plays = {}
     for key, val in play_counts.items():
         parts = key.split("|||")
@@ -323,30 +384,39 @@ def main():
         if plays > 0:
             a["lastfm_plays"] = plays
 
-    # Calculate last-played dates
-    lp_dates = fetch_scrobbles_and_calculate(api_key, username, all_albums)
+    # Fetch scrobbles: from last history checkpoint (1-day overlap so listening
+    # sessions spanning the boundary still qualify), or everything on backfill
+    if backfill or not hist_ts:
+        scan_from = None
+        max_pages = 2000
+    else:
+        scan_from = int(hist_ts) - 86400
+        max_pages = 600
+    scrobbles = fetch_scrobbles(api_key, username, scan_from=scan_from, max_pages=max_pages)
 
-    # Apply last-played dates (merge with Notion dates)
+    # Last-played dates
+    lp_dates = calculate_last_played(scrobbles, all_albums)
     applied = 0
     for a in all_albums:
         norm_key = f"{_normalize_for_match(a['artist'])}|||{_normalize_for_match(a['title'])}"
         scrobble_date = lp_dates.get(norm_key, "")
-        notion_date = a.get("last_played", "")
-
+        notion_date = (a.get("last_played") or "")[:10]
         best_date = max(scrobble_date, notion_date) if scrobble_date and notion_date else (scrobble_date or notion_date)
-        if best_date:
+        if best_date and best_date != (a.get("last_played") or "")[:10]:
             a["last_played"] = best_date
             applied += 1
+    print(f"  Updated last-played dates for {applied} albums")
 
-    print(f"  Applied last-played dates to {applied}/{len(all_albums)} albums")
+    # Listening history
+    new_hist = update_history(scrobbles, all_albums, hist, backfill=backfill)
+    _save_json_atomic(HEATMAP_FILE, new_hist)
+    print(f"  Updated {HEATMAP_FILE.name}")
 
-    # Re-split and inject
-    cd_count = len(cd_albums)
-    cd_albums = all_albums[:cd_count]
-    vinyl_albums = all_albums[cd_count:]
-
-    inject_into_html(cd_albums, vinyl_albums, INDEX_HTML)
-    print(f"  Updated index.html")
+    # Write albums.json back (cd/vinyl lists were mutated in place)
+    data["cd"] = cd_albums
+    data["vinyl"] = vinyl_albums
+    _save_json_atomic(ALBUMS_JSON, data)
+    print(f"  Updated {ALBUMS_JSON.name}")
     print("Done!")
 
 
