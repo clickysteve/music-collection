@@ -374,19 +374,39 @@ def find_missing_albums(all_albums):
 
     mb_headers = {"User-Agent": mb_agent, "Accept": "application/json"}
 
-    # Count albums per artist
+    # Count albums per artist; owned titles are normalised so near-miss
+    # spellings ("¡Uno!" vs "Uno!") don't show up as "missing"
     artist_counts = {}
-    owned_titles = {}  # artist_lower -> set of title_lower
+    owned_titles = {}  # artist_lower -> set of normalised titles
     for a in all_albums:
         artist = a["artist"]
         artist_counts[artist] = artist_counts.get(artist, 0) + 1
         key = artist.lower()
         if key not in owned_titles:
             owned_titles[key] = set()
-        owned_titles[key].add(a["title"].lower())
+        owned_titles[key].add(_normalize_for_match(a["title"]))
 
-    # Top 15 artists by album count
-    top_artists = sorted(artist_counts.items(), key=lambda x: -x[1])[:15]
+    # Candidate artists: top 15 by albums owned + top 15 by listening
+    # (from heatmap_data.json) — the artists you play constantly matter more
+    # than the ones you happen to own a lot of
+    top_owned = [name for name, _ in sorted(artist_counts.items(), key=lambda x: -x[1])[:15]]
+    top_played = []
+    heatmap_file = SITE_DIR / "heatmap_data.json"
+    if heatmap_file.exists():
+        try:
+            hist = json.loads(heatmap_file.read_text(encoding="utf-8"))
+            collection_lower = {a.lower() for a in artist_counts}
+            top_played = [e["artist"] for e in hist.get("artists", [])
+                          if e.get("artist", "").lower() in collection_lower][:15]
+        except Exception:
+            pass
+    seen = set()
+    candidates = []
+    for name in top_owned + top_played:
+        if name.lower() not in seen:
+            seen.add(name.lower())
+            candidates.append(name)
+    top_artists = [(name, artist_counts.get(name, 0)) for name in candidates[:25]]
 
     cache = load_suggestions_cache()
     suggestions = []
@@ -394,20 +414,20 @@ def find_missing_albums(all_albums):
     for artist_name, owned_count in top_artists:
         cache_key = artist_name.lower()
 
-        # Check cache (valid for 30 days)
+        # Check cache (valid for 30 days; v2 entries exclude comps/live)
         if cache_key in cache:
             cached = cache[cache_key]
-            if time.time() - cached.get("ts", 0) < 30 * 86400:
-                # Use cached discography
+            if cached.get("v") == 2 and time.time() - cached.get("ts", 0) < 30 * 86400:
                 discog = cached["albums"]
                 owned = owned_titles.get(cache_key, set())
-                missing = [a for a in discog if a["title"].lower() not in owned]
+                missing = [a for a in discog if _normalize_for_match(a["title"]) not in owned]
                 if missing:
+                    missing.sort(key=lambda x: -(x.get("year") or 0))
                     suggestions.append({
                         "artist": artist_name,
                         "owned": owned_count,
                         "total": len(discog),
-                        "missing": missing[:8],
+                        "missing": missing[:10],
                     })
                 continue
 
@@ -438,6 +458,10 @@ def find_missing_albums(all_albums):
                 title = rg.get("title", "")
                 year = rg.get("first-release-date", "")[:4]
                 mbid = rg.get("id", "")
+                # Studio albums only — skip compilations, live albums,
+                # soundtracks, remix collections, demos etc.
+                if rg.get("secondary-types"):
+                    continue
                 if title:
                     discog.append({
                         "title": title,
@@ -447,20 +471,20 @@ def find_missing_albums(all_albums):
 
             # Cache the discography (saved immediately so an interrupted run
             # keeps the progress — these MusicBrainz calls are the slow part)
-            cache[cache_key] = {"ts": time.time(), "albums": discog}
+            cache[cache_key] = {"ts": time.time(), "v": 2, "albums": discog}
             save_suggestions_cache(cache)
 
             # Find missing
             owned = owned_titles.get(cache_key, set())
-            missing = [a for a in discog if a["title"].lower() not in owned]
+            missing = [a for a in discog if _normalize_for_match(a["title"]) not in owned]
             if missing:
-                # Sort missing by year (newest first), limit to 8
+                # Sort missing by year (newest first), limit to 10
                 missing.sort(key=lambda x: -(x.get("year") or 0))
                 suggestions.append({
                     "artist": artist_name,
                     "owned": owned_count,
                     "total": len(discog),
-                    "missing": missing[:8],
+                    "missing": missing[:10],
                 })
 
             print(f"    {artist_name}: {len(discog)} total, {len(missing)} missing")
