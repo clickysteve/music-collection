@@ -12,8 +12,17 @@ Usage:
     python update_all.py
 
 Options:
-    --notion-only   Just update Notion, skip export/push
-    --export-only   Just export + push, skip MusicBrainz lookups
+    --fast              Fast daily refresh: skip the Notion metadata pass, the
+                        RPM pass, and all Last.fm fetches (play counts, track
+                        counts, last-played are reused from albums.json, which
+                        the 15-minute GitHub Action keeps fresh). Still exports
+                        from Notion, resolves covers/genres/colours for new
+                        albums, and pushes.
+    --collection=X      Limit the Notion metadata + RPM passes to one database:
+                        cd, vinyl, or both (default both). Export always
+                        includes both collections.
+    --notion-only       Just update Notion, skip export/push
+    --export-only       Just export + push, skip MusicBrainz lookups
 
 Environment variables:
     NOTION_TOKEN    - Your Notion integration token
@@ -99,7 +108,7 @@ def print_failure_summary():
 # Step 1: Update Notion via notion_covers.py
 # ---------------------------------------------------------------------------
 
-def update_notion_databases():
+def update_notion_databases(collection="both"):
     token = os.environ.get("NOTION_TOKEN", "").strip()
     mb_agent = os.environ.get("MB_USER_AGENT", "").strip()
 
@@ -110,7 +119,13 @@ def update_notion_databases():
     if not NOTION_COVERS_SCRIPT.exists():
         print(f"Error: notion_covers.py not found at {NOTION_COVERS_SCRIPT}"); sys.exit(1)
 
-    for label, db_id in [("CD Collection", CD_DATABASE_ID), ("Vinyl Collection", VINYL_DATABASE_ID)]:
+    databases = [("CD Collection", CD_DATABASE_ID), ("Vinyl Collection", VINYL_DATABASE_ID)]
+    if collection == "cd":
+        databases = databases[:1]
+    elif collection == "vinyl":
+        databases = databases[1:]
+
+    for label, db_id in databases:
         print(f"\n{'='*60}")
         print(f"Updating {label}")
         print(f"{'='*60}\n")
@@ -430,8 +445,10 @@ def find_missing_albums(all_albums):
                         "mbid": mbid,
                     })
 
-            # Cache the discography
+            # Cache the discography (saved immediately so an interrupted run
+            # keeps the progress — these MusicBrainz calls are the slow part)
             cache[cache_key] = {"ts": time.time(), "albums": discog}
+            save_suggestions_cache(cache)
 
             # Find missing
             owned = owned_titles.get(cache_key, set())
@@ -454,6 +471,51 @@ def find_missing_albums(all_albums):
     save_suggestions_cache(cache)
     print(f"  Found suggestions for {len(suggestions)} artists")
     return suggestions
+
+
+def reuse_listening_data(all_albums):
+    """Fast mode: copy lastfm_plays / track_count / last_played from the
+    existing albums.json instead of re-fetching from Last.fm.
+
+    The 15-minute GitHub Action keeps those fields fresh, so a manual run only
+    needs to carry them over. Anything slightly stale is corrected by the cron
+    within 15 minutes of pushing.
+    """
+    if not ALBUMS_JSON.exists():
+        print("  No existing albums.json — cannot reuse listening data (run without --fast)")
+        return all_albums
+    try:
+        prev = json.loads(ALBUMS_JSON.read_text(encoding="utf-8"))
+    except Exception as e:
+        print(f"  Could not read existing albums.json ({e}); skipping reuse")
+        return all_albums
+
+    prev_albums = (prev.get("cd") or []) + (prev.get("vinyl") or [])
+    by_mbid = {}
+    by_key = {}
+    for p in prev_albums:
+        if p.get("mbid"):
+            by_mbid.setdefault(p["mbid"], p)
+        key = f"{_normalize_for_match(p.get('artist', ''))}|||{_normalize_for_match(p.get('title', ''))}"
+        by_key.setdefault(key, p)
+
+    reused = 0
+    for a in all_albums:
+        key = f"{_normalize_for_match(a['artist'])}|||{_normalize_for_match(a['title'])}"
+        p = by_mbid.get(a.get("mbid") or "") or by_key.get(key)
+        if not p:
+            continue
+        if p.get("lastfm_plays"):
+            a["lastfm_plays"] = p["lastfm_plays"]
+        if p.get("track_count"):
+            a["track_count"] = p["track_count"]
+        prev_lp = p.get("last_played") or ""
+        cur_lp = a.get("last_played") or ""
+        if prev_lp and prev_lp[:10] > cur_lp[:10]:
+            a["last_played"] = prev_lp
+        reused += 1
+    print(f"  Reused listening data for {reused}/{len(all_albums)} albums from albums.json")
+    return all_albums
 
 
 def write_albums_json(cd_albums, vinyl_albums, suggestions=None):
@@ -495,16 +557,10 @@ def extract_dominant_colors(albums, label=""):
 
     Caches results in color_cache.json keyed by MBID to avoid re-downloading.
     """
-    try:
-        from colorthief import ColorThief
-        from io import BytesIO
-    except ImportError:
-        print("  colorthief not installed, skipping color extraction.")
-        print("  Install with: pip install colorthief")
-        return albums
-
     from concurrent.futures import ThreadPoolExecutor, as_completed
 
+    # Always apply cached colors first, even if colorthief isn't installed —
+    # otherwise a machine without it would export albums.json with no colors.
     cache = load_color_cache()
     to_extract = []
     for i, a in enumerate(albums):
@@ -516,6 +572,14 @@ def extract_dominant_colors(albums, label=""):
 
     if not to_extract:
         print(f"  All {label} colors cached.")
+        return albums
+
+    try:
+        from colorthief import ColorThief
+        from io import BytesIO
+    except ImportError:
+        print(f"  colorthief not installed — {len(to_extract)} {label} colors not extracted.")
+        print("  Install with: pip install colorthief")
         return albums
 
     print(f"  Extracting colors for {len(to_extract)} {label} albums...")
@@ -571,18 +635,32 @@ def resolve_cover_urls(albums, label=""):
     Caches resolved URLs by MBID so subsequent runs skip already-resolved covers.
     """
     from concurrent.futures import ThreadPoolExecutor, as_completed
+    import time as _time
 
     cache = load_cover_cache()
 
+    # Failed resolutions are remembered ("_caa_miss_<mbid>" -> timestamp) so we
+    # don't re-issue slow HEAD requests for the same albums on every run.
+    # Retried after this many days (CAA does get new art over time).
+    CAA_MISS_RETRY_SECS = 14 * 86400
+
     to_resolve = []
     cached_count = 0
+    skipped_miss = 0
     for i, a in enumerate(albums):
         mbid = a.get("mbid", "")
         if mbid and mbid in cache:
             albums[i]["cover_url"] = cache[mbid]
             cached_count += 1
         elif a.get("cover_url", "").startswith("https://coverartarchive.org/"):
-            to_resolve.append((i, a))
+            miss_ts = cache.get(f"_caa_miss_{mbid}") if mbid else None
+            if miss_ts and _time.time() - miss_ts < CAA_MISS_RETRY_SECS:
+                skipped_miss += 1  # keep the original CAA URL; browser may still load it
+            else:
+                to_resolve.append((i, a))
+
+    if skipped_miss:
+        print(f"  {label}: skipped {skipped_miss} known-unresolvable covers (retried every 14 days)")
 
     if cached_count:
         print(f"  {label}: {cached_count} cover URLs from cache")
@@ -597,23 +675,26 @@ def resolve_cover_urls(albums, label=""):
     def resolve_one(idx, album):
         url = album["cover_url"]
         try:
-            resp = requests.head(url, allow_redirects=True, timeout=10)
+            resp = requests.head(url, allow_redirects=True, timeout=8)
             if resp.status_code == 200 and "archive.org" in resp.url:
                 return idx, resp.url
         except Exception:
             pass
         return idx, None
 
-    with ThreadPoolExecutor(max_workers=6) as pool:
+    with ThreadPoolExecutor(max_workers=10) as pool:
         futures = [pool.submit(resolve_one, i, a) for i, a in to_resolve]
         for future in as_completed(futures):
             idx, final_url = future.result()
+            mbid = albums[idx].get("mbid", "")
             if final_url:
                 albums[idx]["cover_url"] = final_url
-                mbid = albums[idx].get("mbid", "")
                 if mbid:
                     cache[mbid] = final_url
+                    cache.pop(f"_caa_miss_{mbid}", None)
                 resolved_count += 1
+            elif mbid:
+                cache[f"_caa_miss_{mbid}"] = _time.time()
 
     save_cover_cache(cache)
     print(f"  Resolved {resolved_count}/{len(to_resolve)} cover URLs for {label}")
@@ -653,9 +734,10 @@ def itunes_cover_fallback(albums, label=""):
     print(f"  iTunes fallback: looking up {len(truly_missing)} {label} albums...")
     found = 0
 
-    for idx, album in truly_missing:
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+
+    def lookup_one(idx, album):
         query = f"{album['artist']} {album['title']}"
-        mbid = album.get("mbid", "")
         try:
             resp = requests.get(
                 "https://itunes.apple.com/search",
@@ -667,22 +749,32 @@ def itunes_cover_fallback(albums, label=""):
                 if results:
                     art_url = results[0].get("artworkUrl100", "")
                     if art_url:
-                        art_url = art_url.replace("100x100bb", "250x250bb")
-                        albums[idx]["cover_url"] = art_url
-                        if mbid:
-                            cache[f"_itunes_{mbid}"] = art_url
-                        found += 1
-                        continue
-            # Mark as miss so we don't retry
-            if mbid:
-                cache[f"_itunes_{mbid}"] = ""
-            record_failure("Cover art (none found)",
-                           f"{album.get('artist','?')} — {album.get('title','?')}",
-                           "no match on Cover Art Archive or iTunes")
+                        return idx, album, art_url.replace("100x100bb", "250x250bb"), None
+            return idx, album, "", None
         except Exception as e:
-            record_failure("Cover art (lookup error)",
-                           f"{album.get('artist','?')} — {album.get('title','?')}", str(e))
-        time.sleep(0.3)
+            return idx, album, None, str(e)
+
+    # Small pool: iTunes search is unauthenticated and rate-limited, don't hammer it
+    with ThreadPoolExecutor(max_workers=4) as pool:
+        futures = [pool.submit(lookup_one, i, a) for i, a in truly_missing]
+        for fut in as_completed(futures):
+            idx, album, art_url, err = fut.result()
+            mbid = album.get("mbid", "")
+            if err is not None:
+                record_failure("Cover art (lookup error)",
+                               f"{album.get('artist','?')} — {album.get('title','?')}", err)
+            elif art_url:
+                albums[idx]["cover_url"] = art_url
+                if mbid:
+                    cache[f"_itunes_{mbid}"] = art_url
+                found += 1
+            else:
+                # Mark as miss so we don't retry
+                if mbid:
+                    cache[f"_itunes_{mbid}"] = ""
+                record_failure("Cover art (none found)",
+                               f"{album.get('artist','?')} — {album.get('title','?')}",
+                               "no match on Cover Art Archive or iTunes")
 
     save_cover_cache(cache)
     print(f"  iTunes fallback: found {found}/{len(truly_missing)} covers for {label}")
@@ -737,34 +829,37 @@ def fetch_track_counts(albums):
     print(f"  Fetching track counts from Last.fm for {len(to_fetch)} albums...")
     fetched = 0
 
-    for idx, album in to_fetch:
-        mbid = album.get("mbid", "")
-        artist = album.get("artist", "")
-        title = album.get("title", "")
+    from concurrent.futures import ThreadPoolExecutor, as_completed
 
+    def fetch_one(idx, album):
         try:
             resp = requests.get("https://ws.audioscrobbler.com/2.0/", params={
                 "method": "album.getInfo",
-                "artist": artist,
-                "album": title,
+                "artist": album.get("artist", ""),
+                "album": album.get("title", ""),
                 "api_key": api_key,
                 "format": "json",
             }, timeout=10)
             if resp.status_code == 200:
                 tracks = resp.json().get("album", {}).get("tracks", {}).get("track", [])
-                track_count = len(tracks) if tracks else 0
-                cache[mbid] = track_count
-                if track_count:
-                    albums[idx]["track_count"] = track_count
-                    fetched += 1
+                return idx, album.get("mbid", ""), len(tracks) if tracks else 0
         except Exception:
             pass
+        return idx, album.get("mbid", ""), None
 
-        time.sleep(0.2)
-
-        if fetched % 50 == 0 and fetched > 0:
-            save_trackcount_cache(cache)
-            print(f"    ...{fetched}/{len(to_fetch)}")
+    with ThreadPoolExecutor(max_workers=5) as pool:
+        futures = [pool.submit(fetch_one, i, a) for i, a in to_fetch]
+        for fut in as_completed(futures):
+            idx, mbid, track_count = fut.result()
+            if track_count is None:
+                continue
+            cache[mbid] = track_count
+            if track_count:
+                albums[idx]["track_count"] = track_count
+                fetched += 1
+            if fetched % 50 == 0 and fetched > 0:
+                save_trackcount_cache(cache)
+                print(f"    ...{fetched}/{len(to_fetch)}")
 
     save_trackcount_cache(cache)
     print(f"  Fetched track counts for {fetched}/{len(to_fetch)} albums")
@@ -1379,42 +1474,70 @@ def update_rpm_from_albums(vinyl_albums, force=False):
     print("  (No Discogs URL just means no badge could be auto-fetched; the album is still present.)")
 
 
-def export_to_site():
+def export_to_site(fast=False, collection="both"):
     print(f"\n{'='*60}")
-    print("Exporting to GitHub Pages site")
+    print("Exporting to GitHub Pages site" + (" (fast mode)" if fast else ""))
     print(f"{'='*60}\n")
     if not INDEX_HTML.exists():
         print(f"Error: {INDEX_HTML} not found."); sys.exit(1)
+    import time as _time
+    _t0 = _time.time()
+    _last = [_t0]
+
+    def _mark(label):
+        now = _time.time()
+        print(f"    ⏱  {label}: {now - _last[0]:.1f}s")
+        _last[0] = now
+
     headers = get_notion_headers()
     cd = export_database(CD_DATABASE_ID, "CD Collection", headers)
     vinyl = export_database(VINYL_DATABASE_ID, "Vinyl Collection", headers)
-    update_rpm_from_albums(vinyl)  # single Notion pass: set RPM badges in place
+    _mark("Notion export")
+    if not fast and collection in ("vinyl", "both"):
+        update_rpm_from_albums(vinyl)  # single Notion pass: set RPM badges in place
+        _mark("RPM pass")
     cd = resolve_cover_urls(cd, "CDs")
     vinyl = resolve_cover_urls(vinyl, "Vinyl")
     cd = itunes_cover_fallback(cd, "CDs")
     vinyl = itunes_cover_fallback(vinyl, "Vinyl")
+    _mark("Cover art")
     cd = fetch_genres(cd, "CDs")
     vinyl = fetch_genres(vinyl, "Vinyl")
+    _mark("Genres")
     cd = extract_dominant_colors(cd, "CDs")
     vinyl = extract_dominant_colors(vinyl, "Vinyl")
+    _mark("Colours")
 
-    # Fetch Last.fm listening data, track counts, last played, and AI descriptions
+    # Listening data: fetched from Last.fm on full runs, reused from the
+    # cron-maintained albums.json on --fast runs
     all_albums = cd + vinyl
-    all_albums = fetch_lastfm_data(all_albums)
-    all_albums = fetch_track_counts(all_albums)
-    all_albums = calculate_last_played(all_albums)
+    if fast:
+        all_albums = reuse_listening_data(all_albums)
+        _mark("Listening data (reused)")
+    else:
+        all_albums = fetch_lastfm_data(all_albums)
+        _mark("Last.fm play counts")
+        all_albums = fetch_track_counts(all_albums)
+        _mark("Track counts")
+        all_albums = calculate_last_played(all_albums)
+        _mark("Last played")
     all_albums = generate_ai_descriptions(all_albums)
+    _mark("AI descriptions")
     # Re-split after enrichment
     cd_count = len(cd)
     cd = all_albums[:cd_count]
     vinyl = all_albums[cd_count:]
 
     # Find missing album suggestions for top artists
+    # (MusicBrainz limits to 1 request/second, so this stays serial — but each
+    # artist's discography is cached for 30 days, so it's usually instant)
     print("\n  Finding missing album suggestions...")
     suggestions = find_missing_albums(all_albums)
+    _mark("Suggestions")
 
     write_albums_json(cd, vinyl, suggestions=suggestions)
     print(f"\n  Total: {len(cd)} CDs + {len(vinyl)} vinyl = {len(cd) + len(vinyl)} albums")
+    print(f"  Export took {_time.time() - _t0:.1f}s")
 
 
 # ---------------------------------------------------------------------------
@@ -1479,14 +1602,22 @@ def git_push():
 # ---------------------------------------------------------------------------
 
 def main():
-    args = set(sys.argv[1:])
+    args = sys.argv[1:]
     notion_only = "--notion-only" in args
     export_only = "--export-only" in args
+    fast = "--fast" in args
+    collection = "both"
+    for a in args:
+        if a.startswith("--collection="):
+            collection = a.split("=", 1)[1].lower() or "both"
+    if collection not in ("cd", "vinyl", "both"):
+        print("Error: --collection must be cd, vinyl, or both"); sys.exit(1)
 
-    if not export_only:
-        update_notion_databases()
+    # --fast implies skipping the Notion metadata pass
+    if not export_only and not fast:
+        update_notion_databases(collection)
     if not notion_only:
-        export_to_site()
+        export_to_site(fast=fast, collection=collection)
         print_failure_summary()
         git_push()
 
