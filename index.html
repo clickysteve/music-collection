@@ -2078,6 +2078,18 @@
             </div>
         </div>
 
+        <div class="dropdown">
+            <button class="dropdown-btn" id="tmBtn" aria-label="Time machine — filter by listening history">
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.2"/><path d="M7 4V7L4.5 8.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/><path d="M1 7H2M12 7H13" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>
+                Time Machine
+            </button>
+            <div class="dropdown-menu genre-dropdown" id="tmMenu">
+                <button class="dropdown-item active" data-listen="all">All albums</button>
+                <button class="dropdown-item" data-listen="never">Never played</button>
+                <button class="dropdown-item" data-listen="dusty">Gathering dust (1 yr+)</button>
+            </div>
+        </div>
+
         <button class="clear-filters-btn" id="clearFiltersBtn" aria-label="Clear all filters">
             <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 2L10 10M10 2L2 10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
             Clear
@@ -2159,8 +2171,10 @@
             <div class="in-rotation-scroll" id="inRotationScroll"></div>
         </div>
         <div class="in-rotation" id="thisMonthPanel" style="display:none;">
-            <div class="this-month-intro" id="thisMonthIntro"></div>
-            <div class="in-rotation-scroll" id="thisMonthScroll"></div>
+            <div class="this-month-intro" id="thisMonthIntro" style="display:none;"></div>
+            <div class="in-rotation-scroll" id="thisMonthScroll" style="display:none;"></div>
+            <div class="this-month-intro" id="annivIntro" style="display:none;margin-top:14px;"></div>
+            <div class="in-rotation-scroll" id="annivScroll" style="display:none;"></div>
         </div>
         <div class="suggestions-panel" id="suggestionsPanel"></div>
         <div class="stats-detail" id="statsDetail">
@@ -2204,6 +2218,22 @@
                 <div class="stats-section" id="collectorSection" style="grid-column: 1 / -1;">
                     <div class="stats-section-title">Full Set (CD &amp; Vinyl)</div>
                     <div id="collectorList" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+                </div>
+                <div class="stats-section" id="tasteSection" style="display:none;grid-column: 1 / -1;">
+                    <div class="stats-section-title">Taste Over Time</div>
+                    <p style="font-size:12px;color:var(--text-dim);margin-bottom:12px;">Share of your collection listening by genre, per year</p>
+                    <div id="tasteGraph"></div>
+                    <div id="tasteLegend" style="display:flex;flex-wrap:wrap;gap:10px;margin-top:10px;"></div>
+                </div>
+                <div class="stats-section" id="wondersSection" style="display:none;">
+                    <div class="stats-section-title">One-Month Wonders</div>
+                    <p style="font-size:12px;color:var(--text-dim);margin-bottom:8px;">Albums you burned through in a single month</p>
+                    <div id="wondersList"></div>
+                </div>
+                <div class="stats-section" id="comebacksSection" style="display:none;">
+                    <div class="stats-section-title">Comebacks</div>
+                    <p style="font-size:12px;color:var(--text-dim);margin-bottom:8px;">Rediscovered after years on the shelf</p>
+                    <div id="comebacksList"></div>
                 </div>
                 <div class="stats-section" id="exploreSection" style="grid-column: 1 / -1;">
                     <div class="stats-section-title">Artists to Explore</div>
@@ -2514,6 +2544,23 @@
             // Filter by runtime
             if (currentTimeFilter > 0) {
                 result = result.filter(a => a.runtime && a.runtime <= currentTimeFilter);
+            }
+
+            // Filter by listening history (Time Machine)
+            if (currentListenFilter !== 'all') {
+                if (currentListenFilter === 'never') {
+                    result = result.filter(a => !a.lastfm_plays && !a.last_played && !a.played);
+                } else if (currentListenFilter === 'dusty') {
+                    const cutoff = Date.now() - 365 * 86400000;
+                    result = result.filter(a => {
+                        if (!a.last_played) return true;
+                        const t = new Date(a.last_played).getTime();
+                        return isNaN(t) || t < cutoff;
+                    });
+                } else if (listenYearMap && listenYearMap[currentListenFilter]) {
+                    const set = listenYearMap[currentListenFilter];
+                    result = result.filter(a => set.has(normKey(a.artist, a.title)));
+                }
             }
 
             // Filter by year
@@ -4288,6 +4335,11 @@
             document.querySelector('#timeMenu .dropdown-item[data-time="0"]').classList.add('active');
             currentTimeFilter = 0;
             document.getElementById('timeBtn').textContent = 'I have time...';
+            // Reset time machine filter
+            document.querySelectorAll('#tmMenu .dropdown-item').forEach(i => i.classList.remove('active'));
+            document.querySelector('#tmMenu .dropdown-item[data-listen="all"]').classList.add('active');
+            currentListenFilter = 'all';
+            setTmBtnLabel();
             // Reset sort
             document.querySelectorAll('#sortMenu .dropdown-item').forEach(i => i.classList.remove('active'));
             document.querySelector('#sortMenu .dropdown-item[data-sort="artist"]').classList.add('active');
@@ -4322,6 +4374,7 @@
                 currentGenreFilter !== 'all' ||
                 currentYearFilter !== 'all' ||
                 currentTimeFilter > 0 ||
+                currentListenFilter !== 'all' ||
                 document.getElementById('searchInput').value.trim() !== '' ||
                 isShuffled;
             document.getElementById('clearFiltersBtn').classList.toggle('visible', hasFilters);
@@ -4436,6 +4489,7 @@
             if (currentYearFilter === 'decade') p.set('y', 'd' + currentDecadeValue);
             else if (currentYearFilter !== 'all') p.set('y', currentYearFilter);
             if (currentTimeFilter > 0) p.set('max', String(currentTimeFilter));
+            if (currentListenFilter !== 'all') p.set('ly', currentListenFilter);
             if (currentSort !== 'artist') p.set('sort', currentSort);
             if (currentView !== 'grid') p.set('view', currentView);
             if (_openAlbum) {
@@ -4491,6 +4545,15 @@
                     document.querySelectorAll('#timeMenu .dropdown-item').forEach(i =>
                         i.classList.toggle('active', i.getAttribute('data-time') === String(mx)));
                     document.getElementById('timeBtn').textContent = mx >= 60 ? `≤ ${mx / 60}h` : `≤ ${mx}m`;
+                }
+                const ly = p.get('ly');
+                if (ly) {
+                    currentListenFilter = ly;
+                    document.querySelectorAll('#tmMenu .dropdown-item').forEach(i =>
+                        i.classList.toggle('active', i.getAttribute('data-listen') === ly));
+                    setTmBtnLabel();
+                    // Year values need the listening history — initHistoryFeatures
+                    // re-applies filters once it has loaded
                 }
                 const s = p.get('sort');
                 if (s) {
@@ -4674,17 +4737,27 @@
                     entries.push({ year: y, album: best, plays: bestPlays });
                 }
             }
-            if (!entries.length) return;
+            // First-listen anniversaries: albums whose very first scrobble was
+            // in this calendar month of a previous year
+            const annivs = [];
+            HISTORY.albums.forEach(a => {
+                const fm = firstMonth(a);
+                if (!fm || fm.slice(5, 7) !== mm) return;
+                const y = parseInt(fm.slice(0, 4));
+                const yearsAgo = curYear - y;
+                if (yearsAgo >= 1 && (a.total || 0) >= 10) {
+                    annivs.push({ album: a, year: y, yearsAgo });
+                }
+            });
+            annivs.sort((a, b) => b.yearsAgo - a.yearsAgo || b.album.total - a.album.total);
+
+            if (!entries.length && !annivs.length) return;
 
             const btn = document.getElementById('thisMonthBtn');
             const panel = document.getElementById('thisMonthPanel');
-            const intro = document.getElementById('thisMonthIntro');
-            const scroll = document.getElementById('thisMonthScroll');
             btn.style.display = '';
-            intro.textContent = 'What ' + monthName + ' used to sound like — your top album this month in previous years.';
 
-            scroll.innerHTML = '';
-            entries.slice(0, 12).forEach(({ year, album, plays }) => {
+            function makeCard(album, dateLabel, playsLabel) {
                 const match = findInCollection(album.artist, album.title);
                 const item = document.createElement('div');
                 item.className = 'in-rotation-item';
@@ -4706,11 +4779,11 @@
 
                 const dateEl = document.createElement('div');
                 dateEl.className = 'in-rotation-date';
-                dateEl.textContent = monthName + ' ' + year;
+                dateEl.textContent = dateLabel;
 
                 const playsEl = document.createElement('div');
                 playsEl.className = 'in-rotation-plays';
-                playsEl.textContent = plays + ' plays';
+                playsEl.textContent = playsLabel;
 
                 item.appendChild(img);
                 item.appendChild(titleEl);
@@ -4718,8 +4791,34 @@
                 item.appendChild(dateEl);
                 item.appendChild(playsEl);
                 if (match) item.addEventListener('click', () => openModal(match));
-                scroll.appendChild(item);
-            });
+                return item;
+            }
+
+            if (entries.length) {
+                const intro = document.getElementById('thisMonthIntro');
+                const scroll = document.getElementById('thisMonthScroll');
+                intro.style.display = '';
+                scroll.style.display = '';
+                intro.textContent = 'What ' + monthName + ' used to sound like — your top album this month in previous years.';
+                scroll.innerHTML = '';
+                entries.slice(0, 12).forEach(({ year, album, plays }) => {
+                    scroll.appendChild(makeCard(album, monthName + ' ' + year, plays + ' plays'));
+                });
+            }
+
+            if (annivs.length) {
+                const intro = document.getElementById('annivIntro');
+                const scroll = document.getElementById('annivScroll');
+                intro.style.display = '';
+                scroll.style.display = '';
+                intro.textContent = 'First-listen anniversaries — albums you met in a ' + monthName + ' gone by.';
+                scroll.innerHTML = '';
+                annivs.slice(0, 12).forEach(({ album, year, yearsAgo }) => {
+                    scroll.appendChild(makeCard(album,
+                        'First played ' + monthName + ' ' + year,
+                        yearsAgo + ' year' + (yearsAgo !== 1 ? 's' : '') + ' ago'));
+                });
+            }
 
             let open = false;
             btn.addEventListener('click', () => {
@@ -4895,10 +4994,255 @@
             addRows('Discovered in ' + year, discoveries);
         }
 
+        // ---- Time Machine (filter by listening history) ----
+        let currentListenFilter = 'all';
+        let listenYearMap = null;   // year -> Set of normKeys listened to that year
+
+        const MONTH_ABBR = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        function fmtMonthKey(m) {
+            return MONTH_ABBR[parseInt(m.slice(5, 7), 10) - 1] + ' ' + m.slice(0, 4);
+        }
+
+        function setTmBtnLabel() {
+            const btn = document.getElementById('tmBtn');
+            if (currentListenFilter === 'all') btn.textContent = 'Time Machine';
+            else if (currentListenFilter === 'never') btn.textContent = 'Never played';
+            else if (currentListenFilter === 'dusty') btn.textContent = 'Gathering dust';
+            else btn.textContent = 'Listened in ' + currentListenFilter;
+        }
+
+        function initTimeMachine() {
+            listenYearMap = {};
+            HISTORY.albums.forEach(e => {
+                const k = normKey(e.artist, e.title);
+                for (const m in (e.months || {})) {
+                    const y = m.slice(0, 4);
+                    (listenYearMap[y] = listenYearMap[y] || new Set()).add(k);
+                }
+            });
+
+            const menu = document.getElementById('tmMenu');
+            const years = Object.keys(listenYearMap).sort().reverse();
+            if (years.length) {
+                const sep = document.createElement('div');
+                sep.style.cssText = 'height:1px;background:var(--border);margin:4px 0;';
+                menu.appendChild(sep);
+                years.forEach(y => {
+                    const btn = document.createElement('button');
+                    btn.className = 'dropdown-item';
+                    btn.setAttribute('data-listen', y);
+                    btn.textContent = 'Listened in ' + y + ' (' + listenYearMap[y].size + ')';
+                    if (currentListenFilter === y) btn.classList.add('active');
+                    menu.appendChild(btn);
+                });
+            }
+
+            // If a year filter arrived via the URL, it can only apply now
+            if (currentListenFilter !== 'all') applyFiltersAndSort();
+        }
+
+        document.getElementById('tmBtn').addEventListener('click', () => {
+            const menu = document.getElementById('tmMenu');
+            menu.classList.toggle('show');
+            ['filterMenu', 'sortMenu', 'genreMenu', 'yearMenu', 'timeMenu'].forEach(id =>
+                document.getElementById(id).classList.remove('show'));
+        });
+
+        document.getElementById('tmMenu').addEventListener('click', (e) => {
+            const item = e.target.closest('.dropdown-item');
+            if (!item) return;
+            document.querySelectorAll('#tmMenu .dropdown-item').forEach(i => i.classList.remove('active'));
+            item.classList.add('active');
+            currentListenFilter = item.getAttribute('data-listen');
+            document.getElementById('tmMenu').classList.remove('show');
+            setTmBtnLabel();
+            applyFiltersAndSort();
+        });
+
+        // ---- Listening insights (One-Month Wonders, Comebacks, Taste Over Time) ----
+        function buildHistoryRow(entry, sub, right) {
+            const match = findInCollection(entry.artist, entry.title);
+            const row = document.createElement('div');
+            row.className = 'yir-row' + (match ? ' clickable' : '');
+            const img = document.createElement('img');
+            img.className = 'yir-row-cover';
+            img.loading = 'lazy';
+            img.src = (match && match.cover_url) || '';
+            img.alt = '';
+            img.onerror = function() { this.style.visibility = 'hidden'; };
+            row.appendChild(img);
+            const text = document.createElement('div');
+            text.style.minWidth = '0';
+            const titleEl = document.createElement('div');
+            titleEl.className = 'yir-row-title';
+            titleEl.textContent = entry.title;
+            const subEl = document.createElement('div');
+            subEl.className = 'yir-row-sub';
+            subEl.textContent = sub;
+            text.appendChild(titleEl);
+            text.appendChild(subEl);
+            row.appendChild(text);
+            if (right) {
+                const rightEl = document.createElement('div');
+                rightEl.className = 'yir-row-plays';
+                rightEl.textContent = right;
+                row.appendChild(rightEl);
+            }
+            if (match) row.addEventListener('click', () => openModal(match));
+            return row;
+        }
+
+        function initListeningInsights() {
+            // One-month wonders: most plays concentrated in a single month
+            const wonders = [];
+            HISTORY.albums.forEach(e => {
+                const months = e.months || {};
+                const total = e.total || 0;
+                if (total < 25) return;
+                let bestM = '', bestP = 0;
+                for (const m in months) {
+                    if (months[m] > bestP) { bestP = months[m]; bestM = m; }
+                }
+                if (bestP / total >= 0.6) {
+                    wonders.push({ entry: e, month: bestM, plays: bestP, total });
+                }
+            });
+            wonders.sort((a, b) => b.plays - a.plays);
+            if (wonders.length) {
+                const section = document.getElementById('wondersSection');
+                const list = document.getElementById('wondersList');
+                section.style.display = '';
+                wonders.slice(0, 6).forEach(w => {
+                    list.appendChild(buildHistoryRow(w.entry,
+                        w.entry.artist + ' · ' + w.plays + ' of ' + w.total + ' plays in ' + fmtMonthKey(w.month),
+                        ''));
+                });
+            }
+
+            // Comebacks: biggest gap between two active months, with real
+            // listening on both sides of the gap
+            const comebacks = [];
+            HISTORY.albums.forEach(e => {
+                const keys = Object.keys(e.months || {}).sort();
+                if (keys.length < 2) return;
+                let bestGap = 0, before = '', after = '';
+                let playsBefore = 0, playsAfter = 0, running = 0;
+                for (let i = 1; i < keys.length; i++) {
+                    const gap = (parseInt(keys[i].slice(0, 4)) - parseInt(keys[i - 1].slice(0, 4))) * 12
+                        + (parseInt(keys[i].slice(5, 7)) - parseInt(keys[i - 1].slice(5, 7)));
+                    running += e.months[keys[i - 1]];
+                    if (gap > bestGap) {
+                        bestGap = gap;
+                        before = keys[i - 1];
+                        after = keys[i];
+                        playsBefore = running;
+                        playsAfter = 0;
+                        for (let j = i; j < keys.length; j++) playsAfter += e.months[keys[j]];
+                    }
+                }
+                if (bestGap >= 36 && playsBefore >= 10 && playsAfter >= 10) {
+                    comebacks.push({ entry: e, gap: bestGap, before, after });
+                }
+            });
+            comebacks.sort((a, b) => b.gap - a.gap);
+            if (comebacks.length) {
+                const section = document.getElementById('comebacksSection');
+                const list = document.getElementById('comebacksList');
+                section.style.display = '';
+                comebacks.slice(0, 6).forEach(c => {
+                    list.appendChild(buildHistoryRow(c.entry,
+                        c.entry.artist + ' · shelved ' + fmtMonthKey(c.before) + ', back ' + fmtMonthKey(c.after),
+                        Math.round(c.gap / 12) + ' yr gap'));
+                });
+            }
+
+            renderTasteGraph();
+        }
+
+        const TASTE_COLORS = ['#1db954', '#4a9eed', '#e8873a', '#e8d44d', '#b57bee', '#ee6a9e', '#5fd4c0', '#8a8a8a'];
+
+        function renderTasteGraph() {
+            // Primary genre per collection album, keyed like the history entries
+            const genreOf = {};
+            allAlbums.forEach(a => {
+                genreOf[normKey(a.artist, a.title)] = (a.genres && a.genres[0]) || null;
+            });
+
+            const yearGenre = {};
+            const genreTotals = {};
+            HISTORY.albums.forEach(e => {
+                const g = genreOf[normKey(e.artist, e.title)];
+                if (!g) return;
+                const months = e.months || {};
+                for (const m in months) {
+                    const y = m.slice(0, 4);
+                    (yearGenre[y] = yearGenre[y] || {})[g] = (yearGenre[y][g] || 0) + months[m];
+                    genreTotals[g] = (genreTotals[g] || 0) + months[m];
+                }
+            });
+
+            const years = Object.keys(yearGenre).sort();
+            if (years.length < 3) return;
+            const top = Object.entries(genreTotals).sort((a, b) => b[1] - a[1]).slice(0, 7).map(x => x[0]);
+            const labels = [...top, 'everything else'];
+
+            // Share-of-year per genre (100% stacked)
+            const shares = years.map(y => {
+                const yg = yearGenre[y];
+                let yearTotal = 0;
+                for (const g in yg) yearTotal += yg[g];
+                if (!yearTotal) return labels.map(() => 0);
+                let otherTotal = 0;
+                for (const g in yg) if (!top.includes(g)) otherTotal += yg[g];
+                return labels.map(g => (g === 'everything else' ? otherTotal : (yg[g] || 0)) / yearTotal);
+            });
+
+            const W = 800, H = 200, PADB = 18;
+            const plotH = H - PADB;
+            const x = i => (i / (years.length - 1)) * W;
+            const svgParts = [`<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;" role="img" aria-label="Genre listening share by year">`];
+
+            // Bands drawn bottom-up: band k spans cumulative share [0..k) to [0..k]
+            for (let k = 0; k < labels.length; k++) {
+                const upper = [];
+                const lower = [];
+                for (let i = 0; i < years.length; i++) {
+                    let lo = 0;
+                    for (let j = 0; j < k; j++) lo += shares[i][j];
+                    const hi = lo + shares[i][k];
+                    lower.push(`${x(i).toFixed(1)},${(plotH - lo * plotH).toFixed(1)}`);
+                    upper.push(`${x(i).toFixed(1)},${(plotH - hi * plotH).toFixed(1)}`);
+                }
+                const path = 'M' + upper.join(' L') + ' L' + lower.reverse().join(' L') + ' Z';
+                svgParts.push(`<path d="${path}" fill="${TASTE_COLORS[k % TASTE_COLORS.length]}" fill-opacity="0.75"><title>${labels[k]}</title></path>`);
+            }
+
+            // Year labels every few years
+            const step = years.length > 14 ? 3 : 2;
+            for (let i = 0; i < years.length; i += step) {
+                const anchor = i === 0 ? 'start' : (i >= years.length - step ? 'end' : 'middle');
+                svgParts.push(`<text x="${x(i).toFixed(1)}" y="${H - 4}" font-size="10" fill="var(--text-dim)" text-anchor="${anchor}">${years[i]}</text>`);
+            }
+            svgParts.push('</svg>');
+
+            document.getElementById('tasteGraph').innerHTML = svgParts.join('');
+            const legend = document.getElementById('tasteLegend');
+            legend.innerHTML = '';
+            labels.forEach((g, k) => {
+                const chip = document.createElement('span');
+                chip.style.cssText = 'display:inline-flex;align-items:center;gap:5px;font-size:11px;color:var(--text-dim);';
+                chip.innerHTML = `<span style="width:10px;height:10px;border-radius:2px;background:${TASTE_COLORS[k % TASTE_COLORS.length]};display:inline-block;"></span>${g}`;
+                legend.appendChild(chip);
+            });
+            document.getElementById('tasteSection').style.display = '';
+        }
+
         function initHistoryFeatures() {
             loadHistory().then(() => {
                 initThisMonth();
                 initYearInReview();
+                initTimeMachine();
+                initListeningInsights();
             });
         }
 
