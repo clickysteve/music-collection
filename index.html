@@ -580,6 +580,24 @@
             overflow-y: auto;
         }
 
+        .genre-search {
+            position: sticky;
+            top: 0;
+            z-index: 1;
+            display: block;
+            width: calc(100% - 12px);
+            margin: 2px 6px 6px;
+            padding: 7px 10px;
+            font-size: 12px;
+            font-family: inherit;
+            color: var(--text);
+            background: var(--surface-3);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            outline: none;
+        }
+        .genre-search:focus { border-color: var(--accent); }
+
         .card-actions {
             display: flex;
             align-items: center;
@@ -2156,6 +2174,7 @@
                 <button class="dropdown-item" data-sort="year-asc">Year (Old First)</button>
                 <button class="dropdown-item" data-sort="recently-played">Recently Played</button>
                 <button class="dropdown-item" data-sort="most-played">Most Scrobbled</button>
+                <button class="dropdown-item" data-sort="least-played">Least Played</button>
                 <button class="dropdown-item" data-sort="added-desc">Recently Added</button>
                 <button class="dropdown-item" data-sort="added-asc">Oldest Added</button>
             </div>
@@ -2611,14 +2630,42 @@
                     genreCounts[g] = (genreCounts[g] || 0) + 1;
                 });
             });
-            const sorted = Object.entries(genreCounts).sort((a, b) => b[1] - a[1]).slice(0, 25);
+            const sorted = Object.entries(genreCounts).sort((a, b) => a[0].localeCompare(b[0]));
             const menu = document.getElementById('genreMenu');
+
+            // Type-to-filter box, pinned to the top of the menu
+            const search = document.createElement('input');
+            search.type = 'text';
+            search.className = 'genre-search';
+            search.id = 'genreSearch';
+            search.placeholder = 'Type to filter genres...';
+            search.setAttribute('aria-label', 'Filter genres');
+            menu.insertBefore(search, menu.firstChild);
+
             sorted.forEach(([genre, count]) => {
                 const btn = document.createElement('button');
                 btn.className = 'dropdown-item';
                 btn.setAttribute('data-genre', genre);
                 btn.textContent = `${genre} (${count})`;
                 menu.appendChild(btn);
+            });
+
+            search.addEventListener('input', () => {
+                const q = search.value.trim().toLowerCase();
+                menu.querySelectorAll('.dropdown-item').forEach(item => {
+                    const g = item.getAttribute('data-genre') || '';
+                    item.style.display = (!q || g === 'all' || g.toLowerCase().includes(q)) ? '' : 'none';
+                });
+            });
+            search.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    // Select the first visible genre (skipping "All Genres")
+                    const first = [...menu.querySelectorAll('.dropdown-item')]
+                        .find(i => i.style.display !== 'none' && i.getAttribute('data-genre') !== 'all');
+                    if (first) first.click();
+                } else if (e.key === 'Escape') {
+                    menu.classList.remove('show');
+                }
             });
         }
 
@@ -2743,6 +2790,11 @@
                     break;
                 case 'most-played':
                     result.sort((a, b) => (b.lastfm_plays || 0) - (a.lastfm_plays || 0));
+                    break;
+                case 'least-played':
+                    // Never played first, then ascending play counts
+                    result.sort((a, b) => (a.lastfm_plays || 0) - (b.lastfm_plays || 0)
+                        || a.artist.localeCompare(b.artist));
                     break;
                 case 'added-desc':
                     result.sort((a, b) => {
@@ -3854,6 +3906,13 @@
             document.getElementById('filterMenu').classList.remove('show');
             document.getElementById('sortMenu').classList.remove('show');
             document.getElementById('yearMenu').classList.remove('show');
+            const search = document.getElementById('genreSearch');
+            if (menu.classList.contains('show') && search) {
+                // Fresh view each time it opens
+                search.value = '';
+                menu.querySelectorAll('.dropdown-item').forEach(i => { i.style.display = ''; });
+                search.focus();
+            }
         });
 
         document.getElementById('genreMenu').addEventListener('click', (e) => {
@@ -3956,13 +4015,12 @@
             });
         });
 
-        // Shuffle
+        // Shuffle — every click deals a fresh shuffle; Clear (or picking a
+        // sort) turns it off
         document.getElementById('shuffleBtn').addEventListener('click', () => {
-            isShuffled = !isShuffled;
-            document.getElementById('shuffleBtn').classList.toggle('active');
-            if (isShuffled) {
-                shuffledAlbums = fisherYatesShuffle(filteredAlbums);
-            }
+            isShuffled = true;
+            document.getElementById('shuffleBtn').classList.add('active');
+            shuffledAlbums = fisherYatesShuffle(filteredAlbums);
             applyFiltersAndSort();
         });
 
@@ -4009,38 +4067,16 @@
             const pool = filteredAlbums.length > 0 ? filteredAlbums : allAlbums;
             if (!pool.length) return;
 
-            // Smart weighting: heavily favour unscrobbled/neglected albums
-            const hasLastfm = pool.some(a => a.lastfm_plays);
-            let album;
+            // Pure wildcard — every album has an equal shot
+            const album = pool[Math.floor(Math.random() * pool.length)];
             let reason = '';
-
-            if (hasLastfm) {
-                const maxPlays = Math.max(...pool.map(a => a.lastfm_plays || 0));
-                // Weight: inverse of play count, unplayed get max weight
-                const weights = pool.map(a => {
-                    const plays = a.lastfm_plays || 0;
-                    return plays === 0 ? maxPlays + 10 : Math.max(1, maxPlays - plays);
-                });
-                const totalWeight = weights.reduce((s, w) => s + w, 0);
-                let r = Math.random() * totalWeight;
-                let idx = 0;
-                for (let i = 0; i < weights.length; i++) {
-                    r -= weights[i];
-                    if (r <= 0) { idx = i; break; }
-                }
-                album = pool[idx];
-
-                // Generate reason
-                const plays = album.lastfm_plays || 0;
-                if (plays === 0) {
-                    reason = 'Never scrobbled — give it a spin!';
-                } else if (plays < 10) {
-                    reason = `Only ${plays} scrobble${plays !== 1 ? 's' : ''} — barely touched`;
-                } else {
-                    reason = `${plays} scrobbles — revisit this one`;
-                }
+            const plays = album.lastfm_plays || 0;
+            if (plays === 0) {
+                reason = 'Never scrobbled — give it a spin!';
+            } else if (plays < 10) {
+                reason = `Only ${plays} scrobble${plays !== 1 ? 's' : ''} — barely touched`;
             } else {
-                album = pool[Math.floor(Math.random() * pool.length)];
+                reason = `${plays} scrobbles`;
             }
 
             const overlay = document.getElementById('pickOverlay');

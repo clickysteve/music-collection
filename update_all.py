@@ -161,11 +161,30 @@ def get_notion_headers():
 
 
 def query_all_pages(database_id, headers):
+    import time
     url = f"https://api.notion.com/v1/databases/{database_id}/query"
     pages, payload = [], {"page_size": 100}
     while True:
-        resp = requests.post(url, headers=headers, json=payload, timeout=30)
-        resp.raise_for_status()
+        # Notion occasionally times out or 502s; retry with backoff rather
+        # than killing the whole export on one slow response
+        last_err = None
+        for attempt in range(4):
+            try:
+                resp = requests.post(url, headers=headers, json=payload, timeout=30)
+                if resp.status_code in (429, 500, 502, 503, 504):
+                    raise requests.exceptions.HTTPError(f"HTTP {resp.status_code}")
+                resp.raise_for_status()
+                break
+            except (requests.exceptions.Timeout,
+                    requests.exceptions.ConnectionError,
+                    requests.exceptions.HTTPError) as e:
+                last_err = e
+                if attempt < 3:
+                    wait = 2 ** attempt  # 1s, 2s, 4s
+                    print(f"    Notion request failed ({e}); retrying in {wait}s...")
+                    time.sleep(wait)
+        else:
+            raise last_err
         data = resp.json()
         pages.extend(data["results"])
         if not data.get("has_more"): break
@@ -1054,13 +1073,28 @@ def _normalize_for_match(s):
 
 
 def _apply_lastfm(albums, cache):
-    """Apply cached Last.fm play counts (keyed by normalized artist|||album)."""
-    norm_plays = cache.get("plays", {})
-    matched = 0
+    """Apply cached Last.fm play counts (keyed by normalized artist|||album).
 
+    Uses the fuzzy AlbumMatcher from update_lastplayed so pressing variants
+    ("Swim (blue)"), EP/promo suffixes and prefix titles all match.
+    """
+    from update_lastplayed import AlbumMatcher
+    from collections import defaultdict
+
+    matcher = AlbumMatcher(albums)
+    matched_plays = defaultdict(int)
+    for key, val in cache.get("plays", {}).items():
+        parts = key.split("|||")
+        if len(parts) == 2:
+            norm_key = matcher.match(parts[0], parts[1])
+            if norm_key:
+                matched_plays[norm_key] += val
+
+    matched = 0
     for a in albums:
-        norm_key = f"{_normalize_for_match(a['artist'])}|||{_normalize_for_match(a['title'])}"
-        plays = norm_plays.get(norm_key, 0)
+        norm_key = matcher.match(a["artist"], a["title"]) \
+            or f"{_normalize_for_match(a['artist'])}|||{_normalize_for_match(a['title'])}"
+        plays = matched_plays.get(norm_key, 0)
         if plays > 0:
             a["lastfm_plays"] = plays
             matched += 1
@@ -1098,6 +1132,8 @@ def calculate_last_played(all_albums):
             pass
 
     # Build lookup: normalized album key -> track_count
+    from update_lastplayed import AlbumMatcher
+    matcher = AlbumMatcher(all_albums)
     album_track_counts = {}
     album_keys_by_norm = {}  # norm_key -> list of album indices
     for i, a in enumerate(all_albums):
@@ -1160,9 +1196,10 @@ def calculate_last_played(all_albums):
 
                 if artist and album_name and date_uts:
                     ts = int(date_uts)
-                    norm_key = f"{_normalize_for_match(artist)}|||{_normalize_for_match(album_name)}"
                     # Only collect scrobbles for albums in our collection
-                    if norm_key in album_keys_by_norm:
+                    # (fuzzy match: pressing variants, EP suffixes, prefixes)
+                    norm_key = matcher.match(artist, album_name)
+                    if norm_key:
                         all_scrobbles.append((ts, norm_key, _normalize_for_match(track_name)))
 
             if page % 10 == 0:
