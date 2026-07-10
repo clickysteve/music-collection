@@ -2621,6 +2621,28 @@
             return svg;
         }
 
+        // ---- Cover art resolution helpers ----
+        // All stored cover URLs are 250px thumbnails. Larger versions exist at
+        // predictable URLs for archive.org (CAA) and iTunes sources.
+        function hiResCover(url) {
+            if (!url) return url;
+            if (url.includes('_thumb250')) return url.replace('_thumb250', '_thumb500');
+            if (url.includes('250x250bb')) return url.replace('250x250bb', '600x600bb');
+            return url; // unresolved CAA URLs: no reliable larger size
+        }
+
+        // Progressive load: show the (usually already-cached) 250px thumb
+        // instantly, then swap in the hi-res version once it has downloaded.
+        // If the hi-res 404s or stalls, the thumb simply stays.
+        function loadProgressive(imgEl, url) {
+            imgEl.src = url;
+            const hi = hiResCover(url);
+            if (!hi || hi === url) return;
+            const pre = new Image();
+            pre.onload = () => { imgEl.src = hi; };
+            pre.src = hi;
+        }
+
         function fisherYatesShuffle(arr) {
             const result = [...arr];
             for (let i = result.length - 1; i > 0; i--) {
@@ -2863,6 +2885,7 @@
             img.className = 'card-image';
             img.alt = `${album.artist} - ${album.title}`;
             img.loading = 'lazy';
+            img.decoding = 'async';
             imgWrapper.appendChild(img);
 
             img.addEventListener('load', () => {
@@ -2996,7 +3019,9 @@
         // Staggered image loading — loads covers in small batches to avoid overwhelming the server
         const loadQueue = [];
         let activeLoads = 0;
-        const MAX_CONCURRENT = 8;
+        const MAX_CONCURRENT = 12;
+        let gridHiRes = false;   // large tiles get 500px covers
+        const GRID_HIRES_TILE = 230;
 
         function processQueue() {
             while (activeLoads < MAX_CONCURRENT && loadQueue.length > 0) {
@@ -3008,7 +3033,7 @@
                     const done = () => { activeLoads--; processQueue(); };
                     img.addEventListener('load', done, { once: true });
                     img.addEventListener('error', done, { once: true });
-                    img.src = url;
+                    img.src = gridHiRes ? hiResCover(url) : url;
                     delete wrapper.dataset.coverUrl;
                 }
             }
@@ -3799,7 +3824,7 @@
             modalImg.addEventListener('error', () => {
                 modalImg.replaceWith(createPlaceholderSVG());
             }, { once: true });
-            modalImg.src = album.cover_url;
+            loadProgressive(modalImg, album.cover_url);
 
             // Badges
             modalBadges.innerHTML = '';
@@ -4061,6 +4086,15 @@
         document.getElementById('sizeSlider').addEventListener('input', (e) => {
             document.documentElement.style.setProperty('--tile-size', e.target.value + 'px');
         });
+        // On release: if the tile size crossed the hi-res threshold, re-render
+        // so large tiles get 500px covers (and small ones go back to 250px)
+        document.getElementById('sizeSlider').addEventListener('change', (e) => {
+            const wantHiRes = parseInt(e.target.value, 10) >= GRID_HIRES_TILE;
+            if (wantHiRes !== gridHiRes) {
+                gridHiRes = wantHiRes;
+                if (currentView === 'grid') render();
+            }
+        });
 
         // Close dropdowns on outside click
         document.addEventListener('click', (e) => {
@@ -4114,7 +4148,7 @@
 
             const overlay = document.getElementById('pickOverlay');
             const img = document.getElementById('pickImage');
-            img.src = album.cover_url;
+            loadProgressive(img, album.cover_url);
             img.alt = `${album.artist} - ${album.title}`;
             document.getElementById('pickTitle').textContent = album.title;
             document.getElementById('pickMeta').textContent = `${album.artist} · ${album.year || ''}`;

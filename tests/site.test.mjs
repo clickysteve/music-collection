@@ -213,7 +213,19 @@ check('wishlist remove persists', JSON.parse(w.localStorage.getItem('mc_wishlist
 check('wishlist state was clean before test', heartsBefore === null || heartsBefore === '[]');
 
 // ---------------------------------------------------------------------------
-// 8. Pick One
+// 8. Cover art resolution
+// ---------------------------------------------------------------------------
+console.log('\n== cover art ==');
+check('hiResCover upgrades archive thumbs', w.eval(
+  `hiResCover('https://x.archive.org/a/mbid-1-2_thumb250.jpg')`) === 'https://x.archive.org/a/mbid-1-2_thumb500.jpg');
+check('hiResCover upgrades iTunes', w.eval(
+  `hiResCover('https://is1-ssl.mzstatic.com/x/250x250bb.jpg')`) === 'https://is1-ssl.mzstatic.com/x/600x600bb.jpg');
+check('hiResCover leaves unresolved CAA alone', w.eval(
+  `hiResCover('https://coverartarchive.org/release/abc/front-250')`) === 'https://coverartarchive.org/release/abc/front-250');
+check('sw caches iTunes covers', readFileSync(path.join(ROOT, 'sw.js'), 'utf8').includes('mzstatic.com'));
+
+// ---------------------------------------------------------------------------
+// 9. Pick One
 // ---------------------------------------------------------------------------
 console.log('\n== pick one ==');
 w.eval('showRandomPick()');

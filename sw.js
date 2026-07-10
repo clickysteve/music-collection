@@ -1,7 +1,6 @@
 const COVER_CACHE = 'cover-art-v1';
 const SHELL_CACHE = 'shell-v1';
-const COVER_ART_ORIGIN = 'coverartarchive.org';
-const ARCHIVE_ORIGIN = 'archive.org'; // CAA redirects here
+const COVER_ORIGINS = ['coverartarchive.org', 'archive.org', 'mzstatic.com']; // CAA, its redirect host, iTunes
 
 // App shell + data: network-first with cache fallback, so the site works
 // offline (e.g. in a record shop basement) but always shows fresh data when
@@ -56,7 +55,7 @@ self.addEventListener('fetch', (event) => {
     }
 
     // Cover art: cache-first (covers never change for a given URL)
-    if (!url.hostname.includes(COVER_ART_ORIGIN) && !url.hostname.includes(ARCHIVE_ORIGIN)) {
+    if (!COVER_ORIGINS.some(o => url.hostname.includes(o))) {
         return;
     }
 
