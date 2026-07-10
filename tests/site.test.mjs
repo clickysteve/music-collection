@@ -136,6 +136,26 @@ const bjork = w.eval('filteredAlbums.length');
 check('diacritic-insensitive search', bjork === 0 || w.eval(`filteredAlbums.every(a => /bj(ö|o)rk/i.test(a.artist))`));
 w.eval(`resetAllFilters()`);
 
+// no-flicker: identical results must not rebuild the grid DOM
+w.document.getElementById('searchInput').value = 'future of the left';
+w.eval('applyFiltersAndSort()');
+const cardBefore = w.document.querySelector('#grid .card');
+w.document.getElementById('searchInput').value = 'future of the left';  // no-op change
+w.eval('applyFiltersAndSort()');
+check('unchanged results skip re-render (no flicker)', w.document.querySelector('#grid .card') === cardBefore);
+w.document.getElementById('searchInput').value = 'future';
+w.eval('applyFiltersAndSort()');
+check('changed results do re-render', w.document.querySelector('#grid .card') !== cardBefore
+  || w.eval('filteredAlbums.length') === w.eval('_lastRendered.length'));
+w.eval(`resetAllFilters()`);
+
+// debounced search input: typing eventually applies through the wrapper chain
+w.document.getElementById('searchInput').value = 'deftones';
+w.document.getElementById('searchInput').dispatchEvent(new w.Event('input'));
+await new Promise(r => setTimeout(r, 300));
+check('debounced typing filters and updates URL', w.location.hash.includes('q=deftones'));
+w.eval(`resetAllFilters()`);
+
 // ---------------------------------------------------------------------------
 // 4. Sorts
 // ---------------------------------------------------------------------------

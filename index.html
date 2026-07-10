@@ -2665,6 +2665,8 @@
         let shuffledAlbums = [];
         let currentView = 'grid';
         let currentTimeFilter = 0; // 0 = no filter, otherwise max minutes
+        let _lastRendered = [];    // last result set actually rendered
+        let _resultChanged = true; // did the last applyFiltersAndSort change anything?
 
         // ============ INITIALIZATION ============
         function initData() {
@@ -2813,7 +2815,16 @@
             }
 
             filteredAlbums = result;
-            render();
+
+            // Skip the (expensive, flicker-inducing) full re-render when the
+            // result set is identical — e.g. typing the tail of a word where
+            // extra characters no longer narrow anything
+            _resultChanged = !(result.length === _lastRendered.length
+                && result.every((a, i) => a === _lastRendered[i]));
+            if (_resultChanged) {
+                _lastRendered = result;
+                render();
+            }
         }
 
         function sortAlbums(arr, sortType) {
@@ -3911,8 +3922,13 @@
             }
         });
 
-        // Search
-        document.getElementById('searchInput').addEventListener('input', applyFiltersAndSort);
+        // Search — lightly debounced so fast typing settles before rendering,
+        // and resolved at call time so the URL/clear-button wrappers apply
+        let _searchDebounce = null;
+        document.getElementById('searchInput').addEventListener('input', () => {
+            clearTimeout(_searchDebounce);
+            _searchDebounce = setTimeout(() => applyFiltersAndSort(), 120);
+        });
 
         // Collection filter
         document.querySelectorAll('.pill-btn').forEach(btn => {
@@ -4773,9 +4789,9 @@
             _origApplyFilters();
             updateClearFiltersVisibility();
 
-            // Re-render suggestions if panel is open
+            // Re-render suggestions if panel is open and the results changed
             const sugPanel = document.getElementById('suggestionsPanel');
-            if (sugPanel && sugPanel.classList.contains('open') && sugPanel.hasChildNodes()) {
+            if (sugPanel && sugPanel.classList.contains('open') && sugPanel.hasChildNodes() && _resultChanged) {
                 renderSuggestions();
             }
         };
