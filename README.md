@@ -9,22 +9,39 @@ A static gallery site for browsing a physical music collection (CDs + vinyl), po
 - Pulls album data from two Notion databases (CD + Vinyl)
 - Resolves cover art from Cover Art Archive (with iTunes fallback)
 - Fetches genre tags from MusicBrainz
-- Optionally pulls listening stats from Last.fm
-- Fetches album descriptions/bios from Last.fm
-- Generates missing album suggestions for your top artists
-- Bakes everything into a single static HTML file and pushes to GitHub Pages
+- Pulls listening stats + full monthly listening history from Last.fm
+  (with fuzzy album matching: pressing variants, EP/promo suffixes, roman
+  numerals, near-miss titles)
+- Generates missing album suggestions for the artists you own and play most
+- Exports everything to static JSON (`albums.json`, `heatmap_data.json`)
+  fetched by a single-page site on GitHub Pages
+- A GitHub Action keeps play counts, last-played dates, and listening history
+  fresh every 15 minutes
 
 ### Features
 
 - Grid and list views with adjustable tile sizes
-- Filter by collection (CD/Vinyl), type (Album/EP/Single), and genre
-- Sort by artist, title, year, recently played, or most scrobbled
-- Search across artists and titles
+- Filter by collection (CD/Vinyl), type (Album/EP/Single), genre (searchable,
+  alphabetical), release year/decade, and runtime ("I have time...")
+- Time Machine — filter to what you actually listened to in any year, plus
+  "Never played" and "Gathering dust (1 yr+)" views
+- Sort by artist, title, year, recently played, most/least scrobbled, or
+  colour (hue-bucketed rainbow grid)
+- Shareable URLs — filters, sort, view, and open album all live in the hash
+- Now Spinning — live banner when something's playing on Last.fm, with a
+  spinning cover that opens the album if it's in the collection
+- Year in Review — any year's plays, month-by-month chart, top albums/artists,
+  and discoveries
+- This Month in History — what this month sounded like in past years, plus
+  first-listen anniversaries
+- One-Month Wonders, Comebacks, and a Taste Over Time genre stream graph
+- Wishlist — heart missing albums in the suggestions panel for record shopping
+- Search across artists and titles (diacritic- and punctuation-insensitive)
 - Album detail modal with metadata, description/bio, and links
 - Stats dashboard with year chart, decade breakdown, top artists, genre breakdown, collection split, and collection vs listening compatibility
 - Scrobble heatmap — cards glow by listening intensity
 - Ambient background — subtle color shifts based on visible album art
-- "Pick One" smart random album selector (weighted toward neglected albums)
+- "Pick One" — pure-wildcard random album selector
 - "I Have Time..." — pick albums that fit your available listening time
 - Collector's indicator — shows when you own an album on both CD and vinyl
 - "What am I missing?" gap identifier showing gaps in your top artists' discographies
@@ -36,8 +53,10 @@ A static gallery site for browsing a physical music collection (CDs + vinyl), po
 - Collapsible toolbar for mobile browsing
 - Scrobble links (direct or via OpenScrobbler)
 - Scroll-to-top floating button
-- Service Worker for cover art caching
+- Installable PWA — works offline (network-first data, cache-first cover art)
 - Fully responsive dark theme
+- Test suite (Python matcher unit tests + 42 jsdom site integration tests) run
+  in CI on every push
 
 ## Setting up your own
 
@@ -106,10 +125,20 @@ This will:
 1. Update your Notion databases with MusicBrainz/Discogs metadata
 2. Export everything, resolve cover art, fetch genres, extract colors
 3. Fetch Last.fm stats and album descriptions (if API key set)
-4. Inject the data into `index.html`
+4. Write the data to `albums.json`
 5. Commit and push to GitHub
 
-Use `--export-only` to skip the Notion metadata update (faster if you just want to refresh the site), or `--notion-only` to just update Notion without exporting.
+Options:
+- `--fast` — daily refresh: skips the Notion metadata pass, RPM pass, and all
+  Last.fm fetches (listening data is reused from `albums.json`, which the
+  GitHub Action keeps fresh). Runs in a few seconds.
+- `--collection=cd|vinyl|both` — limit the Notion metadata/RPM passes to one
+  database
+- `--export-only` / `--notion-only` — as they sound
+
+For the full listening-history features, also run
+`python update_lastplayed.py --backfill` once to build `heatmap_data.json`
+from your complete scrobble history.
 
 ### 6. Enable GitHub Pages
 
@@ -144,6 +173,8 @@ After the first run, only newly added albums trigger network requests.
 | `update_lastplayed.py` | Cron script — last played, play counts, listening history |
 | `notion_covers.py` | Updates Notion with MusicBrainz/Discogs metadata |
 | `export_notion.py` | Standalone export (used by update_all.py) |
+| `manifest.webmanifest`, `icon-*.png` | PWA install metadata + icons |
+| `tests/` | AlbumMatcher unit tests + jsdom site integration tests (run in CI) |
 | `*_cache.json` | Local caches to speed up repeated runs (gitignored) |
 
 ## License
