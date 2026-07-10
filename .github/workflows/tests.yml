@@ -1,0 +1,41 @@
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Python syntax check
+        run: python -m py_compile update_all.py update_lastplayed.py export_notion.py notion_covers.py update_rpm.py
+
+      - name: Install Python deps
+        run: pip install requests
+
+      - name: AlbumMatcher unit tests
+        run: python tests/test_matcher.py
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install test deps
+        working-directory: tests
+        run: npm install
+
+      - name: Site integration tests
+        working-directory: tests
+        run: node site.test.mjs

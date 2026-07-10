@@ -1,0 +1,11 @@
+{
+  "name": "music-collection-tests",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node site.test.mjs"
+  },
+  "devDependencies": {
+    "jsdom": "^29.0.0"
+  }
+}

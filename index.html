@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Music Collection Gallery</title>
+    <meta name="theme-color" content="#0a0a0a">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+    <link rel="apple-touch-icon" href="apple-touch-icon.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         * {
@@ -2082,6 +2088,33 @@
         }
         .sugg-ratio-artist { font-weight: 600; min-width: 140px; }
         .sugg-ratio-detail { color: var(--text-dim); font-size: 12px; }
+
+        /* Small screens / installed app */
+        body {
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+        .topbar {
+            padding-left: max(16px, env(safe-area-inset-left));
+            padding-right: max(16px, env(safe-area-inset-right));
+        }
+        @media (max-width: 600px) {
+            .dropdown-menu {
+                max-width: calc(100vw - 24px);
+            }
+            .yir-modal {
+                padding: 16px;
+            }
+            .yir-summary {
+                gap: 14px;
+            }
+            .now-spinning {
+                margin-left: 12px;
+                margin-right: 12px;
+            }
+            .sugg-ratio-artist {
+                min-width: 110px;
+            }
+        }
     </style>
 </head>
 <body>

@@ -51,6 +51,135 @@ def _normalize_for_match(s):
     return s
 
 
+# Trailing parenthetical variants in collection titles: "Swim (blue)",
+# "Dookie (green case)", "Nimrod (Australia)" etc.
+_PAREN_RE = re.compile(r"\s*\([^)]*\)\s*$")
+# Trailing decorations Last.fm often appends to album names
+_SUFFIX_RE = re.compile(
+    r"\s+(ep|single|promo|demo|deluxe( edition| version)?|"
+    r"remaster(ed)?( \d{4})?|anniversary edition)$")
+
+
+_ROMAN = {"1": "i", "2": "ii", "3": "iii", "4": "iv", "5": "v",
+          "6": "vi", "7": "vii", "8": "viii", "9": "ix", "10": "x"}
+_ROMAN_REV = {v: k for k, v in _ROMAN.items()}
+
+
+def _norm_variants(title):
+    """Base normalised forms of a title."""
+    out = set()
+    for t in (title, _PAREN_RE.sub("", title)):
+        n = _normalize_for_match(t)
+        if n:
+            out.add(n)
+        # Punctuation as word separator: "Nu*Med" -> "nu med"
+        spaced = re.sub(r"[^\w\s]", " ", t.lower().replace("&", "and"))
+        spaced = re.sub(r"\s+", " ", spaced).strip()
+        spaced = re.sub(r"^(the|a|an)\s+", "", spaced)
+        if spaced:
+            out.add(spaced)
+        # ASCII-only: drops mojibake / translated segments ("Shadoof/ Шадуф")
+        n_ascii = _normalize_for_match(re.sub(r"[^\x00-\x7f]+", " ", t))
+        if n_ascii and len(n_ascii) >= 6:
+            out.add(n_ascii)
+    # Spelling variants
+    for k in list(out):
+        if re.search(r"\bokay\b", k):
+            out.add(re.sub(r"\bokay\b", "ok", k))
+    return out
+
+
+def _title_keys(title):
+    """Normalised variants of an album title, for fuzzy matching."""
+    keys = set()
+    for k in _norm_variants(title):
+        keys.add(k)
+        s = _SUFFIX_RE.sub("", k)
+        if s:
+            keys.add(s)
+    # Trailing volume numbers: "vol2" == "vol ii" == "vol 2" ("Vol.2" vs "Vol.II")
+    extra = set()
+    for k in keys:
+        m = re.match(r"^(.*?)\s?(\d{1,2})$", k)
+        if m and m.group(2) in _ROMAN:
+            base = m.group(1).rstrip()
+            for suffix in (_ROMAN[m.group(2)], m.group(2)):
+                extra.add((base + " " + suffix).strip())
+                extra.add((base + suffix).strip())
+        m2 = re.match(r"^(.*?)\s?(ii|iii|iv|vi|vii|viii|ix)$", k)
+        if m2:
+            base = m2.group(1).rstrip()
+            for suffix in (_ROMAN_REV[m2.group(2)], m2.group(2)):
+                extra.add((base + " " + suffix).strip())
+                extra.add((base + suffix).strip())
+    keys |= {e for e in extra if e}
+    return keys
+
+
+class AlbumMatcher:
+    """Match Last.fm artist/album names to collection albums.
+
+    Exact match on normalised title variants first (parenthetical pressing
+    notes and EP/promo/deluxe suffixes stripped), then a word-boundary prefix
+    rule so "Come on Feel" matches "Come On Feel the Lemonheads" and
+    "Ripped Off" matches "Ripped Off (Live at KBC 2004)".
+    """
+
+    MIN_PREFIX = 8  # chars — keeps short titles from prefix-matching wrongly
+
+    def __init__(self, albums):
+        self.exact = {}      # (norm_artist, title_key) -> canonical norm_key
+        self.by_artist = {}  # norm_artist -> [(title_key, canonical), ...]
+        for a in albums:
+            nart = _normalize_for_match(a["artist"])
+            canonical = f"{nart}|||{_normalize_for_match(a['title'])}"
+            for tk in _title_keys(a["title"]):
+                self.exact.setdefault((nart, tk), canonical)
+                self.by_artist.setdefault(nart, []).append((tk, canonical))
+        self._memo = {}
+
+    def match(self, artist, album):
+        """Return the collection album's canonical norm_key, or None."""
+        memo_key = (artist, album)
+        if memo_key in self._memo:
+            return self._memo[memo_key]
+        nart = _normalize_for_match(artist)
+        result = None
+        tkeys = _title_keys(album)
+        for tk in tkeys:
+            result = self.exact.get((nart, tk))
+            if result:
+                break
+        if not result:
+            for tk in tkeys:
+                for ctk, canonical in self.by_artist.get(nart, []):
+                    if len(ctk) >= self.MIN_PREFIX and (
+                            tk.startswith(ctk + " ") or tk.endswith(" " + ctk)):
+                        result = canonical
+                        break
+                    if len(tk) >= self.MIN_PREFIX and (
+                            ctk.startswith(tk + " ") or ctk.endswith(" " + tk)):
+                        result = canonical
+                        break
+                if result:
+                    break
+        if not result:
+            # Last resort: near-identical titles (typos like "Juice B Crypt"
+            # vs "Juice B Crypts", "Align Hex" vs "Malign Hex")
+            import difflib
+            for tk in tkeys:
+                if len(tk) < 6:
+                    continue
+                for ctk, canonical in self.by_artist.get(nart, []):
+                    if len(ctk) >= 6 and difflib.SequenceMatcher(None, tk, ctk).ratio() >= 0.9:
+                        result = canonical
+                        break
+                if result:
+                    break
+        self._memo[memo_key] = result
+        return result
+
+
 def _save_json_atomic(path, data):
     tmp = f"{path}.tmp"
     with open(tmp, "w", encoding="utf-8") as fh:
@@ -196,13 +325,11 @@ def fetch_scrobbles(api_key, username, scan_from=None, max_pages=600):
 # Last-played calculation (50% track threshold, session-based)
 # ---------------------------------------------------------------------------
 
-def calculate_last_played(scrobbles, all_albums):
+def calculate_last_played(scrobbles, all_albums, matcher):
     """Group collection scrobbles into sessions and apply the 50% threshold."""
-    album_keys = set()
     album_track_counts = {}
     for a in all_albums:
         norm_key = f"{_normalize_for_match(a['artist'])}|||{_normalize_for_match(a['title'])}"
-        album_keys.add(norm_key)
         tc = a.get("track_count") or 0
         if tc:
             album_track_counts[norm_key] = tc
@@ -211,8 +338,8 @@ def calculate_last_played(scrobbles, all_albums):
     for uts, artist, album_name, track_name in scrobbles:
         if not album_name:
             continue
-        norm_key = f"{_normalize_for_match(artist)}|||{_normalize_for_match(album_name)}"
-        if norm_key in album_keys:
+        norm_key = matcher.match(artist, album_name)
+        if norm_key:
             scrobbles_by_album[norm_key].append((uts, _normalize_for_match(track_name)))
 
     SESSION_GAP = 4 * 3600
@@ -270,7 +397,7 @@ def calculate_last_played(scrobbles, all_albums):
 # Listening history (heatmap_data.json)
 # ---------------------------------------------------------------------------
 
-def update_history(scrobbles, all_albums, hist, backfill=False):
+def update_history(scrobbles, all_albums, hist, backfill=False, matcher=None):
     """Update per-album and per-artist monthly play counts.
 
     Album entries count scrobbles matching a collection album (artist+album).
@@ -279,6 +406,8 @@ def update_history(scrobbles, all_albums, hist, backfill=False):
     scans never double-count.
     """
     hist_ts = 0 if backfill else hist.get("_hist_last_ts", 0)
+    if matcher is None:
+        matcher = AlbumMatcher(all_albums)
 
     # Display-name lookups from the collection
     album_names = {}   # norm album key -> (artist, title)
@@ -315,8 +444,8 @@ def update_history(scrobbles, all_albums, hist, backfill=False):
             counted += 1
 
         if album_name:
-            akey = f"{nart}|||{_normalize_for_match(album_name)}"
-            if akey in album_names:
+            akey = matcher.match(artist, album_name)
+            if akey and akey in album_names:
                 entry = albums_idx.get(akey)
                 if entry is None:
                     disp = album_names[akey]
@@ -367,20 +496,27 @@ def main():
     hist = load_heatmap()
     hist_ts = 0 if backfill else hist.get("_hist_last_ts", 0)
 
-    # Fetch play counts
+    matcher = AlbumMatcher(all_albums)
+
+    # Fetch play counts and match them to collection albums (fuzzy: pressing
+    # variants, EP/promo suffixes, prefix titles). Multiple Last.fm entries
+    # matching one album (e.g. "Swim" + "Swim EP") are summed.
     play_counts = fetch_top_albums(api_key, username)
 
-    norm_plays = {}
+    matched_plays = defaultdict(int)
     for key, val in play_counts.items():
         parts = key.split("|||")
         if len(parts) == 2:
-            norm_key = f"{_normalize_for_match(parts[0])}|||{_normalize_for_match(parts[1])}"
-            if norm_key not in norm_plays or val > norm_plays[norm_key]:
-                norm_plays[norm_key] = val
+            norm_key = matcher.match(parts[0], parts[1])
+            if norm_key:
+                matched_plays[norm_key] += val
 
     for a in all_albums:
-        norm_key = f"{_normalize_for_match(a['artist'])}|||{_normalize_for_match(a['title'])}"
-        plays = norm_plays.get(norm_key, 0)
+        # Match the album's own title through the matcher too, so pressing
+        # variants ("Swim (red)" and "Swim (blue)") share the same plays
+        norm_key = matcher.match(a["artist"], a["title"]) \
+            or f"{_normalize_for_match(a['artist'])}|||{_normalize_for_match(a['title'])}"
+        plays = matched_plays.get(norm_key, 0)
         if plays > 0:
             a["lastfm_plays"] = plays
 
@@ -395,10 +531,11 @@ def main():
     scrobbles = fetch_scrobbles(api_key, username, scan_from=scan_from, max_pages=max_pages)
 
     # Last-played dates
-    lp_dates = calculate_last_played(scrobbles, all_albums)
+    lp_dates = calculate_last_played(scrobbles, all_albums, matcher)
     applied = 0
     for a in all_albums:
-        norm_key = f"{_normalize_for_match(a['artist'])}|||{_normalize_for_match(a['title'])}"
+        norm_key = matcher.match(a["artist"], a["title"]) \
+            or f"{_normalize_for_match(a['artist'])}|||{_normalize_for_match(a['title'])}"
         scrobble_date = lp_dates.get(norm_key, "")
         notion_date = (a.get("last_played") or "")[:10]
         best_date = max(scrobble_date, notion_date) if scrobble_date and notion_date else (scrobble_date or notion_date)
@@ -408,7 +545,7 @@ def main():
     print(f"  Updated last-played dates for {applied} albums")
 
     # Listening history
-    new_hist = update_history(scrobbles, all_albums, hist, backfill=backfill)
+    new_hist = update_history(scrobbles, all_albums, hist, backfill=backfill, matcher=matcher)
     _save_json_atomic(HEATMAP_FILE, new_hist)
     print(f"  Updated {HEATMAP_FILE.name}")
 
