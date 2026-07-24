@@ -33,6 +33,17 @@ def make_matcher():
         {"artist": "Marnie Stern", "title": "This is It and I am It and...."},
         {"artist": "CoryaYo", "title": "Rated R"},
         {"artist": "The Beatles", "title": "Revolver"},
+        {"artist": "Onra", "title": "Chinoiseries"},
+        {"artist": "Onra", "title": "Chinoiseries Pt.2"},
+        {"artist": "Onra", "title": "Chinoiseries Pt.3"},
+        {"artist": "Royksopp", "title": "Melody A.M."},
+        {"artist": "Zero7", "title": "Simple Things"},
+        {"artist": "Melt Banana", "title": "Fetch"},
+        {"artist": "Braniac", "title": "Electro-shock for President"},
+        {"artist": "Rapider than Horsepower / Mae Shi", "title": "Don't Ignore the Potential"},
+        {"artist": "Talking Heads", "title": "Stop Making Sense"},
+        {"artist": "Talking Heads", "title": "Stop Making Sense - Tour"},
+        {"artist": "Monoganon", "title": "Family"},
     ]
     return AlbumMatcher(albums)
 
@@ -104,6 +115,34 @@ class TestAlbumMatcher(unittest.TestCase):
         self.assertIn("vol2", keys)
         self.assertIn("volii", keys)
         self.assertIn("vol ii", keys)
+
+    def test_artist_aliases(self):
+        # Accents, spacing, no-space, underscores, typos
+        self.assertMatches("Röyksopp", "Melody A.M.", "melody am")
+        self.assertMatches("zero 7", "Simple Things", "simple things")
+        self.assertMatches("meltbanana", "Fetch", "fetch")
+        self.assertMatches("brainiac", "Electro-Shock for President", "electroshock")
+        # "/"-split collaborations match either side
+        self.assertMatches("rapider than horsepower", "Don't Ignore the Potential",
+                           "dont ignore the potential")
+
+    def test_volume_sequels_stay_distinct(self):
+        # Owning Pt.2 and Pt.3 must not cross-match, in any variant form
+        self.assertMatches("Onra", "Chinoiseries Pt.2", "pt2")
+        self.assertMatches("Onra", "chinoiseries pt iii", "pt3")
+        self.assertMatches("Onra", "Chinoiseries", "chinoiseries")
+        r2 = self.m.match("Onra", "chinoiseries pt 2")
+        r3 = self.m.match("Onra", "chinoiseries pt 3")
+        self.assertNotEqual(r2, r3)
+
+    def test_pressing_variant_grouping(self):
+        # "- Tour" pressing shares a canonical with the plain copy
+        tour = self.m.match("Talking Heads", "Stop Making Sense - Tour")
+        plain = self.m.match("Talking Heads", "Stop Making Sense")
+        self.assertEqual(tour, plain)
+
+    def test_spacing_variants(self):
+        self.assertMatches("Monoganon", "f a m i l y", "family")
 
 
 if __name__ == "__main__":

@@ -65,15 +65,49 @@ _ROMAN = {"1": "i", "2": "ii", "3": "iii", "4": "iv", "5": "v",
 _ROMAN_REV = {v: k for k, v in _ROMAN.items()}
 
 
+def _fold_accents(s):
+    """Strip diacritics: 'Voilà' -> 'Voila', 'Röyksopp' -> 'Royksopp'."""
+    import unicodedata
+    return "".join(c for c in unicodedata.normalize("NFKD", s)
+                   if not unicodedata.combining(c))
+
+
+def _numeral_tokens(s):
+    """All numbers in a string, arabic or roman — including romans glued to
+    the end of squashed forms ('chinoiseriesptiii' -> 'iii')."""
+    toks = re.findall(r"\d+", s) + re.findall(r"\b[ivx]{1,4}\b", s)
+    m = re.search(r"[^ivx\W]([ivx]{1,4})$", s)
+    if m:
+        toks.append(m.group(1))
+    return toks
+
+
+def _digits_differ(a, b):
+    """True when two strings contain different numbers — guards fuzzy rules
+    from matching 'Chinoiseries Pt.3' against 'Chinoiseries Pt.2'."""
+    return _numeral_tokens(a) != _numeral_tokens(b)
+
+
+_VOLUME_RE = re.compile(
+    r"^(?:(?:pt|part|vol|volume|no|number|chapter|book|disc|cd)\s*)?"
+    r"(?:\d{1,3}|[ivx]{1,4})$")
+
+
+def _is_volume_marker(s):
+    """'pt 2', 'vol iii', '2' — a sequel marker, not a subtitle. Prefix rules
+    must not equate 'Chinoiseries Pt 2' with 'Chinoiseries'."""
+    return bool(_VOLUME_RE.match(s.strip()))
+
+
 def _norm_variants(title):
     """Base normalised forms of a title."""
     out = set()
-    for t in (title, _PAREN_RE.sub("", title)):
+    for t in (title, _PAREN_RE.sub("", title), _fold_accents(title)):
         n = _normalize_for_match(t)
         if n:
             out.add(n)
         # Punctuation as word separator: "Nu*Med" -> "nu med"
-        spaced = re.sub(r"[^\w\s]", " ", t.lower().replace("&", "and"))
+        spaced = re.sub(r"[^\w\s]", " ", t.lower().replace("&", "and")).replace("_", " ")
         spaced = re.sub(r"\s+", " ", spaced).strip()
         spaced = re.sub(r"^(the|a|an)\s+", "", spaced)
         if spaced:
@@ -86,6 +120,38 @@ def _norm_variants(title):
     for k in list(out):
         if re.search(r"\bokay\b", k):
             out.add(re.sub(r"\bokay\b", "ok", k))
+    # Spacing variants: "family" == "f a m i l y"
+    for k in list(out):
+        squashed = k.replace(" ", "")
+        if len(squashed) >= 5:
+            out.add(squashed)
+    # Word-order variants: "…More Painful and Sad…" == "…More Sad and Painful…"
+    for k in list(out):
+        words = k.split()
+        if len(words) >= 4:
+            out.add("\x00sorted:" + " ".join(sorted(words)))
+    return out
+
+
+def _artist_variants(artist):
+    """Normalised variants of an artist name, for alias resolution."""
+    out = set()
+    # Comma-inverted articles: "Pixies, the" -> "Pixies"
+    uninverted = re.sub(r",\s*(the|a|an)\s*$", "", artist, flags=re.I)
+    for src in (artist, _fold_accents(artist), uninverted, _fold_accents(uninverted)):
+        n = _normalize_for_match(src)
+        if n:
+            out.add(n)
+        spaced = re.sub(r"[^\w\s]", " ", src.lower().replace("&", "and")).replace("_", " ")
+        spaced = re.sub(r"\s+", " ", spaced).strip()
+        spaced = re.sub(r"^(the|a|an)\s+", "", spaced)
+        if spaced:
+            out.add(spaced)
+    # No-space forms: "Zero7" == "Zero 7", "Meltbanana" == "Melt Banana"
+    for k in list(out):
+        squashed = k.replace(" ", "")
+        if len(squashed) >= 5:
+            out.add(squashed)
     return out
 
 
@@ -119,24 +185,108 @@ def _title_keys(title):
 class AlbumMatcher:
     """Match Last.fm artist/album names to collection albums.
 
-    Exact match on normalised title variants first (parenthetical pressing
-    notes and EP/promo/deluxe suffixes stripped), then a word-boundary prefix
-    rule so "Come on Feel" matches "Come On Feel the Lemonheads" and
-    "Ripped Off" matches "Ripped Off (Live at KBC 2004)".
+    Titles: exact match on normalised variants (pressing notes, EP/promo
+    suffixes, accents, spacing, word order, roman numerals) → word-boundary
+    prefix/suffix rules → digit-guarded near-match for typos.
+
+    Artists: exact normalised match → alias resolution (spacing, accents,
+    underscores, "/"-split collaborations) → digit-guarded close match, so
+    "Braniac", "Zero7" and "Royksopp" find brainiac, zero 7 and röyksopp.
+
+    Pressing variants are grouped at registration: "Swim (red)", "Swim (blue)"
+    and "Stop Making Sense - Tour" all share one canonical key, so plays land
+    on every copy.
     """
 
     MIN_PREFIX = 8  # chars — keeps short titles from prefix-matching wrongly
 
     def __init__(self, albums):
-        self.exact = {}      # (norm_artist, title_key) -> canonical norm_key
-        self.by_artist = {}  # norm_artist -> [(title_key, canonical), ...]
+        self.exact = {}         # (norm_artist, title_key) -> canonical norm_key
+        self.by_artist = {}     # norm_artist -> [(title_key, canonical), ...]
+        self.artist_alias = {}  # alias variant -> norm_artist
         for a in albums:
             nart = _normalize_for_match(a["artist"])
-            canonical = f"{nart}|||{_normalize_for_match(a['title'])}"
-            for tk in _title_keys(a["title"]):
+            tkeys = _title_keys(a["title"])
+            # Group with an already-registered album (pressing variants of the
+            # same record share a canonical, so plays reach every copy)
+            canonical = self._lookup([nart], tkeys) \
+                or f"{nart}|||{_normalize_for_match(a['title'])}"
+            for tk in tkeys:
                 self.exact.setdefault((nart, tk), canonical)
                 self.by_artist.setdefault(nart, []).append((tk, canonical))
+            for alias in _artist_variants(a["artist"]):
+                self.artist_alias.setdefault(alias, [])
+                if nart not in self.artist_alias[alias]:
+                    self.artist_alias[alias].append(nart)
+            # "/"-split collaborations: each side is an alias of the row
+            for part in re.split(r"\s*/\s*", a["artist"]):
+                p = _normalize_for_match(part)
+                if len(p) >= 5:
+                    self.artist_alias.setdefault(p, [])
+                    if nart not in self.artist_alias[p]:
+                        self.artist_alias[p].append(nart)
         self._memo = {}
+        self._artist_memo = {}
+
+    def _resolve_artists(self, artist, nart):
+        """Collection norm-artist keys this Last.fm artist name could mean."""
+        if artist in self._artist_memo:
+            return self._artist_memo[artist]
+        # Direct key first, then aliases — both, because "Pixies" must also
+        # reach albums filed under "Pixies, the"
+        found = [nart] if nart in self.by_artist else []
+        for v in _artist_variants(artist):
+            for hit in self.artist_alias.get(v, []):
+                if hit not in found:
+                    found.append(hit)
+        if not found and len(nart) >= 5:
+            import difflib
+            for m in difflib.get_close_matches(nart, list(self.artist_alias.keys()),
+                                               n=2, cutoff=0.85):
+                if not _digits_differ(nart, m):
+                    for hit in self.artist_alias[m]:
+                        if hit not in found:
+                            found.append(hit)
+        self._artist_memo[artist] = found
+        return found
+
+    def _lookup(self, narts, tkeys):
+        """Match title keys against registered albums for the given artists."""
+        for na in narts:
+            for tk in tkeys:
+                result = self.exact.get((na, tk))
+                if result:
+                    return result
+        for na in narts:
+            for tk in tkeys:
+                if tk.startswith("\x00"):
+                    continue
+                for ctk, canonical in self.by_artist.get(na, []):
+                    if ctk.startswith("\x00"):
+                        continue
+                    if len(ctk) >= self.MIN_PREFIX:
+                        if tk.startswith(ctk + " ") and not _is_volume_marker(tk[len(ctk) + 1:]):
+                            return canonical
+                        if tk.endswith(" " + ctk) and not _is_volume_marker(tk[:-len(ctk) - 1]):
+                            return canonical
+                    if len(tk) >= self.MIN_PREFIX:
+                        if ctk.startswith(tk + " ") and not _is_volume_marker(ctk[len(tk) + 1:]):
+                            return canonical
+                        if ctk.endswith(" " + tk) and not _is_volume_marker(ctk[:-len(tk) - 1]):
+                            return canonical
+        # Last resort: near-identical titles (typos like "Juice B Crypt" vs
+        # "Juice B Crypts") — digit-guarded so Pt.3 never matches Pt.2
+        import difflib
+        for na in narts:
+            for tk in tkeys:
+                if len(tk) < 6 or tk.startswith("\x00"):
+                    continue
+                for ctk, canonical in self.by_artist.get(na, []):
+                    if (len(ctk) >= 6 and not ctk.startswith("\x00")
+                            and not _digits_differ(tk, ctk)
+                            and difflib.SequenceMatcher(None, tk, ctk).ratio() >= 0.9):
+                        return canonical
+        return None
 
     def match(self, artist, album):
         """Return the collection album's canonical norm_key, or None."""
@@ -144,38 +294,8 @@ class AlbumMatcher:
         if memo_key in self._memo:
             return self._memo[memo_key]
         nart = _normalize_for_match(artist)
-        result = None
-        tkeys = _title_keys(album)
-        for tk in tkeys:
-            result = self.exact.get((nart, tk))
-            if result:
-                break
-        if not result:
-            for tk in tkeys:
-                for ctk, canonical in self.by_artist.get(nart, []):
-                    if len(ctk) >= self.MIN_PREFIX and (
-                            tk.startswith(ctk + " ") or tk.endswith(" " + ctk)):
-                        result = canonical
-                        break
-                    if len(tk) >= self.MIN_PREFIX and (
-                            ctk.startswith(tk + " ") or ctk.endswith(" " + tk)):
-                        result = canonical
-                        break
-                if result:
-                    break
-        if not result:
-            # Last resort: near-identical titles (typos like "Juice B Crypt"
-            # vs "Juice B Crypts", "Align Hex" vs "Malign Hex")
-            import difflib
-            for tk in tkeys:
-                if len(tk) < 6:
-                    continue
-                for ctk, canonical in self.by_artist.get(nart, []):
-                    if len(ctk) >= 6 and difflib.SequenceMatcher(None, tk, ctk).ratio() >= 0.9:
-                        result = canonical
-                        break
-                if result:
-                    break
+        narts = self._resolve_artists(artist, nart)
+        result = self._lookup(narts, _title_keys(album)) if narts else None
         self._memo[memo_key] = result
         return result
 
