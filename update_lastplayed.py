@@ -120,6 +120,8 @@ def _norm_variants(title):
     for k in list(out):
         if re.search(r"\bokay\b", k):
             out.add(re.sub(r"\bokay\b", "ok", k))
+        if re.search(r"\bn\b", k):     # "Rock n Roll" == "Rock and Roll"
+            out.add(re.sub(r"\bn\b", "and", k))
     # Spacing variants: "family" == "f a m i l y"
     for k in list(out):
         squashed = k.replace(" ", "")
@@ -218,10 +220,11 @@ class AlbumMatcher:
                 self.artist_alias.setdefault(alias, [])
                 if nart not in self.artist_alias[alias]:
                     self.artist_alias[alias].append(nart)
-            # "/"-split collaborations: each side is an alias of the row
-            for part in re.split(r"\s*/\s*", a["artist"]):
+            # Split collaborations ("A / B", "A x B"): each side is an alias
+            # of the row ("Mt Fujitive x Smuv" answers to plain "Smuv")
+            for part in re.split(r"\s*/\s*|\s+x\s+", a["artist"], flags=re.I):
                 p = _normalize_for_match(part)
-                if len(p) >= 5:
+                if len(p) >= 4 and p != nart:
                     self.artist_alias.setdefault(p, [])
                     if nart not in self.artist_alias[p]:
                         self.artist_alias[p].append(nart)
@@ -247,18 +250,38 @@ class AlbumMatcher:
                     for hit in self.artist_alias[m]:
                         if hit not in found:
                             found.append(hit)
+        if not found:
+            # Word-boundary prefix: "Captain Beefheart & His Magic Band" ->
+            # "Captain Beefheart"; "Himuro" -> "Himuro v. Koichi". Min 6 chars
+            # so "Pre" can never reach "Prefuse 73".
+            for coll in self.by_artist:
+                if len(coll) >= 6 and nart.startswith(coll + " "):
+                    found.append(coll)
+                elif len(nart) >= 6 and coll.startswith(nart + " "):
+                    found.append(coll)
         self._artist_memo[artist] = found
         return found
 
     def _lookup(self, narts, tkeys):
         """Match title keys against registered albums for the given artists."""
-        for na in narts:
+        def keys_for(na):
+            # Also try titles with the artist name stripped off the front:
+            # "Frank Zappa Meets the Mothers…" -> "Meets the Mothers…"
+            ks = list(tkeys)
             for tk in tkeys:
+                if tk.startswith(na + " "):
+                    stripped = tk[len(na) + 1:]
+                    if len(stripped) >= 4:
+                        ks.append(stripped)
+            return ks
+
+        for na in narts:
+            for tk in keys_for(na):
                 result = self.exact.get((na, tk))
                 if result:
                     return result
         for na in narts:
-            for tk in tkeys:
+            for tk in keys_for(na):
                 if tk.startswith("\x00"):
                     continue
                 for ctk, canonical in self.by_artist.get(na, []):
@@ -275,16 +298,22 @@ class AlbumMatcher:
                         if ctk.endswith(" " + tk) and not _is_volume_marker(ctk[:-len(tk) - 1]):
                             return canonical
         # Last resort: near-identical titles (typos like "Juice B Crypt" vs
-        # "Juice B Crypts") — digit-guarded so Pt.3 never matches Pt.2
+        # "Juice B Crypts") — digit-guarded so Pt.3 never matches Pt.2.
+        # Also truncated titles: "The Peace & Truth of" vs the full (and
+        # correctly-spelled) "The Peace and Truce Of Future Of the Left".
         import difflib
         for na in narts:
-            for tk in tkeys:
+            for tk in keys_for(na):
                 if len(tk) < 6 or tk.startswith("\x00"):
                     continue
                 for ctk, canonical in self.by_artist.get(na, []):
-                    if (len(ctk) >= 6 and not ctk.startswith("\x00")
-                            and not _digits_differ(tk, ctk)
-                            and difflib.SequenceMatcher(None, tk, ctk).ratio() >= 0.9):
+                    if len(ctk) < 6 or ctk.startswith("\x00") or _digits_differ(tk, ctk):
+                        continue
+                    if difflib.SequenceMatcher(None, tk, ctk).ratio() >= 0.9:
+                        return canonical
+                    lo, hi = (tk, ctk) if len(tk) <= len(ctk) else (ctk, tk)
+                    if (len(lo) >= 12
+                            and difflib.SequenceMatcher(None, lo, hi[:len(lo)]).ratio() >= 0.85):
                         return canonical
         return None
 

@@ -144,6 +144,38 @@ class TestAlbumMatcher(unittest.TestCase):
     def test_spacing_variants(self):
         self.assertMatches("Monoganon", "f a m i l y", "family")
 
+    def test_band_name_suffixes(self):
+        # Last.fm's fuller band name reaches the short collection artist
+        m = AlbumMatcher([{"artist": "Captain Beefheart", "title": "Trout Mask Replica"},
+                          {"artist": "Himuro v. Koichi", "title": "Latest Gorgeous Energy"},
+                          {"artist": "Pre", "title": "Epic Fits"},
+                          {"artist": "Prefuse 73", "title": "One Word Extinguisher"}])
+        self.assertIsNotNone(m.match("Captain Beefheart & His Magic Band", "Trout Mask Replica"))
+        self.assertIsNotNone(m.match("Himuro", "latest gorgeous energy"))
+        # Min-length guard: "Pre" must not absorb Prefuse 73 albums
+        self.assertIsNone(m.match("Prefuse 73", "Epic Fits"))
+
+    def test_collab_splits(self):
+        m = AlbumMatcher([{"artist": "Mt Fujitive x Smuv", "title": "Wonderland"},
+                          {"artist": "Enjo / AMJW", "title": "EnjoyLife"}])
+        self.assertIsNotNone(m.match("Smuv", "Wonderland"))
+        self.assertIsNotNone(m.match("Mt Fujitive", "Wonderland"))
+        self.assertIsNotNone(m.match("Enjo", "EnjoyLife"))
+
+    def test_n_vs_and(self):
+        m = AlbumMatcher([{"artist": "Sex Pistols", "title": "Rock and Roll Swindle"}])
+        self.assertIsNotNone(m.match("Sex Pistols", "The Great Rock 'N' Roll Swindle"))
+
+    def test_truncated_title_with_typo(self):
+        m = AlbumMatcher([{"artist": "Future of the Left", "title": "The Peace & Truth of"}])
+        self.assertIsNotNone(
+            m.match("Future of the Left", "The Peace and Truce Of Future Of the Left"))
+
+    def test_artist_prefix_stripped_title(self):
+        m = AlbumMatcher([{"artist": "Frank Zappa", "title": "Meets the Mothers of Invention"}])
+        self.assertIsNotNone(
+            m.match("Frank Zappa", "Frank Zappa Meets the Mothers of Prevention"))
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
