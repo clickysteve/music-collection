@@ -3469,14 +3469,18 @@
                 decadeRows.appendChild(row);
             });
 
-            // ---- Top artists ----
+            // ---- Top artists (grouped by normalised name) ----
             const artistCounts = {};
+            const artistDisplay = {};
             albums.forEach(a => {
-                artistCounts[a.artist] = (artistCounts[a.artist] || 0) + 1;
+                const k = artistKey(a.artist);
+                artistCounts[k] = (artistCounts[k] || 0) + 1;
+                if (!artistDisplay[k]) artistDisplay[k] = a.artist;
             });
             const topArtists = Object.entries(artistCounts)
                 .sort((a, b) => b[1] - a[1])
-                .slice(0, 10);
+                .slice(0, 10)
+                .map(([k, count]) => [artistDisplay[k], count]);
 
             const topArtistsEl = document.getElementById('topArtists');
             topArtistsEl.innerHTML = '';
@@ -3698,7 +3702,7 @@
             const collectorAlbums = new Map();
             albums.forEach(a => {
                 if (a._isCollector) {
-                    const key = `${a.artist.toLowerCase()}|||${a.title.toLowerCase()}`;
+                    const key = normKey(a.artist, a.title);
                     if (!collectorAlbums.has(key)) collectorAlbums.set(key, a);
                 }
             });
@@ -4390,7 +4394,7 @@
         function artistPlaysMap() {
             const map = {};
             if (HISTORY && HISTORY.artists) {
-                HISTORY.artists.forEach(e => { map[e.artist.toLowerCase()] = e.total || 0; });
+                HISTORY.artists.forEach(e => { map[artistKey(e.artist)] = e.total || 0; });
             }
             return map;
         }
@@ -4418,14 +4422,14 @@
             if (HISTORY && HISTORY.artists && HISTORY.artists.length) {
                 const ownedCount = {};
                 allAlbums.forEach(a => {
-                    const k = a.artist.toLowerCase();
+                    const k = artistKey(a.artist);
                     ownedCount[k] = (ownedCount[k] || 0) + 1;
                 });
                 const ratios = HISTORY.artists
                     .map(e => ({
                         artist: e.artist,
                         plays: e.total || 0,
-                        owned: ownedCount[e.artist.toLowerCase()] || 0,
+                        owned: ownedCount[artistKey(e.artist)] || 0,
                     }))
                     .filter(r => r.owned >= 1 && r.plays >= 150)
                     .map(r => ({ ...r, ratio: r.plays / r.owned }))
@@ -4464,10 +4468,10 @@
 
             // ---- Missing albums (per artist, filter-aware) ----
             if (SUGGESTIONS && SUGGESTIONS.length) {
-                const visible = new Set(filteredAlbums.map(a => a.artist.toLowerCase()));
+                const visible = new Set(filteredAlbums.map(a => artistKey(a.artist)));
                 const relevant = SUGGESTIONS
-                    .filter(s => visible.has(s.artist.toLowerCase()) && s.missing.length)
-                    .sort((a, b) => (plays[b.artist.toLowerCase()] || 0) - (plays[a.artist.toLowerCase()] || 0)
+                    .filter(s => visible.has(artistKey(s.artist)) && s.missing.length)
+                    .sort((a, b) => (plays[artistKey(b.artist)] || 0) - (plays[artistKey(a.artist)] || 0)
                         || b.owned - a.owned);
                 if (relevant.length) {
                     const label = document.createElement('div');
@@ -4491,7 +4495,7 @@
                         head.appendChild(name);
                         const meta = document.createElement('span');
                         meta.className = 'sugg-artist-meta';
-                        const p = plays[s.artist.toLowerCase()];
+                        const p = plays[artistKey(s.artist)];
                         meta.textContent = s.owned + ' of ' + s.total + ' studio albums owned'
                             + (p ? ' · ' + p.toLocaleString() + ' plays' : '');
                         head.appendChild(meta);
@@ -4800,13 +4804,13 @@
         function buildCollectorMap() {
             const map = {};
             allAlbums.forEach(a => {
-                const key = `${a.artist.toLowerCase()}|||${a.title.toLowerCase()}`;
+                const key = normKey(a.artist, a.title);
                 if (!map[key]) map[key] = new Set();
                 map[key].add(a.collection);
             });
             // Mark albums that exist on both
             allAlbums.forEach(a => {
-                const key = `${a.artist.toLowerCase()}|||${a.title.toLowerCase()}`;
+                const key = normKey(a.artist, a.title);
                 a._isCollector = map[key].size > 1;
             });
         }
@@ -5007,6 +5011,19 @@
                 .replace(/\s+/g, ' ').trim()
                 .replace(/^(the|a|an)\s+/, '');
             return norm(artist) + '|||' + norm(title);
+        }
+
+        // Grouping key for artist names — folds case, accents, µ/μ variants,
+        // punctuation, and leading articles so "The Thermals"/"Thermals" or
+        // "HEALTH"/"Health" always count as one artist
+        function artistKey(s) {
+            return (s || '').toLowerCase()
+                .replace(/&/g, 'and')
+                .replace(/[μµ]/g, 'u')
+                .normalize('NFKD').replace(/[̀-ͯ]/g, '')
+                .replace(/[^\p{L}\p{N}\s]/gu, '')
+                .replace(/\s+/g, ' ').trim()
+                .replace(/^(the|a|an)\s+/, '');
         }
 
         function findInCollection(artist, title) {
