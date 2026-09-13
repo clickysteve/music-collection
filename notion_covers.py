@@ -42,6 +42,8 @@ import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
+import mb_client
+
 # ----------------------------
 # Property names (edit only if your Notion columns differ)
 # ----------------------------
@@ -61,7 +63,8 @@ PROP_RUNTIME = "Runtime"        # minutes (Number)
 NOTION_VERSION = "2022-06-28"
 NOTION_PAGE_SIZE = 100
 
-MB_MIN_INTERVAL_SECONDS = 1.15   # MusicBrainz etiquette: be gentle (API calls only)
+# MusicBrainz throttling (interval, user agent, 503 backoff) lives in mb_client
+# so this script and update_all.py can't drift out of step with each other.
 NOTION_WRITE_PAUSE = 0.20        # pause between Notion updates (only after a PATCH)
 
 # Negative cache: rows MusicBrainz/CAA already couldn't fill are remembered so we
@@ -126,20 +129,7 @@ def make_session() -> requests.Session:
 
 
 NOTION = make_session()
-MB = make_session()   # MusicBrainz API
-CAA = make_session()  # Cover Art Archive (separate service)
-
-_last_mb_request_at = 0.0
-
-
-def mb_throttle() -> None:
-    """Throttle *only* MusicBrainz API calls (not CAA image redirects)."""
-    global _last_mb_request_at
-    now = time.time()
-    wait = (_last_mb_request_at + MB_MIN_INTERVAL_SECONDS) - now
-    if wait > 0:
-        time.sleep(wait)
-    _last_mb_request_at = time.time()
+CAA = make_session()  # Cover Art Archive (separate service, not rate limited)
 
 
 def notion_headers() -> Dict[str, str]:
@@ -151,7 +141,7 @@ def notion_headers() -> Dict[str, str]:
 
 
 def mb_headers() -> Dict[str, str]:
-    return {"User-Agent": MB_USER_AGENT, "Accept": "application/json"}
+    return mb_client.headers()
 
 # ----------------------------
 # Notion property helpers
@@ -258,14 +248,7 @@ def extract_artist_credit(obj: Dict[str, Any]) -> str:
 # ----------------------------
 
 def mb_get_json(url: str, params: Dict[str, Any]) -> Optional[Dict[str, Any]]:
-    try:
-        mb_throttle()
-        r = MB.get(url, headers=mb_headers(), params=params, timeout=30)
-        if r.status_code >= 400:
-            return None
-        return r.json()
-    except Exception:
-        return None
+    return mb_client.get_json(url, params)
 
 
 def mb_search_release(artist: str, title: str) -> List[Dict[str, Any]]:
@@ -672,6 +655,7 @@ def main() -> None:
 
     print(f"\nDone. Updated {updated}. Skipped {skipped} "
           f"({skipped_cached} skipped instantly via cache, {processed} queried MusicBrainz).")
+    print(f"  {mb_client.status_line()}")
 
 
 if __name__ == "__main__":

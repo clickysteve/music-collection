@@ -37,6 +37,8 @@ import sys
 import unicodedata
 from pathlib import Path
 
+import mb_client
+
 # ---------------------------------------------------------------------------
 # Configuration
 # ---------------------------------------------------------------------------
@@ -88,6 +90,8 @@ def record_failure(category, label, reason):
 
 def print_failure_summary():
     """Print a grouped summary of everything that didn't resolve this run."""
+    if mb_client.requests_made:
+        print(f"\n  {mb_client.status_line()}")
     if not FAILURES:
         print("\nNo lookup failures this run.")
         return
@@ -305,13 +309,6 @@ def fetch_genres(albums, label=""):
     Uses the ?inc=genres parameter on the release-group endpoint.
     Picks the top genre by vote count. Caches permanently by MBID.
     """
-    import time
-
-    mb_agent = os.environ.get("MB_USER_AGENT", "").strip()
-    if not mb_agent:
-        mb_agent = "MusicCollectionGallery/1.0 (steve.blythe@a8c.com)"
-
-    mb_headers = {"User-Agent": mb_agent, "Accept": "application/json"}
     cache = load_genre_cache()
 
     to_fetch = []
@@ -331,35 +328,37 @@ def fetch_genres(albums, label=""):
     print(f"  Fetching genres for {len(to_fetch)} {label} albums...")
     fetched = 0
 
+    # mb_client owns the pacing and the 503 backoff — no sleeps needed here.
     for idx, album in to_fetch:
         mbid = album["mbid"]
-        time.sleep(1.1)  # MusicBrainz rate limit: 1 req/sec
-        try:
-            resp = requests.get(
-                f"https://musicbrainz.org/ws/2/release-group/{mbid}",
-                params={"fmt": "json", "inc": "genres"},
-                headers=mb_headers, timeout=10,
-            )
-            if resp.status_code == 200:
-                data = resp.json()
-                genres_raw = data.get("genres", [])
-                # Sort by vote count, take top 3 genre names
-                genres_raw.sort(key=lambda g: -g.get("count", 0))
-                genre_names = [g["name"] for g in genres_raw[:3]]
-                albums[idx]["genres"] = genre_names
-                cache[mbid] = genre_names
-                fetched += 1
-                if fetched % 20 == 0:
-                    print(f"    ...{fetched}/{len(to_fetch)}")
-            else:
-                albums[idx]["genres"] = []
-                record_failure("Genre lookup (MusicBrainz)",
-                               f"{album.get('artist','?')} — {album.get('title','?')}",
-                               f"HTTP {resp.status_code}")
-        except Exception as e:
+        label_for_album = f"{album.get('artist','?')} — {album.get('title','?')}"
+        resp = mb_client.get(
+            f"https://musicbrainz.org/ws/2/release-group/{mbid}",
+            params={"fmt": "json", "inc": "genres"},
+        )
+        if resp is None:
             albums[idx]["genres"] = []
-            record_failure("Genre lookup (MusicBrainz)",
-                           f"{album.get('artist','?')} — {album.get('title','?')}", str(e))
+            record_failure("Genre lookup (MusicBrainz)", label_for_album, "request failed")
+            continue
+        if resp.status_code != 200:
+            albums[idx]["genres"] = []
+            record_failure("Genre lookup (MusicBrainz)", label_for_album,
+                           f"HTTP {resp.status_code}")
+            continue
+        try:
+            genres_raw = resp.json().get("genres", [])
+        except ValueError as e:
+            albums[idx]["genres"] = []
+            record_failure("Genre lookup (MusicBrainz)", label_for_album, str(e))
+            continue
+        # Sort by vote count, take top 3 genre names
+        genres_raw.sort(key=lambda g: -g.get("count", 0))
+        genre_names = [g["name"] for g in genres_raw[:3]]
+        albums[idx]["genres"] = genre_names
+        cache[mbid] = genre_names
+        fetched += 1
+        if fetched % 20 == 0:
+            print(f"    ...{fetched}/{len(to_fetch)}")
 
     save_genre_cache(cache)
     print(f"  Fetched genres for {fetched}/{len(to_fetch)} {label} albums")
@@ -386,12 +385,9 @@ def find_missing_albums(all_albums):
     """Query MusicBrainz for top artists' discographies and find albums not in the collection."""
     import time
 
-    mb_agent = os.environ.get("MB_USER_AGENT", "").strip()
-    if not mb_agent:
+    if not os.environ.get("MB_USER_AGENT", "").strip():
         print("  Skipping suggestions: MB_USER_AGENT not set")
         return []
-
-    mb_headers = {"User-Agent": mb_agent, "Accept": "application/json"}
 
     # Count albums per artist, grouped by normalised name so spelling
     # variants ("The Thermals"/"Thermals", "HEALTH"/"Health") count as one.
@@ -454,28 +450,30 @@ def find_missing_albums(all_albums):
                     })
                 continue
 
-        # Query MusicBrainz for artist
-        time.sleep(1.2)  # Rate limit
+        # Query MusicBrainz for artist (mb_client paces the calls and backs off
+        # on 503, so a throttled run slows down instead of failing outright).
         try:
-            search_url = "https://musicbrainz.org/ws/2/artist"
-            resp = requests.get(search_url, params={"query": artist_name, "fmt": "json", "limit": 1},
-                                headers=mb_headers, timeout=10)
-            resp.raise_for_status()
-            artists = resp.json().get("artists", [])
+            search = mb_client.get_json(
+                "https://musicbrainz.org/ws/2/artist",
+                params={"query": artist_name, "fmt": "json", "limit": 1},
+            )
+            if search is None:
+                raise RuntimeError("MusicBrainz artist search failed")
+            artists = search.get("artists", [])
             if not artists:
                 continue
 
             artist_id = artists[0]["id"]
 
             # Get release groups (albums + EPs)
-            time.sleep(1.2)
-            rg_url = f"https://musicbrainz.org/ws/2/release-group"
-            resp = requests.get(rg_url, params={
-                "artist": artist_id, "type": "album", "fmt": "json", "limit": 100
-            }, headers=mb_headers, timeout=10)
-            resp.raise_for_status()
+            rg = mb_client.get_json(
+                "https://musicbrainz.org/ws/2/release-group",
+                params={"artist": artist_id, "type": "album", "fmt": "json", "limit": 100},
+            )
+            if rg is None:
+                raise RuntimeError("MusicBrainz release-group lookup failed")
 
-            release_groups = resp.json().get("release-groups", [])
+            release_groups = rg.get("release-groups", [])
             discog = []
             for rg in release_groups:
                 title = rg.get("title", "")
@@ -1624,9 +1622,12 @@ def git_push():
 
     MAX_RETRIES = 3
 
-    # Stage everything we care about
+    # Stage everything we care about. Keep this list in step with the Python
+    # files CI compiles — a module that never gets staged (as mb_client.py
+    # nearly was) pushes an import error to GitHub Pages and breaks the build.
     _run(["git", "add", "index.html", "albums.json", "heatmap_data.json",
-          "update_all.py", "update_rpm.py"],
+          "update_all.py", "update_rpm.py", "update_lastplayed.py",
+          "export_notion.py", "notion_covers.py", "mb_client.py"],
          check=False)
 
     # Check if there's anything to commit
